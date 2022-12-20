@@ -20,7 +20,7 @@ ENV PATH="/home/apiuser/venv/bin:$PATH"
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install requirements
-COPY ../src/backend/requirements.txt requirements.txt
+COPY src/backend/requirements.txt requirements.txt
 RUN pip3 install --no-cache-dir wheel
 RUN pip3 install --no-cache-dir --upgrade pip
 RUN pip3 install --no-cache-dir -r requirements.txt
