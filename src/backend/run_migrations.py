@@ -3,7 +3,6 @@ import alembic.config
 import time, logging
 from typing import List, Optional
 
-from db import get_db
 import glob
 
 logging.basicConfig(level = logging.DEBUG)
