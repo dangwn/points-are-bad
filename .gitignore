@@ -1,0 +1,5 @@
+*__pycache__
+scratch.py
+.vscode
+*ipynb*
+#kubernetes/docker-secret.yml
