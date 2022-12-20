@@ -7,17 +7,6 @@ from db import get_db
 import glob
 
 logging.basicConfig(level = logging.DEBUG)
-
-def poll_db() -> None:
-    '''
-    Polls the database until a connection can be established
-    '''
-    logging.info('Attempting to verify database connection')
-    while True:
-        if get_db() is not None:
-            break
-        logging.info('Could not connect to database. Retrying in 5 seconds.')
-        time.sleep(5)
     
 def get_init_dir() -> str:
     '''
@@ -45,9 +34,7 @@ def run_alembic(alembic_args: List[str], init_dir: str = '', log_msg: Optional[s
 
     os.chdir(old_path)
 
-def main():
-    poll_db()
-    
+def main():    
     init_dir = get_init_dir()
 
     run_alembic(['stamp','head'], init_dir, 'Stamping head')

@@ -131,9 +131,15 @@ def get_position(
         method = 'GET'
     )
 
+def get_leaderboard(
+    table_start: int = 1,
+    table_end: int = 100
+):
+    pass
+
 def main():
     # print(create_user(is_admin = True))
-    # print(create_user('string','string@example.com','string'))
+    print(create_user('string222','string2222@example.com','string'))
 
     _, token = login('string', 'string')
     # print(create_match(token = token))
