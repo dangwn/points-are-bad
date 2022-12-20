@@ -2,7 +2,7 @@ from urllib import request, parse
 from typing import Optional
 import json
 
-host = 'http://localhost:30009/'
+host = 'http://localhost:8000/'
 default_headers = {
     'Content-Type':'application/json',
     'accept':'application/json'
@@ -139,14 +139,14 @@ def get_leaderboard(
 
 def main():
     # print(create_user(is_admin = True))
-    print(create_user('string222','string2222@example.com','string'))
+    # print(create_user('string','string@example.com','string'))
 
-    _, token = login('string', 'string')
-    # print(create_match(token = token))
-    # print(create_match(token = token))
-    # print(create_match(token = token))
+    _, token = login('dan', 'password')
+    print(create_match(token = token))
+    print(create_match(token = token))
+    print(create_match(token = token))
 
-    # print(update_score(token = token))
+    print(update_score(token = token))
     print(get_position(token = token))
 
 if __name__ == '__main__':
