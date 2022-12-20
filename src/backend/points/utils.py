@@ -50,8 +50,6 @@ async def get_user_position(user_id: int, database: Session) -> PlayerPointsMode
         subq.c.largest_error,
         subq.c.position
     ).filter(subq.c.user_id == user_id).first()
-    print(PlayerPosition_keys)
-    print(query_result)
 
     player_position = PlayerPosition(**dict(zip(PlayerPosition_keys, query_result)))
 
