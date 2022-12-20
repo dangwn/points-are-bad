@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from predictions.models import Prediction as PredictionModel
 from predictions.schema import MatchPredictionWithUserId
+from matches.models import Match as MatchModel
 from http_exceptions import NOT_FOUND_EXCEPTION, COULD_NOT_UPDATE_EXCEPTION
 
 async def get_predictions_by_user_id(user_id: int, database: Session) -> List[PredictionModel]:
@@ -60,3 +61,23 @@ async def update_predictions(
     database.commit()
 
     return updated_predictions
+
+async def get_display_predictions(
+    user_id: int,
+    database: Session
+):
+    subq = database.query(
+        PredictionModel
+    ).filter(PredictionModel.user_id == user_id).subquery()
+
+    predictions = database.query(
+        subq,
+        MatchModel.home,
+        MatchModel.away
+    ).join(
+        MatchModel,
+        subq.c.match_id == MatchModel.match_id,
+        isouter = True
+    ).all()
+
+    return predictions

@@ -10,3 +10,7 @@ class MatchPrediction(BaseModel):
 
 class MatchPredictionWithUserId(MatchPrediction):
     user_id: int
+
+class MatchPredictionWithTeams(MatchPrediction):
+    home: str
+    away: str
