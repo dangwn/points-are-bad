@@ -77,7 +77,7 @@ async def update_multiple_matches_by_id(
     return new_match_scores
 
 @router.delete('/{match_id}', status_code = status.HTTP_204_NO_CONTENT, response_class = Response)
-async def delete_user_by_id(
+async def delete_match_by_id(
     match_id: int,
     database: Session = Depends(get_db),
     is_admin: Match = Depends(is_current_user_admin)
