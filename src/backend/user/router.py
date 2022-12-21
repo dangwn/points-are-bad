@@ -10,7 +10,7 @@ from user import checker
 from authentication.hash_brown import get_password_hash
 
 from authentication.utils import get_current_user, is_current_user_admin
-from http_exceptions import EMAIL_EXISTS_EXCEPTION, NOT_ADMIN_EXCEPTION, USERNAME_EXISTS_EXCEPTION, NOT_AUTHORIZED_EXCEPTION
+from http_exceptions import EMAIL_EXISTS_EXCEPTION, NOT_ADMIN_EXCEPTION, USERNAME_EXISTS_EXCEPTION, NOT_AUTHORIZED_EXCEPTION, COULD_NOT_UPDATE_EXCEPTION
 
 
 router = APIRouter(
@@ -58,7 +58,7 @@ async def display_current_user(
 ) -> DisplayUser:
     return current_user
 
-@router.delete('/', status_code = status.HTTP_204_NO_CONTENT)
+@router.delete('/', status_code = status.HTTP_204_NO_CONTENT, response_class = Response)
 async def delete_current_user(
     database: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
@@ -105,3 +105,34 @@ async def delete_user_by_id(
         raise NOT_AUTHORIZED_EXCEPTION
 
     return await utils.delete_user_by_id(user_id, database)
+
+@router.put('/make_admin/{user_id}', status_code = status.HTTP_202_ACCEPTED, response_class = Response)
+async def make_user_admin(
+    user_id: int,
+    database: Session = Depends(get_db),
+    is_admin: bool = Depends(is_current_user_admin) 
+):
+    '''
+    Updates the DB to make the given user an admin user
+    '''
+    if not is_admin:
+        raise NOT_ADMIN_EXCEPTION
+
+    return await utils.alter_admin_status_by_id(user_id, True, database)
+
+@router.put('/revoke_admin/{user_id}', status_code = status.HTTP_202_ACCEPTED, response_class = Response)
+async def revoke_user_admin(
+    user_id: int,
+    database: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user) 
+):
+    '''
+    Updates the DB to make the given user an admin user
+    '''
+    if not current_user.is_admin:
+        raise NOT_ADMIN_EXCEPTION
+
+    if current_user.id == user_id:
+        raise COULD_NOT_UPDATE_EXCEPTION("current user's admin status")
+
+    return await utils.alter_admin_status_by_id(user_id, False, database)

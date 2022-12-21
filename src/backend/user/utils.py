@@ -96,3 +96,13 @@ async def delete_user_by_id(user_id: int, database: Session) -> None:
     database.query(UserModel).filter(UserModel.id == user_id).delete()
     database.commit()
 
+async def alter_admin_status_by_id(user_id: int, admin_status: bool, database: Session) -> None:
+    '''
+    Alter user's admin status
+    '''
+    user = database.query(UserModel).filter(UserModel.id == user_id).first()
+    if not user:
+        raise USER_NOT_FOUND_EXCEPION
+
+    user.is_admin = admin_status
+    database.commit() 
