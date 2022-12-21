@@ -3,10 +3,10 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from db import get_db
-from user import schema
+from user.schema import User, DisplayUser
 from user import utils
 from user.models import User as UserModel
-from user.checker import check_if_email_exists, check_if_username_exists
+from user import checker
 from authentication.hash_brown import get_password_hash
 
 from authentication.utils import get_current_user, is_current_user_admin
@@ -19,37 +19,57 @@ router = APIRouter(
 )
 
 @router.post('/', status_code = status.HTTP_201_CREATED)
-async def create_new_user(request: schema.User, database: Session = Depends(get_db)):
+async def create_new_user(request: User, database: Session = Depends(get_db)):
     '''
     Adds new user to database, checking to see if any users already have the same username or email address
     '''
-    user = await check_if_email_exists(
+    username_exists = await checker.username_exists(
         request.email,
         database
     )
-    if user:
+    if username_exists:
         raise USERNAME_EXISTS_EXCEPTION
     
-    user = await check_if_username_exists(
+    email_exists = await checker.email_exists(
         request.username,
         database
     )
-    if user:
+    if email_exists:
         raise EMAIL_EXISTS_EXCEPTION
+
+    first_user = await checker.is_first_user(
+        database
+    )
+    if first_user:
+        is_admin = True
+    else:
+        is_admin = False
 
     request.password = get_password_hash(request.password)
 
     new_user = await utils.create_user(
-        request, database
+        request, is_admin, database
     )
     return new_user
 
+@router.get('/', response_model = DisplayUser)
+async def display_current_user(
+    current_user: UserModel = Depends(get_current_user)
+) -> DisplayUser:
+    return current_user
 
-@router.get('/', response_model = List[schema.DisplayUser])
+@router.delete('/', status_code = status.HTTP_204_NO_CONTENT)
+async def delete_current_user(
+    database: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    return await utils.delete_user_by_id(current_user.id, database)
+
+@router.get('/all', response_model = List[DisplayUser])
 async def get_all_users(
     database: Session = Depends(get_db), 
     is_admin: bool = Depends(is_current_user_admin)
-) -> List[schema.DisplayUser]:
+) -> List[DisplayUser]:
     '''
     Returns all users in the database (ADMIN ONLY)
     '''
@@ -58,7 +78,7 @@ async def get_all_users(
     db_users =  await utils.get_all_users(database)
     return db_users 
 
-@router.get('/{user_id}', response_model = schema.DisplayUser)
+@router.get('/{user_id}', response_model = DisplayUser)
 async def get_user(
     user_id: int, 
     database: Session = Depends(get_db),

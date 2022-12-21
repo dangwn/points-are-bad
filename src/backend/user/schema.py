@@ -8,7 +8,7 @@ class User(BaseModel):
     username: constr(min_length = 2, max_length = config.USERNAME_MAX_LENGTH)
     email: EmailStr
     password: str
-    is_admin: bool
+
 
 class DisplayUser(BaseModel):
     '''

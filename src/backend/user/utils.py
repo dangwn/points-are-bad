@@ -1,5 +1,6 @@
 from typing import List
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 
 from user.models import User as UserModel
 from user.schema import User
@@ -7,7 +8,7 @@ from points.models import PlayerPoints as PlayerPointsModel
 from predictions.populate import populate_predictions
 from http_exceptions import USER_NOT_FOUND_EXCEPION, COULD_NOT_UPDATE_EXCEPTION
 
-async def create_user(request: User, database: Session) -> UserModel:
+async def create_user(request: User, is_admin: bool, database: Session) -> UserModel:
     '''
     Creates new user and player points in database
     '''
@@ -15,7 +16,7 @@ async def create_user(request: User, database: Session) -> UserModel:
         username = request.username, 
         email = request.email, 
         password = request.password, 
-        is_admin = request.is_admin
+        is_admin = is_admin
     )
     
     try:
@@ -51,7 +52,6 @@ async def create_user(request: User, database: Session) -> UserModel:
 
     return user
 
-
 async def get_all_users(database: Session) -> List[UserModel]:
     '''
     Gets all users in the user table
@@ -78,6 +78,21 @@ async def get_user_by_username(username: str, database: Session) -> UserModel:
     return user
 
 async def delete_user_by_id(user_id: int, database: Session) -> None:
+    '''
+    Deletes a user in the database given their ID
+    Note: Cannot delete user if they are the final admin user
+    '''
+    # Check to make sure that there is at least one admin user remaining
+    admin_user = database.query(UserModel).filter(
+        and_(
+            UserModel.id != user_id,
+            UserModel.is_admin == True
+        )
+    ).first()
+
+    if not admin_user:
+        raise COULD_NOT_UPDATE_EXCEPTION('users table as there needs to be at least one admin user')
+    
     database.query(UserModel).filter(UserModel.id == user_id).delete()
     database.commit()
 
