@@ -32,7 +32,11 @@ async def create_new_match(match: schema.Match, database: Session) -> MatchModel
         raise COULD_NOT_UPDATE_EXCEPTION('matches table')
 
     try:
-        _ = await populate_predictions(database, match_id = new_match.match_id)
+        _ = await populate_predictions(
+            database,
+            match_id = new_match.match_id,
+            match_date = new_match.match_date,
+        )
     except:
         # Delete match if predictions could not be created
         try:

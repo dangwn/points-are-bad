@@ -9,12 +9,13 @@ from http_exceptions import COULD_NOT_UPDATE_EXCEPTION
 async def populate_predictions(
     database: Session,
     user_id: Optional[int] = None,
-    match_id: Optional[int] = None
+    match_id: Optional[int] = None,
+    match_date: Optional[str] = None
 ) -> Optional[List[PredictionModel]]:
     '''
     Populates the predictions table for a given user or match
     '''
-    if user_id is None and match_id is None:
+    if user_id is None and (match_id is None or match_date is None):
         raise COULD_NOT_UPDATE_EXCEPTION('predictions table')
 
     model = UserModel if user_id is None else MatchModel
@@ -22,13 +23,12 @@ async def populate_predictions(
     items = database.query(model).all()
     if items == []:
         return
-    
     new_predictions = []
     for item in items:
         if user_id is not None:
-            new_pred = PredictionModel(user_id=user_id, match_id=item.match_id)
+            new_pred = PredictionModel(user_id=user_id, match_id=item.match_id, match_date=item.match_date)
         else:
-            new_pred = PredictionModel(user_id=item.id, match_id=match_id)
+            new_pred = PredictionModel(user_id=item.id, match_id=match_id, match_date=match_date)
         try:
             database.add(new_pred)
 

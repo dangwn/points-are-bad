@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 4936ecc4425f
+Revision ID: bbaf99c20112
 Revises: 
-Create Date: 2022-12-14 07:50:16.375190
+Create Date: 2022-12-22 09:23:10.009184
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '4936ecc4425f'
+revision = 'bbaf99c20112'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -40,7 +40,6 @@ def upgrade() -> None:
     op.create_table('points',
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('points', sa.Integer(), nullable=False),
-    sa.Column('prev_day_points', sa.Integer(), nullable=False),
     sa.Column('correct_scores', sa.Integer(), nullable=False),
     sa.Column('largest_error', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
@@ -52,6 +51,7 @@ def upgrade() -> None:
     sa.Column('match_id', sa.Integer(), nullable=True),
     sa.Column('predicted_home_goals', sa.Integer(), nullable=False),
     sa.Column('predicted_away_goals', sa.Integer(), nullable=False),
+    sa.Column('match_date', sa.String(length=10), nullable=True),
     sa.ForeignKeyConstraint(['match_id'], ['matches.match_id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('prediction_id')
