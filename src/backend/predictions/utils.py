@@ -54,7 +54,6 @@ async def update_predictions(
     if not prediction_match_dates:
         raise NOTHING_TO_UPDATE_EXCEPTION
 
-    
     if any(datetime.strptime(match_date, '%Y-%m-%d').date() <= today for match_date in prediction_match_dates):
         raise COULD_NOT_UPDATE_EXCEPTION('predictions table as some predictions are for games in the past')
 

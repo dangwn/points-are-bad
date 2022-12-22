@@ -1,6 +1,7 @@
-from fastapi import HTTPException
 from typing import List
+from sqlalchemy import func
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import case
 
 from http_exceptions import COULD_NOT_UPDATE_EXCEPTION, MATCH_NOT_FOUND_EXCEPTION
 from matches.models import Match as MatchModel
@@ -29,7 +30,7 @@ async def create_new_match(match: schema.Match, database: Session) -> MatchModel
         database.commit()
         database.refresh(new_match)
     except:
-        raise COULD_NOT_UPDATE_EXCEPTION('matches table')
+        raise COULD_NOT_UPDATE_EXCEPTION('matches table with new match')
 
     try:
         _ = await populate_predictions(
@@ -40,10 +41,13 @@ async def create_new_match(match: schema.Match, database: Session) -> MatchModel
     except:
         # Delete match if predictions could not be created
         try:
-            _ = await delete_match_by_id(new_match.match_id, database)
+            new_match_id = database.query(
+                func.max(MatchModel.match_id)
+            ).first()[0]
+            _ = await delete_match_by_id(new_match_id, database)
         except:
             raise COULD_NOT_UPDATE_EXCEPTION('matches table when deleting match')
-        raise COULD_NOT_UPDATE_EXCEPTION('predictions table')
+        raise COULD_NOT_UPDATE_EXCEPTION('predictions table when populating with new predictions')
     
     return new_match
 
@@ -83,22 +87,32 @@ async def update_multiple_matches_by_id(match_scores: List[schema.MatchScoreWith
     '''
     Updates multiple matches based on ids
     '''
-    new_match_scores = []
-    for match in match_scores: 
-        try:
-            new_match_score = await update_match_by_id(
-                match.match_id,
-                schema.MatchScore(
-                    home_goals = match.home_goals,
-                    away_goals = match.away_goals
-                ),
-                database
-            )
-            new_match_scores.append(new_match_score)
-        except HTTPException:
-            pass
+    home_goals_payload = {ms.match_id:ms.home_goals for ms in match_scores}
+    away_goals_payload = {ms.match_id:ms.away_goals for ms in match_scores}
 
-    return new_match_scores
+    matches_query = database.query(
+        MatchModel
+    ).filter(
+        MatchModel.match_id.in_(home_goals_payload)
+    )
+
+    try:
+        matches_query.update({
+            MatchModel.home_goals: case(
+                home_goals_payload,
+                value = MatchModel.match_id
+            ),
+            MatchModel.away_goals: case(
+                away_goals_payload,
+                value = MatchModel.match_id
+            )
+        })
+    except:
+        raise COULD_NOT_UPDATE_EXCEPTION('matches table with new matches')
+
+    database.commit()
+
+    return matches_query.all()
 
 async def delete_match_by_id(match_id: int, database: Session) -> None:
     database.query(MatchModel).filter(MatchModel.match_id == match_id).delete()
