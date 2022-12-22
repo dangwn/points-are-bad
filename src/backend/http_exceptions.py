@@ -26,6 +26,11 @@ NOT_AUTHORIZED_EXCEPTION = HTTPException(
     detail = 'User is not authorized'
 )
 
+NOTHING_TO_UPDATE_EXCEPTION = HTTPException(
+    status_code = status.HTTP_304_NOT_MODIFIED,
+    detail = 'Nothing to update'
+)
+
 PASSWORD_INCORRECT_EXCEPTION = HTTPException(
     status_code = status.HTTP_403_FORBIDDEN,
     detail = 'Password incorrect'

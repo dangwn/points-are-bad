@@ -1,11 +1,13 @@
 from typing import List
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import case
+from datetime import datetime, date
 
 from predictions.models import Prediction as PredictionModel
 from predictions.schema import MatchPredictionWithUserId
 from matches.models import Match as MatchModel
-from http_exceptions import NOT_FOUND_EXCEPTION, COULD_NOT_UPDATE_EXCEPTION
+from http_exceptions import NOT_FOUND_EXCEPTION, COULD_NOT_UPDATE_EXCEPTION, NOTHING_TO_UPDATE_EXCEPTION
 
 async def get_predictions_by_user_id(user_id: int, database: Session) -> List[PredictionModel]:
     '''
@@ -31,36 +33,54 @@ async def get_predictions_by_match_id(match_id: int, database: Session) -> List[
 
 async def update_predictions(
     predictions: List[MatchPredictionWithUserId],
+    user_id: int,
     database: Session
 ) -> List[PredictionModel]:
     '''
     Updates multiple predictions in the database
     '''
-    updated_predictions = []
-    try:    
-        for pred in predictions:
-            db_prediction = database.query(
-                PredictionModel
-            ).filter(
-                and_(
-                    PredictionModel.match_id == pred.match_id,
-                    PredictionModel.user_id == pred.user_id,
-                )
-            ).first()
-
-            if not db_prediction:
-                continue
-            
-            db_prediction.predicted_home_goals = pred.predicted_home_goals
-            db_prediction.predicted_away_goals = pred.predicted_away_goals
-
-            updated_predictions.append(db_prediction)
-    except:
-        raise COULD_NOT_UPDATE_EXCEPTION('predictions table with new predictions')
+    home_goals_payload = {pred.match_id:pred.predicted_home_goals for pred in predictions}
+    away_goals_payload = {pred.match_id:pred.predicted_away_goals for pred in predictions}
     
+    # If any predictions are for matches today or in the past, raise an error
+    today = date.today()
+    prediction_match_dates = database.query(
+        PredictionModel.match_date
+    ).filter(and_(
+        PredictionModel.user_id == user_id,
+        PredictionModel.match_id.in_(home_goals_payload)
+    )).all()
+    prediction_match_dates = {md[0] for md in prediction_match_dates}
+    if not prediction_match_dates:
+        raise NOTHING_TO_UPDATE_EXCEPTION
+
+    
+    if any(datetime.strptime(match_date, '%Y-%m-%d').date() <= today for match_date in prediction_match_dates):
+        raise COULD_NOT_UPDATE_EXCEPTION('predictions table as some predictions are for games in the past')
+
+    # Update scores
+    try:
+        database.query(
+            PredictionModel
+        ).filter(and_(
+            PredictionModel.user_id == user_id,
+            PredictionModel.match_id.in_(home_goals_payload)
+        )).update({
+            PredictionModel.predicted_home_goals: case(
+                home_goals_payload,
+                value = PredictionModel.match_id
+            ),
+            PredictionModel.predicted_away_goals: case(
+                away_goals_payload,
+                value = PredictionModel.match_id
+            ),
+        }, synchronize_session = False)
+    except:
+        raise COULD_NOT_UPDATE_EXCEPTION('predictions table')
+
     database.commit()
 
-    return updated_predictions
+    return await get_display_predictions(user_id, database)
 
 async def get_display_predictions(
     user_id: int,

@@ -12,6 +12,6 @@ class MatchPredictionWithUserId(MatchPrediction):
     user_id: int
 
 class DisplayMatchPrediction(MatchPrediction):
+    match_date: str
     home: str
     away: str
-    match_date: str

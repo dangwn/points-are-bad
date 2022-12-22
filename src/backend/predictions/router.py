@@ -6,7 +6,7 @@ from db import get_db
 from authentication.utils import get_current_user, is_current_user_admin
 from predictions import utils
 from user.models import User as UserModel
-from http_exceptions import NOT_AUTHORIZED_EXCEPTION, NOT_FOUND_EXCEPTION, NOT_ADMIN_EXCEPTION
+from http_exceptions import NOT_AUTHORIZED_EXCEPTION, NOT_FOUND_EXCEPTION, NOT_ADMIN_EXCEPTION, USER_NOT_FOUND_EXCEPION
 from predictions.schema import MatchPrediction, MatchPredictionWithUserId, DisplayMatchPrediction
 
 router = APIRouter(
@@ -30,25 +30,20 @@ async def get_current_user_predictions(
 
     return predictions
 
-@router.put('/', status_code = status.HTTP_202_ACCEPTED, response_model = List[MatchPredictionWithUserId])
+@router.put('/', status_code = status.HTTP_202_ACCEPTED, response_model = List[DisplayMatchPrediction])
 async def update_predictions(
-    predictions: List[MatchPredictionWithUserId],
-    database = Depends(get_db),
+    predictions: List[MatchPrediction],
+    database: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ) -> List[MatchPredictionWithUserId]:
     '''
-    Updates predictions(s) for a given user and match
+    Updates predictions(s) for the current user
     '''
-    # Normal users can only update their own predictions
-    # Admins can update all predictions
-    users_from_predictions = list({pred.user_id for pred in predictions})
-    if current_user is None:
-        raise NOT_AUTHORIZED_EXCEPTION
-    elif not current_user.is_admin:
-        if not (len(users_from_predictions) == 1 and current_user.id in users_from_predictions):
-            raise NOT_AUTHORIZED_EXCEPTION
+    if not current_user:
+        raise USER_NOT_FOUND_EXCEPION
 
-    updated_predictions = await utils.update_predictions(predictions, database)
+    updated_predictions = await utils.update_predictions(predictions, current_user.id, database)
+
     return updated_predictions
 
 @router.get('/user/{user_id}', response_model = List[MatchPrediction])
