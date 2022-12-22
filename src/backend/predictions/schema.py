@@ -11,6 +11,7 @@ class MatchPrediction(BaseModel):
 class MatchPredictionWithUserId(MatchPrediction):
     user_id: int
 
-class MatchPredictionWithTeams(MatchPrediction):
+class DisplayMatchPrediction(MatchPrediction):
     home: str
     away: str
+    match_date: str

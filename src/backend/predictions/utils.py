@@ -73,7 +73,8 @@ async def get_display_predictions(
     predictions = database.query(
         subq,
         MatchModel.home,
-        MatchModel.away
+        MatchModel.away,
+        MatchModel.match_date
     ).join(
         MatchModel,
         subq.c.match_id == MatchModel.match_id,

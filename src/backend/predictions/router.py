@@ -7,18 +7,18 @@ from authentication.utils import get_current_user, is_current_user_admin
 from predictions import utils
 from user.models import User as UserModel
 from http_exceptions import NOT_AUTHORIZED_EXCEPTION, NOT_FOUND_EXCEPTION, NOT_ADMIN_EXCEPTION
-from predictions.schema import MatchPrediction, MatchPredictionWithUserId, MatchPredictionWithTeams
+from predictions.schema import MatchPrediction, MatchPredictionWithUserId, DisplayMatchPrediction
 
 router = APIRouter(
     prefix = '/predictions',
     tags = ['predictions']
 )
 
-@router.get('/', response_model = List[MatchPredictionWithTeams])
+@router.get('/', response_model = List[DisplayMatchPrediction])
 async def get_current_user_predictions(
     database: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
-) -> List[MatchPredictionWithTeams]:
+) -> List[DisplayMatchPrediction]:
     '''
     Returns the predictions for a given user
     '''
