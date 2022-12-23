@@ -35,17 +35,17 @@ async def create_user(request: User, is_admin: bool, database: Session) -> UserM
     except:
         # Delete user if points could not be created
         try:
-            _ = await delete_user_by_id(user.id, database)
+            await delete_user_by_id(user.id, database)
         except:
             raise COULD_NOT_UPDATE_EXCEPTION('user table when deleting user')
         raise COULD_NOT_UPDATE_EXCEPTION('points table')
 
     try:
-        _ = await populate_predictions(database, user_id = user.id)
+        await populate_predictions(database, user_id = user.id)
     except:
         # Delete user if predictions could not be created
         try:
-            _ = await delete_user_by_id(user.id, database)
+            await delete_user_by_id(user.id, database)
         except:
             raise COULD_NOT_UPDATE_EXCEPTION('user table when deleting user')
         raise COULD_NOT_UPDATE_EXCEPTION('predictions table')
