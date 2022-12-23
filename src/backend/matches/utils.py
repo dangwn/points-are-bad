@@ -5,7 +5,7 @@ from sqlalchemy.sql import case
 
 from http_exceptions import COULD_NOT_UPDATE_EXCEPTION, MATCH_NOT_FOUND_EXCEPTION
 from matches.models import Match as MatchModel
-from matches import schema
+from matches.schema import Match, MatchScore, MatchScoreWithId
 from predictions.populate import populate_predictions
 
 async def get_all_matches(database: Session) -> List[MatchModel]:
@@ -15,9 +15,10 @@ async def get_all_matches(database: Session) -> List[MatchModel]:
     all_matches = database.query(MatchModel).all()
     return all_matches
 
-async def create_new_match(match: schema.Match, database: Session) -> MatchModel:
+async def create_new_match(match: Match, database: Session) -> MatchModel:
     '''
-    Creates new match and inserts it into database
+    Creates new match and inserts it into database, then populates the predictions table
+    If the predictions table can't be populated, the match is deleted
     '''
     new_match = MatchModel(
         match_date = match.match_date,
@@ -41,10 +42,7 @@ async def create_new_match(match: schema.Match, database: Session) -> MatchModel
     except:
         # Delete match if predictions could not be created
         try:
-            new_match_id = database.query(
-                func.max(MatchModel.match_id)
-            ).first()[0]
-            await delete_match_by_id(new_match_id, database)
+            await delete_match_by_id(new_match.match_id, database)
         except:
             raise COULD_NOT_UPDATE_EXCEPTION('matches table when deleting match')
         raise COULD_NOT_UPDATE_EXCEPTION('predictions table when populating with new predictions')
@@ -60,7 +58,7 @@ async def get_match_by_id(match_id: int, database: Session) -> MatchModel:
         raise MATCH_NOT_FOUND_EXCEPTION
     return match
 
-async def update_match_by_id(match_id: int, match_score: schema.MatchScore, database: Session) -> MatchModel:
+async def update_match_by_id(match_id: int, match_score: MatchScore, database: Session) -> MatchModel:
     '''
     Updates a specified match's score
     '''
@@ -83,7 +81,7 @@ async def get_multiple_matches_by_id(match_ids: List[int], database: Session) ->
         raise MATCH_NOT_FOUND_EXCEPTION
     return matches
 
-async def update_multiple_matches_by_id(match_scores: List[schema.MatchScoreWithId], database: Session) -> List[MatchModel]:
+async def update_multiple_matches_by_id(match_scores: List[MatchScoreWithId], database: Session) -> List[MatchModel]:
     '''
     Updates multiple matches based on ids
     '''
@@ -115,5 +113,8 @@ async def update_multiple_matches_by_id(match_scores: List[schema.MatchScoreWith
     return matches_query.all()
 
 async def delete_match_by_id(match_id: int, database: Session) -> None:
+    '''
+    Deletes a given match
+    '''
     database.query(MatchModel).filter(MatchModel.match_id == match_id).delete()
     database.commit()

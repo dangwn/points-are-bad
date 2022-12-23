@@ -76,16 +76,14 @@ def login(
 def create_user(
     username: str = 'dan',
     email: str = 'dan@email.com',
-    password: str = 'password',
-    is_admin: bool = False
+    password: str = 'password'
 ):
     return url_request(
         'user/',
         data = {
             'username': username,
             'email': email,
-            'password': password,
-            'is_admin': is_admin
+            'password': password
         }
     )
 
@@ -138,8 +136,8 @@ def get_leaderboard(
     pass
 
 def main():
-    # print(create_user(is_admin = True))
-    # print(create_user('string','string@example.com','string'))
+    print(create_user())
+    print(create_user('string','string@example.com','string'))
 
     _, token = login('dan', 'password')
     print(create_match(token = token))
