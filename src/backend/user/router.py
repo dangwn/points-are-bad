@@ -18,7 +18,7 @@ router = APIRouter(
     tags = ['user']
 )
 
-@router.post('/', status_code = status.HTTP_201_CREATED)
+@router.post('/', status_code = status.HTTP_201_CREATED, response_model = DisplayUser)
 async def create_new_user(request: User, database: Session = Depends(get_db)):
     '''
     Adds new user to database, checking to see if any users already have the same username or email address
