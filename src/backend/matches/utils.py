@@ -33,7 +33,7 @@ async def create_new_match(match: schema.Match, database: Session) -> MatchModel
         raise COULD_NOT_UPDATE_EXCEPTION('matches table with new match')
 
     try:
-        _ = await populate_predictions(
+        await populate_predictions(
             database,
             match_id = new_match.match_id,
             match_date = new_match.match_date,
@@ -44,7 +44,7 @@ async def create_new_match(match: schema.Match, database: Session) -> MatchModel
             new_match_id = database.query(
                 func.max(MatchModel.match_id)
             ).first()[0]
-            _ = await delete_match_by_id(new_match_id, database)
+            await delete_match_by_id(new_match_id, database)
         except:
             raise COULD_NOT_UPDATE_EXCEPTION('matches table when deleting match')
         raise COULD_NOT_UPDATE_EXCEPTION('predictions table when populating with new predictions')
