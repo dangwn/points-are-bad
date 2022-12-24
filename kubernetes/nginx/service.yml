@@ -4,7 +4,7 @@ metadata:
   name: nginx-service
   namespace: points-are-bad
   labels:
-    app: ecommerce
+    app: points-are-bad
 spec:
   type: NodePort
   selector:
