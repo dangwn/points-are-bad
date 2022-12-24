@@ -136,8 +136,11 @@ def get_leaderboard(
     pass
 
 def main():
-    print(create_user())
-    print(create_user('string','string@example.com','string'))
+    try:
+        print(create_user())
+        print(create_user('string','string@example.com','string'))
+    except Exception as e:
+        print(e)
 
     _, token = login('dan', 'password')
     print(create_match(token = token))
