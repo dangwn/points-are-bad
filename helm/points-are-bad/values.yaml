@@ -1,0 +1,25 @@
+global:
+  appName: points-are-bad
+
+postgres:
+  imageTag: latest
+  nodeAffinity:
+    hostname: docker-desktop  # name of the node
+
+backend:
+  imageName: dangawne/points-are-bad-backend
+  imageTag: latest
+  api:
+    replicas: 2
+
+nginx:
+  imageTag: latest
+
+secrets:
+  authSecretKey: YjIyN2M0Yzg4Y2I1OWNjZTA1N2VlYjk3NzI4Y2U4MzVkZGQ0MWU2YTg2YWY4YTllMWY4YTFlYmUyYTAwNjE5Ng==
+  dbName: ZGI=
+  dbUser: dGVzdA==
+  dbPassword: cGFzc3dvcmQ=
+  dbType: cG9zdGdyZXNxbCtwc3ljb3BnMg==
+  dbHost: cG9zdGdyZXMtc2VydmljZQ==
+  pgData: L3Zhci9saWIvcG9zdGdyZXNxbC9kYXRhL3BnX2RhdGEv

@@ -2,22 +2,23 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: migrations-job
-  namespace: points-are-bad
+  namespace: {{ .Release.Namespace }}
   labels:
-    app: points-are-bad
+    app: {{ .Values.global.appName }}
+    version: {{ .Chart.AppVersion }}
 spec:
   ttlSecondsAfterFinished: 100
   template:
     spec:
       initContainers:
         - name: check-db-ready
-          image: postgres:latest
+          image: "postgres:{{ .Values.postgres.imageTag }}"
           command: ['sh', '-c', 
             'until pg_isready -h postgres-service.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local -p 5432; 
             do echo waiting for database; sleep 2; done;']
       containers:
       - name: migrations-job
-        image: dangawne/points-are-bad-api:latest
+        image: "{{ .Values.backend.imageName }}:{{ .Values.backend.imageTag }}"
         command: ["python",  "run_migrations.py"]
         envFrom:
           - secretRef:
