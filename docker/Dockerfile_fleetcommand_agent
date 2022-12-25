@@ -31,13 +31,14 @@ FROM ubuntu:20.04 AS run-image
 ARG DEBIAN_FRONTEND=noninterative
 
 RUN apt-get -y update
-RUN apt-get install --no-install-recommends -y python3.7 python3-venv curl vim
+RUN apt-get install --no-install-recommends -y python3.7 python3-venv curl
  
 # Install helm
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 RUN chmod 700 get_helm.sh
 RUN ./get_helm.sh
 RUN yes | rm get_helm.sh
+RUN apt-get purge curl
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
