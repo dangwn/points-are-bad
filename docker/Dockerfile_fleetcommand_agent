@@ -31,7 +31,7 @@ FROM ubuntu:20.04 AS run-image
 ARG DEBIAN_FRONTEND=noninterative
 
 RUN apt-get -y update
-RUN apt-get install --no-install-recommends -y python3.7 python3-venv curl
+RUN apt-get install --no-install-recommends -y python3.7 python3-venv curl vim
  
 # Install helm
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
@@ -41,14 +41,16 @@ RUN yes | rm get_helm.sh
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Create API user
+# Create build user
 RUN useradd --create-home builduser
 COPY --from=build-image /home/builduser/venv /home/builduser/venv
 
-RUN mkdir /home/builduser/api
-WORKDIR /home/builduser/api
+RUN mkdir /home/builduser/fleetcommand
+WORKDIR /home/builduser/fleetcommand
 COPY --chown=builduser:builduser deploy/fleetcommand .
 
 # Change User
 USER builduser
 ENV PATH="/home/builduser/venv/bin:$PATH"
+
+ENTRYPOINT [ "python", "-m", "agent" ]

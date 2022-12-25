@@ -38,11 +38,11 @@ spec:
   containers:
   - name: fleetcommand-agent
     image: dangawne/points-are-bad-fleetcommand-agent
-    args: ["run", "-f", "/app/install/pab.yml", "-v"]
+    args: ["run", "-f", "/builduser/fleetcommand/pab.yml"]
     imagePullPolicy: Always
     volumeMounts:
     - name: install-config
-      mountPath: /app/install/
+      mountPath: /builduser/fleetcommand/
   volumes:
   - name: install-config
     configMap:

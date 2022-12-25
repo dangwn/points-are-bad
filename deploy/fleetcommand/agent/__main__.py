@@ -1,9 +1,15 @@
-from .utils import create_values_yaml
+from .launcher import Launcher
+import argparse
+import sys
 
-yml = create_values_yaml(
-    pab_yaml_path = 'pab_master.yml',
-    values_base_yaml_path = 'values_base.yml',
-    values_yaml_path = 'helm_charts/points-are-bad/values.yaml',
-    write_yaml = True
+args = sys.argv[1:]
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-f', '--file-name')
+
+launcher = Launcher(
+    command = args[0],
+    args = parser.parse_args(args[1:])
 )
-print(yml)
+
+launcher.launch()

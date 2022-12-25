@@ -5,12 +5,15 @@ services:
 
 before_install:
   - docker build -t dangawne/points-are-bad-backend -f docker/Dockerfile_backend .
+  - docker build -t dangawne/points-are-bad-fleetcommand-agent -f docker/Dockerfile_fleetcommand_agent .
 
 before_deploy:
   - docker login --username "$DOCKERUSER" --password "$DOCKERPWD"
  
 deploy:
   provider: script
-  script: docker push dangawne/points-are-bad-backend
+  script: >-
+    docker push dangawne/points-are-bad-backend && 
+    docker push dangawne/points-are-bad-fleetcommand-agent
   on:
     branch: main
