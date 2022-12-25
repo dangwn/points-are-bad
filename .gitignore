@@ -2,4 +2,5 @@
 scratch.py
 .vscode
 *ipynb*
-#kubernetes/docker-secret.yml
+deploy/fleetcommand/pab_master.yml
+deploy/fleetcommand/helm_charts/points-are-bad/values.yaml

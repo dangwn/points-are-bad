@@ -14,6 +14,7 @@ backend:
 
 nginx:
   imageTag: latest
+  nodePort: 30009
 
 secrets:
   authSecretKey: YjIyN2M0Yzg4Y2I1OWNjZTA1N2VlYjk3NzI4Y2U4MzVkZGQ0MWU2YTg2YWY4YTllMWY4YTFlYmUyYTAwNjE5Ng==

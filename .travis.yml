@@ -4,7 +4,7 @@ services:
   - docker
 
 before_install:
-  - docker build -t dangawne/points-are-bad-backend .
+  - docker build -t dangawne/points-are-bad-backend -f docker/Dockerfile_backend .
 
 before_deploy:
   - docker login --username "$DOCKERUSER" --password "$DOCKERPWD"
