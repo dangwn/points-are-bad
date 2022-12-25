@@ -38,7 +38,7 @@ RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/s
 RUN chmod 700 get_helm.sh
 RUN ./get_helm.sh
 RUN yes | rm get_helm.sh
-RUN apt-get purge curl
+RUN apt-get remove -y curl
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
