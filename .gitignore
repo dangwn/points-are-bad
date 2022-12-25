@@ -2,5 +2,5 @@
 scratch.py
 .vscode
 *ipynb*
-deploy/fleetcommand/pab_master.yml
+deploy/pab_master.yml
 deploy/fleetcommand/helm_charts/points-are-bad/values.yaml
