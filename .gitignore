@@ -4,3 +4,4 @@ scratch.py
 *ipynb*
 deploy/pab_master.yml
 deploy/fleetcommand/helm_charts/points-are-bad/values.yaml
+docker_deploy_stack.yml

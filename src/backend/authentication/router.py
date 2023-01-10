@@ -3,26 +3,52 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from authentication.schema import Token
-from authentication.utils import verify_user, create_access_token
-import db
+from authentication.utils import verify_user
+from db import get_db
 from http_exceptions import USERNAME_OR_PASSWORD_EXCEPTION
+
+from fastapi_jwt_auth import AuthJWT
 
 router = APIRouter(
     prefix = '/login',
     tags = ['login']
 )
 
-@router.post('/', status_code = status.HTTP_202_ACCEPTED, response_model = Token)
+@router.post('/', status_code=status.HTTP_202_ACCEPTED, response_model = Token)
 async def login_user(
     request: OAuth2PasswordRequestForm = Depends(),
-    database: Session = Depends(db.get_db)
+    Authorize: AuthJWT = Depends(),
+    database: Session = Depends(get_db)
 ) -> Token:
-    '''
-    Given a username and password, return an authentication token with a fixed lifespan
-    '''
-    user = await verify_user(database, request.username, request.password)
-    
-    if not user:
+    user = await verify_user(request.username, request.password, database)
+
+    if not user: 
         raise USERNAME_OR_PASSWORD_EXCEPTION
-    access_token = create_access_token(user_id = user.id)
-    return Token(access_token = access_token, token_type = 'Bearer')
+
+    access_token = Authorize.create_access_token(subject=user.id)
+    refresh_token = Authorize.create_refresh_token(subject=user.id)
+
+    Authorize.set_refresh_cookies(refresh_token)
+
+    return Token(access_token=access_token, token_type='Bearer')
+
+@router.post('/refresh', status_code=status.HTTP_202_ACCEPTED, response_model = Token)
+async def refresh_access_token(
+    Authorize: AuthJWT = Depends()
+):
+    Authorize.jwt_refresh_token_required()
+
+    current_user = Authorize.get_jwt_subject()
+    print('Current user:', current_user)
+    new_access_token = Authorize.create_access_token(subject=current_user)
+
+    return Token(access_token=new_access_token, token_type='Bearer')
+
+@router.delete('/', status_code=status.HTTP_202_ACCEPTED)
+async def logout_user(
+    Authorize: AuthJWT = Depends()
+):
+    Authorize.jwt_required()
+
+    Authorize.unset_jwt_cookies()
+    return {'msg':'Logout successful'}
