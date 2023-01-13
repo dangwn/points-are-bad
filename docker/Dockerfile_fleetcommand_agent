@@ -31,7 +31,7 @@ FROM ubuntu:20.04 AS run-image
 ARG DEBIAN_FRONTEND=noninterative
 
 RUN apt-get -y update
-RUN apt-get install --no-install-recommends -y python3.7 python3-venv curl
+RUN apt-get install --no-install-recommends -y python3.7 python3-venv curl libcurl4
  
 # Install helm
 RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
