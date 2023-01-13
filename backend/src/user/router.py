@@ -12,14 +12,20 @@ from authentication.hash_brown import get_password_hash
 from authentication.utils import get_current_user, is_current_user_admin
 from http_exceptions import EMAIL_EXISTS_EXCEPTION, NOT_ADMIN_EXCEPTION, USERNAME_EXISTS_EXCEPTION, NOT_AUTHORIZED_EXCEPTION, COULD_NOT_UPDATE_EXCEPTION
 
+from fastapi_jwt_auth import AuthJWT
+from authentication.schema import Token
 
 router = APIRouter(
     prefix = '/user',
     tags = ['user']
 )
 
-@router.post('/', status_code = status.HTTP_201_CREATED, response_model = DisplayUser)
-async def create_new_user(request: User, database: Session = Depends(get_db)):
+@router.post('/', status_code = status.HTTP_201_CREATED, response_model = Token)
+async def create_new_user(
+    request: User, 
+    Authorize: AuthJWT = Depends(),
+    database: Session = Depends(get_db)
+):
     '''
     Adds new user to database, checking to see if any users already have the same username or email address
     '''
@@ -50,7 +56,13 @@ async def create_new_user(request: User, database: Session = Depends(get_db)):
     new_user = await utils.create_user(
         request, is_admin, database
     )
-    return new_user
+
+    access_token = Authorize.create_access_token(subject=new_user.id)
+    refresh_token = Authorize.create_refresh_token(subject=new_user.id)
+
+    Authorize.set_refresh_cookies(refresh_token)
+
+    return Token(access_token=access_token, token_type='Bearer')
 
 @router.get('/', response_model = DisplayUser)
 async def display_current_user(
