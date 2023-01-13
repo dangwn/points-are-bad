@@ -20,7 +20,7 @@ ENV PATH="/home/apiuser/venv/bin:$PATH"
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install requirements
-COPY src/backend/requirements.txt requirements.txt
+COPY backend/requirements.txt requirements.txt
 RUN pip3 install --no-cache-dir wheel
 RUN pip3 install --no-cache-dir --upgrade pip
 RUN pip3 install --no-cache-dir -r requirements.txt
@@ -41,7 +41,7 @@ COPY --from=build-image /home/apiuser/venv /home/apiuser/venv
 
 RUN mkdir /home/apiuser/api
 WORKDIR /home/apiuser/api
-COPY --chown=apiuser:apiuser src/backend .
+COPY --chown=apiuser:apiuser backend/src .
 
 
 # Change User
