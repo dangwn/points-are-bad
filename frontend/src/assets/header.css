@@ -1,0 +1,29 @@
+.global-header {
+    font-family: 'Courier New', Courier, monospace;
+    margin: auto;
+    border: 30px;
+    padding: 30px;
+    background-color: grey;
+    text-align: justify;
+    justify-content: space-evenly;
+    display: flex;
+}
+
+.global-header:after {
+    display: inline-block;
+    width: 100%;
+    height: 0;
+}
+
+.header-button {
+    border-radius: 20%;
+    padding: 20px;
+    color: white;
+    background-color: #49678D;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.header-button:hover {
+    background-color: #38506B
+}
