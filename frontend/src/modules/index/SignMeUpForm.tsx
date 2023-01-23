@@ -37,7 +37,7 @@ const SignMeUpForm: React.FC<signMeUpFormProps> = ({ session }) => {
       <div>{`Display name: ${session.user.name}`}</div>
       <Image src={session.user.image} alt="New user's avatar" width={300} height={300}/>
       <button onClick={handleNewUserRequest}>Sign me up!</button>
-      <button onClick={() => signOut()}>I don't want to have fun</button>
+      <button onClick={() => signOut()}>I don&apos;t want to have fun</button>
     </>
   );
 };

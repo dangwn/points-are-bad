@@ -5,7 +5,7 @@ import ProviderForm from "@/modules/login/ProviderForm";
 
 interface loginProps {};
 
-const loginPage: React.FC<loginProps> = ({}) => {
+const LoginPage: React.FC<loginProps> = ({}) => {
   const { data: session, status} = useSession();
   const { push } = useRouter();
 
@@ -17,7 +17,7 @@ const loginPage: React.FC<loginProps> = ({}) => {
     };
 
     return (): void => {};
-  }, [status, push]);
+  }, [session, push]);
 
   if (status === 'unauthenticated') {
     return (
@@ -30,4 +30,4 @@ const loginPage: React.FC<loginProps> = ({}) => {
   return <p>loading...</p>
 };
 
-export default loginPage;
+export default LoginPage;
