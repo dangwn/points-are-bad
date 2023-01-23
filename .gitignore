@@ -31,3 +31,12 @@ frontend/dist-ssr
 *.sln
 *.sw?
 
+# typescript
+*.tsbuildinfo
+*next-env.d.ts
+
+# local env files
+.env*.local
+
+workbench
+notes.txt

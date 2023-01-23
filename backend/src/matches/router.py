@@ -1,19 +1,30 @@
 from typing import List
-from fastapi import APIRouter, Depends, status, Body, Response, Query
+from fastapi import (
+    APIRouter, 
+    Depends, 
+    status, 
+    Body, 
+    Response,
+    Query
+)
 from sqlalchemy.orm import Session
 
 from db import get_db
 from authentication.utils import is_current_user_admin
-from http_exceptions import NOT_ADMIN_EXCEPTION, MATCH_NOT_FOUND_EXCEPTION, COULD_NOT_UPDATE_EXCEPTION, NOT_AUTHORIZED_EXCEPTION
-from matches.schema import Match, DisplayMatch, MatchScore, MatchScoreWithId
+from http_exceptions import (
+    NOT_ADMIN_EXCEPTION,
+    MATCH_NOT_FOUND_EXCEPTION,
+    NOT_AUTHORIZED_EXCEPTION
+)
+from matches.schema import Match, DisplayMatch, MatchScoreWithId
 from matches import utils
 
 router = APIRouter(
-    prefix = '/matches',
-    tags = ['matches']
+    prefix='/matches',
+    tags=['matches']
 )
 
-@router.get('/', response_model = List[DisplayMatch])
+@router.get('/', response_model=List[DisplayMatch])
 async def get_all_matches(database: Session = Depends(get_db)) -> List[DisplayMatch]:
     '''
     Returns a list of all matches
@@ -21,7 +32,7 @@ async def get_all_matches(database: Session = Depends(get_db)) -> List[DisplayMa
     matches = await utils.get_all_matches(database)
     return matches
 
-@router.post('/', status_code = status.HTTP_201_CREATED, response_model = DisplayMatch)
+@router.post('/', status_code=status.HTTP_201_CREATED, response_model=DisplayMatch)
 async def create_new_match(
     match: Match,
     database: Session = Depends(get_db),
@@ -35,7 +46,7 @@ async def create_new_match(
     new_match = await utils.create_new_match(match, database)
     return new_match
 
-@router.get('/{match_id}', response_model = DisplayMatch)
+@router.get('/{match_id}', response_model=DisplayMatch)
 async def get_match_by_id(match_id: int, database: Session = Depends(get_db)) -> DisplayMatch:
     '''
     Gets a match by its ID
@@ -45,7 +56,7 @@ async def get_match_by_id(match_id: int, database: Session = Depends(get_db)) ->
         raise MATCH_NOT_FOUND_EXCEPTION
     return match
 
-@router.get('/get_matches_by_id/', response_model = List[DisplayMatch])
+@router.get('/get_matches_by_id/', response_model=List[DisplayMatch])
 async def get_multiple_matches_by_id(
     match_ids: List[int] = Query(...),
     database: Session = Depends(get_db)

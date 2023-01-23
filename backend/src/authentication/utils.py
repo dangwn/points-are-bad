@@ -1,67 +1,72 @@
-from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
-from sqlalchemy.orm import Session
-
 from fastapi import Depends
-
-from datetime import datetime, timedelta
-
-from fastapi_jwt_auth import AuthJWT
-
-from user.models import User as UserModel
-from authentication.hash_brown import verify_password
-from config import AUTH_SECRET_KEY, AUTH_ALGORITHM, AUTH_ACCESS_TOKEN_EXPIRE_MINUTES
 from db import get_db
-from http_exceptions import CREDENTIALS_EXCEPTION, USER_NOT_FOUND_EXCEPION, PASSWORD_INCORRECT_EXCEPTION
+from sqlalchemy.orm import Session
+from sqlalchemy import and_
 
+from authentication.session_manager import *
+from authentication.validate import validate_token
+from authentication.auth_handler import pab_auth_handler
+from authentication.schema import SessionUser, HeaderCredentials
+from user.models import User as UserModel
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl = 'login')
+from typing import Optional, Dict
 
-
-async def verify_user(username: str, password: str, database: Session) -> UserModel:
-    '''
-    Verifies a user against a given password, then returns the user
-    '''
-    user = database.query(UserModel).filter(UserModel.username == username).first()
-    if not user:
-        raise USER_NOT_FOUND_EXCEPION
-    if not verify_password(password, user.password):
-        raise PASSWORD_INCORRECT_EXCEPTION
+async def get_user_from_token_and_provider(
+    email: str,
+    provider: str,
+    database: Session
+) -> Optional[UserModel]:
+    user: UserModel = database.query(UserModel).filter(
+        and_(
+            UserModel.email == email,
+            UserModel.provider == provider
+        )
+    ).first()
     return user
 
 async def get_current_user(
-    Authorize: AuthJWT = Depends(),
+    auth_data: HeaderCredentials = Depends(pab_auth_handler),
     database: Session = Depends(get_db)
-) -> UserModel:
+) -> Optional[SessionUser]:
     '''
-    Gets the current user from a given jwt token
+    Returns the current user based on provider and access token
+    -----
+    Returns none if user doesn't exist or token is invalid
     '''
-    Authorize.jwt_required()
+    access_token: str = auth_data.access_token
+    provider: str = auth_data.provider
 
-    user_id = Authorize.get_jwt_subject()
-    
-    user = database.query(UserModel).get(user_id)
-    if user is None:
-        raise USER_NOT_FOUND_EXCEPION
-    return user
-    
+    # Get user session if it exists and return
+    session_user: Optional[SessionUser] = await get_user_session(access_token, provider)
+    if session_user:
+        return session_user
+
+    # See if validation token is valid, if not return none
+    token_email: Optional[str] = await validate_token(access_token, provider)
+    if not token_email:
+        return
+        
+    # Check is user exists, if they do, start a new session in redis
+    user: Optional[UserModel] = await get_user_from_token_and_provider(
+        token_email, 
+        provider, 
+        database
+    )
+    if not user:
+        return
+    session_user: Optional[SessionUser] = await create_user_session(
+        access_token,
+        provider,
+        user
+    )
+    return session_user
+
 async def is_current_user_admin(
-    current_user: UserModel = Depends(get_current_user)
+    current_user: SessionUser = Depends(get_current_user)
 ) -> bool:
     '''
-    Whether the current user is an admin or not
+    Returns whether the current user is an admin
     '''
-    return current_user.is_admin
-
-async def is_user_authorized(
-    user_id: int,
-    current_user: UserModel
-):
-    '''
-    Users can access their own resources, admins can access all resources
-    '''
-    is_admin = await is_current_user_admin(current_user)
-    
-    if is_admin or user_id == current_user.id:
-        return True
+    if current_user:
+        return current_user.is_admin
     return False

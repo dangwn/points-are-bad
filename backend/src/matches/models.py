@@ -17,8 +17,6 @@ class Match(Base):
     home_goals = Column(Integer, nullable = False)
     away_goals = Column(Integer, nullable = False)
 
-    # prediction = relationship('Prediction', back_populates = 'match')
-
     def __init__(
         self,
         match_date: str,

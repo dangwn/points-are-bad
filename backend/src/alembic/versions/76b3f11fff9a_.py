@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 7ddbd2ef1def
-Revises: 6ee95e3535c3
-Create Date: 2023-01-13 08:07:15.377272
+Revision ID: 76b3f11fff9a
+Revises: 
+Create Date: 2023-01-21 18:16:07.216149
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '7ddbd2ef1def'
-down_revision = '6ee95e3535c3'
+revision = '76b3f11fff9a'
+down_revision = None
 branch_labels = None
 depends_on = None
 
@@ -29,13 +29,13 @@ def upgrade() -> None:
     )
     op.create_table('users',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('username', sa.String(length=30), nullable=False),
+    sa.Column('display_name', sa.String(length=30), nullable=False),
     sa.Column('email', sa.String(length=255), nullable=False),
-    sa.Column('password', sa.String(length=255), nullable=False),
+    sa.Column('avatar', sa.String(length=510), nullable=False),
+    sa.Column('provider', sa.String(length=255), nullable=False),
     sa.Column('is_admin', sa.Boolean(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('email'),
-    sa.UniqueConstraint('username')
+    sa.UniqueConstraint('display_name')
     )
     op.create_table('points',
     sa.Column('user_id', sa.Integer(), nullable=False),

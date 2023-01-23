@@ -14,7 +14,7 @@ class PlayerPoints(Base):
     correct_scores = Column(Integer, nullable = False)
     largest_error = Column(Integer, nullable = False)
 
-    user = relationship('User', back_populates = 'score')
+    # user = relationship('User', back_populates = 'score')
 
     def __init__(
         self,

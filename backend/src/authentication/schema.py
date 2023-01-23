@@ -1,15 +1,13 @@
 from pydantic import BaseModel
 
-class LoginRequest(BaseModel):
-    '''
-    Schema for the login request
-    '''
-    username: str
-    password: str
-    
-class Token(BaseModel):
-    '''
-    Schema for the authentication token return after login
-    '''
+class SessionUser(BaseModel):
+    id: int
+    display_name: str
+    email: str
+    avatar: str
+    provider: str
+    is_admin: bool
+
+class HeaderCredentials(BaseModel):
     access_token: str
-    token_type: str
+    provider: str
