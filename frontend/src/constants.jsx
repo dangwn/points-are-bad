@@ -1,1 +1,0 @@
-export const APIHOST = 'http://localhost:8000/'

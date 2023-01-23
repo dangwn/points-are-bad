@@ -5,3 +5,7 @@
     text-align: center;
     min-height: 100vh;
 }
+
+.auth-button {
+    padding-bottom: 5px;
+}
