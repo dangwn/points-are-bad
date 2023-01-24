@@ -10,4 +10,4 @@ Source code for [Points are Bad](https://pointsarebad.com) (_Currently under con
 | [NextJS](https://nextjs.org/)                | [SQLAlchemy](https://sqlalchemy.org/)    | [Kubernetes](https://kubernetes.io/) |
 | [Next Auth](https://next-auth.js.org/)       | [Redis](https://redis.io/)               | [Helm](https://helm.sh/)             |
 
-<img height=300 src="https://raw.githubusercontent.com/dangwn/points-are-bad/staging/.assets/pab_architecture.svg" />
+<img height=300 src="https://github.com/dangwn/points-are-bad/blob/staging/.assets/pab_architecture.svg" />
