@@ -36,6 +36,16 @@ def run_alembic(alembic_args: List[str], init_dir: str = '', log_msg: Optional[s
 def main():    
     init_dir = get_init_dir()
 
+    try:
+        os.mkdir(os.path.join(
+            os.getcwd(),
+            init_dir(),
+            'alembic',
+            'versions'
+        ))
+    except:
+        pass
+
     run_alembic(['stamp','head'], init_dir, 'Stamping head')
     run_alembic(['revision','--autogenerate'], init_dir, 'Creating new db revision')
     run_alembic(['upgrade','head'], init_dir, 'Upgrading db')

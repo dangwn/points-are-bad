@@ -40,3 +40,5 @@ frontend/dist-ssr
 
 workbench
 notes.txt
+
+**/alembic/versions
