@@ -6,7 +6,7 @@ from db import get_db
 from authentication.utils import get_current_user, is_current_user_admin
 from points import utils
 from user.models import User as UserModel
-from points.schema import DayScore, DayScoreWithUserId, PlayerPosition, PlayerPositionWithUsername
+from points.schema import DayScore, DayScoreWithUserId, PlayerPosition, PlayerPositionWithDisplayName
 from http_exceptions import USER_NOT_FOUND_EXCEPION, COULD_NOT_UPDATE_EXCEPTION, NOT_ADMIN_EXCEPTION, INVALID_QUERY_PARAMETERS_EXCEPTION
 
 router = APIRouter(
@@ -108,7 +108,7 @@ async def get_current_user_position(
     )
     return player_score
 
-@router.get('/leaderboard', response_model = List[PlayerPositionWithUsername])
+@router.get('/leaderboard', response_model = List[PlayerPositionWithDisplayName])
 async def get_leaderboard(
     table_start: int,
     table_end: int,

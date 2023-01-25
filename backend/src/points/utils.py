@@ -5,11 +5,11 @@ from sqlalchemy import func, and_
 from fastapi import HTTPException
 from points.models import PlayerPoints as PlayerPointsModel
 from user.models import User as UserModel
-from points.schema import DayScore, DayScoreWithUserId, PlayerPosition, PlayerPositionWithUsername
+from points.schema import DayScore, DayScoreWithUserId, PlayerPosition, PlayerPositionWithDisplayName
 from http_exceptions import USER_NOT_FOUND_EXCEPION, COULD_NOT_UPDATE_EXCEPTION
 
 PlayerPosition_keys = PlayerPosition.__fields__.keys()
-PlayerPositionWithUsername_keys = PlayerPositionWithUsername.__fields__.keys()
+PlayerPositionWithDisplayName_keys = PlayerPositionWithDisplayName.__fields__.keys()
 
 async def get_all_player_scores(database: Session) -> List[PlayerPointsModel]:
     '''
@@ -132,14 +132,14 @@ async def get_leaderboard(
         subq.c.correct_scores,
         subq.c.largest_error,
         subq.c.position,
-        UserModel.username
+        UserModel.display_name
     ).filter(and_(
         subq.c.position >= table_start,
         subq.c.position < table_end,
     )).join(UserModel, subq.c.user_id == UserModel.id, isouter = True).all()
 
     player_positions = [
-        PlayerPositionWithUsername(**dict(zip(PlayerPositionWithUsername_keys, ppr))) for ppr in player_position_result
+        PlayerPositionWithDisplayName(**dict(zip(PlayerPositionWithDisplayName_keys, ppr))) for ppr in player_position_result
     ]
 
     return player_positions

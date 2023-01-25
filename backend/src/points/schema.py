@@ -14,5 +14,5 @@ class DayScoreWithUserId(DayScore):
 class PlayerPosition(DayScore):
     position: int
 
-class PlayerPositionWithUsername(PlayerPosition):
-    username: str
+class PlayerPositionWithDisplayName(PlayerPosition):
+    display_name: str
