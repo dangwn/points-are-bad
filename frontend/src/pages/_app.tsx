@@ -4,8 +4,6 @@ import { SessionProvider } from "next-auth/react";
 
 import type { Session } from "next-auth";
 
-import "../styles/loginPage.css";
-
 const App: React.FC<AppProps> = ({ 
   Component, pageProps: { session, ...pageProps }
 }: AppProps<{ session: Session}>) => {

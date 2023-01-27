@@ -1,7 +1,9 @@
 import { signOut } from "next-auth/react";
-import { Inter } from '@next/font/google';
-
 import type { Session } from "next-auth";
+
+import LeaderBoard from "../leaderboard/Leaderboard";
+
+import { Inter } from '@next/font/google';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -16,6 +18,7 @@ const UserHomePage: React.FC<userHomePageProps> = ({ session }) => {
       <button onClick={() => signOut({
         callbackUrl: '/'
       })}>Sign Out</button>
+      <LeaderBoard leagueId={null}/>
     </>
   )
 };

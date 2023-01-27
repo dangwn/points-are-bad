@@ -1,11 +1,10 @@
 import React from 'react'
-import { useSession, signOut, signIn } from "next-auth/react";
-import { useRouter } from 'next/router';
+import { useSession } from "next-auth/react";
 
 import SignMeUpForm from '@/modules/index/SignMeUpForm';
 import LandingPage from '@/modules/index/LandingPage';
 import UserHomePage from '@/modules/index/UserHomePage';
-
+import Header from '@/modules/header/Header';
 
 interface homeProps {};
 
@@ -16,7 +15,12 @@ const Home: React.FC<homeProps> = ({}) => {
     return <SignMeUpForm session={session}/>
   };
   if (session) {
-    return <UserHomePage session={session}/>
+    return (
+      <> 
+        <Header session={session} />
+        <UserHomePage session={session}/>
+      </>
+    )
   }
   if (status === 'loading'){
     return <h1>Loading...</h1>

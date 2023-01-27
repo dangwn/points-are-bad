@@ -19,7 +19,7 @@ const LandingPage: React.FC = () => {
       }}>Sign in</button>
 
     </>
-  )
+  );
 }
 
 export default LandingPage;

@@ -75,7 +75,7 @@ export const authOptions: NextAuthOptions = {
       session.user.accessToken = token.providerAccessToken;
       session.user.provider = token.provider;
       session.user.newUser = token.newUser;
-      
+
       return session;
     },
   },

@@ -3,6 +3,8 @@ import { signIn } from "next-auth/react";
 
 import { CLIENT_HOST } from "@/lib/constants";
 
+import loginStyles from "../../styles/loginPage.module.css";
+
 interface ProviderFormProps {};
 
 const ProviderForm: React.FC<ProviderFormProps> = () => {
@@ -10,11 +12,11 @@ const ProviderForm: React.FC<ProviderFormProps> = () => {
   
   return (
     <>
-      <div className='login-signup-form'>
+      <div className={loginStyles.loginSignupForm}>
         <div>
           <h3>Welcome to Points are Bad</h3>
           <hr />
-          <div className='auth-button'>
+          <div className={loginStyles.authButton}>
             <button onClick={() => signIn(
               'github',
               {
@@ -22,7 +24,7 @@ const ProviderForm: React.FC<ProviderFormProps> = () => {
               }
             )}>Continue with GitHub</button>
           </div>
-          <div className='auth-button'>
+          <div className={loginStyles.authButton}>
             <button onClick={() => signIn(
               'google',
               {

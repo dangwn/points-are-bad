@@ -1,4 +1,4 @@
-.login-signup-form {
+.loginSignupForm {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -6,6 +6,6 @@
     min-height: 100vh;
 }
 
-.auth-button {
+.authButton {
     padding-bottom: 5px;
 }
