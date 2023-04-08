@@ -1,29 +1,19 @@
-from sqlalchemy import Column, Integer, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, Integer, ForeignKey
+from sqlalchemy.orm import relationship, RelationshipProperty
+
 from db import Base
 from user.models import User
 
-class PlayerPoints(Base):
+class Points(Base):
     '''
-    SQL Alchemy model for player points
+    Points table in database
     '''
-    __tablename__ = 'points'
-    
-    user_id = Column(Integer, ForeignKey(User.id, ondelete = 'CASCADE'), primary_key = True)
-    points = Column(Integer, nullable = False)
-    correct_scores = Column(Integer, nullable = False)
-    largest_error = Column(Integer, nullable = False)
+    __tablename__: str = 'points'
 
-    # user = relationship('User', back_populates = 'score')
+    user_id: Column = Column(Integer, ForeignKey(User.user_id, ondelete='CASCADE', onupdate='CASCADE'), primary_key=True)
+    points: Column = Column(Integer, nullable=False, index=True, default=0)
+    correct_scores: Column = Column(Integer, nullable=False, index=True, default=0)
+    largest_error: Column = Column(Integer, nullable=False, index=True, default=0)
+    position: Column = Column(Integer, nullable=True, index=True, default=None)
 
-    def __init__(
-        self,
-        user_id: int,
-        points: int = 0,
-        correct_scores: int = 0,
-        largest_error: int = 0
-    ):
-        self.user_id = user_id
-        self.points = points
-        self.correct_scores = correct_scores
-        self.largest_error = largest_error
+    user: RelationshipProperty = relationship('User', back_populates='user_points')

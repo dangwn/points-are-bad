@@ -1,129 +1,85 @@
+from fastapi import HTTPException, status
 from sqlalchemy import and_
-from sqlalchemy.orm import Session
-from typing import List, Optional
 
+from points.utils import insert_points_into_db
+from points.models import Points as PointsModel
 from user.models import User as UserModel
-from predictions.populate import populate_predictions
-from points.models import PlayerPoints as PlayerPointsModel
-from http_exceptions import COULD_NOT_UPDATE_EXCEPTION, USER_NOT_FOUND_EXCEPION
 
-async def create_user(
-    display_name: str,
+from sqlalchemy.orm import Session
+from typing import Optional
+
+async def insert_user_into_db(
+    username: str,
     email: str,
-    provider: str,
-    avatar: str,
-    database: Session
+    hashed_password: str,
+    db: Session
 ) -> UserModel:
-    # The first user added to the db is an admin
+    '''
+    Runs database query to insert a new user into the database
+    When the first user is added, they become an admin
+        - All other users by default will not be admins
+    Users will be verified separately
+    '''
     is_admin: bool = False
-    if not database.query(UserModel).first():
+    if not db.query(UserModel).first():
         is_admin = True
-
+        
     try:
-        new_user: UserModel = UserModel(
-            display_name=display_name,
+        new_user: Optional[UserModel] = UserModel(
+            username=username,
             email=email,
-            avatar=avatar,
-            provider=provider,
+            hashed_password=hashed_password,
             is_admin=is_admin
         )
-        database.add(new_user)
-        database.commit()
-        database.refresh(new_user)
-    except:
-        raise COULD_NOT_UPDATE_EXCEPTION('users table when creating new user')
-
-    # Add fresh score as well as user
-    try:
-        player_score = PlayerPointsModel(new_user.id)
-        database.add(player_score)
-        database.commit()
-        database.refresh(player_score)
-    except:
-        # Delete user if points could not be created
-        try:
-            await delete_user_by_id(new_user.id, database)
-        except:
-            raise COULD_NOT_UPDATE_EXCEPTION('user table when deleting user')
-        raise COULD_NOT_UPDATE_EXCEPTION('points table')
-
-    try:
-        await populate_predictions(database, user_id = new_user.id)
-    except:
-        # Delete user if predictions could not be created
-        try:
-            await delete_user_by_id(new_user.id, database)
-        except:
-            raise COULD_NOT_UPDATE_EXCEPTION('user table when deleting user')
-        raise COULD_NOT_UPDATE_EXCEPTION('predictions table')
-
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Could not insert new user into database'
+        )
+    
+    new_points: Optional[PointsModel] = await insert_points_into_db(
+        user_id=new_user.user_id,
+        db=db
+    )
+    if not new_points:
+        db.delete(new_user)
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Could not insert new user into database as could not create new points entry'
+        )
+    
     return new_user
 
-async def get_user_by_id(
-    user_id: int,
-    database: Session
-) -> Optional[UserModel]:
-    return database.query(UserModel).filter(
-        UserModel.id == user_id
-    ).first()
-
-async def get_user_by_email_and_provider(
-    email: str,
-    provider: str,
-    database: Session
-) -> Optional[UserModel]:
-    return database.query(UserModel).filter(
-        and_(
-            UserModel.email == email,
-            UserModel.provider == provider
-        )
-    ).first()
-
-async def get_all_users(
-    database: Session
-) -> List[UserModel]:
-    users: List[UserModel] = database.query(UserModel).all()
-    return users
-
 async def delete_user_by_id(
-    user_id: int, 
-    database: Session
+    user_id: int,
+    db: Session
 ) -> None:
     '''
-    Deletes a user in the database given their ID
-    Note: Cannot delete user if they are the final admin user
+    Deletes a given user by ID
     '''
-    # Check to make sure that there is at least one admin user remaining
-    admin_user: UserModel = database.query(UserModel).filter(
+    admin_user: UserModel = db.query(UserModel).filter(
         and_(
-            UserModel.id != user_id,
+            UserModel.user_id != user_id,
             UserModel.is_admin == True
         )
     ).first()
-
     if not admin_user:
-        raise COULD_NOT_UPDATE_EXCEPTION('users table as there needs to be at least one admin user')
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='User table needs at least one admin user.'
+        )
     
     try:
-        database.query(UserModel).filter(UserModel.id == user_id).delete()
-        database.commit()
-    except:
-        raise COULD_NOT_UPDATE_EXCEPTION(f'user table when deleting user with id: {user_id}')
-
-async def alter_admin_status_by_id(
-    user_id: int,
-    admin_status: bool,
-    database: Session
-) -> None:
-    '''
-    Alter user's admin status
-    '''
-    user: UserModel = database.query(UserModel).filter(UserModel.id == user_id).first()
-    if not user:
-        raise USER_NOT_FOUND_EXCEPION
-
-    try:
-        user.is_admin = admin_status
-        database.commit()
-    except:
-        raise COULD_NOT_UPDATE_EXCEPTION(f"user {user.id}'s admin status") 
+        db.query(UserModel).filter(UserModel.user_id == user_id).delete()
+        db.commit()
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Could not delete user'
+        )

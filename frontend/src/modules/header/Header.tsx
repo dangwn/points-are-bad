@@ -1,53 +1,87 @@
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
+import { useMutation, useQueryClient } from 'react-query';
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
 
-import HeaderUserStat from "./HeaderUserStat";
-import { getUserPoints } from "@/lib/requests/user";
+import { API_HOST } from '../../lib/constants';
+import styles from '../../styles/header/Header.module.css';
 
-import type { Session } from "next-auth";
-
-import headerStyles from "../../styles/header.module.css";
-import { Inter } from '@next/font/google';
-
-const inter = Inter({ subsets: ['latin'] });
-
-interface headerProps {
-  session: Session
+interface HeaderProps {
+  username: string,
+  isAdmin: boolean
 }
 
-const Header: React.FC<headerProps> = ({ session }) => {
-  const [ points, setPoints ] = useState<number>(0);
-  const [ correctScores, setCorrectScores ] = useState<number>(0);
-  const [ largestError, setLargestError ] = useState<number>(0);
-  const [ globalPosition, setGlobalPosition ] = useState<number>(0);
-  
-  useEffect(() => {
-    const setUserPointsData = async (): Promise<void> => {
-      const userPointsData = await getUserPoints(
-        session.user.accessToken, 
-        session.user.provider
-      );
+const Header: React.FC<HeaderProps> = ({username, isAdmin}) => {
+  const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  const queryClient = useQueryClient();
+  const router = useRouter();
 
-      setPoints(userPointsData.points);
-      setCorrectScores(userPointsData.correct_scores);
-      setLargestError(userPointsData.largest_error);
-      setGlobalPosition(userPointsData.position);
-    };
-    setUserPointsData();
-  }, []);
+  const handleLeaderboard = useMutation(async () => {
+    router.push('/leaderboard')
+  })
+
+  const handleLogout = useMutation(async () => {
+    await fetch(`${API_HOST}/auth/login/`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+
+    queryClient.removeQueries();
+
+    router.push('/login');
+  });
+
+  const handleDeleteUser = useMutation(async () => {
+    const accessToken = localStorage.getItem('access_token');
+    await fetch(`${API_HOST}/user/`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      },
+      credentials: 'include',
+    });
+
+    queryClient.removeQueries();
+
+    router.push('/login');
+  })
+
+  const handleDropdownClick = () => {
+    setShowDropdown(!showDropdown);
+  };
 
   return (
-    <>
-      <div className={`${headerStyles.header} ${inter.className}`}>
-        <HeaderUserStat statKey={"Points"} value={points}/>
-        <HeaderUserStat statKey={"Correct Scores"} value={correctScores}/>
-        <HeaderUserStat statKey={"Largest Error"} value={largestError}/>
-        <HeaderUserStat statKey={"Global Position"} value={globalPosition}/>
-        <h2 className={headerStyles.headerUserName}>{session.user.name}</h2>
-        <Image className={headerStyles.headerAvatar} src={session.user.image} alt="User avatar" width={200} height={200}/>
+    <header className={styles.header}>
+      <div className={styles.title}>
+        <Link href="/">
+          Points Are Bad
+        </Link>
       </div>
-    </>
-  )
+      <div className={styles.user}>
+        <button className={styles.username} onClick={handleDropdownClick}>
+          Menu
+        </button>
+        {showDropdown && (
+          <div className={styles.dropdown}>
+            <button className={styles.dropdownButton}>Settings</button>
+            { isAdmin ? 
+              <button className={styles.dropdownButton}>Admin</button> :
+              null
+            }
+            <button className={styles.dropdownButton} onClick={() => handleLeaderboard.mutate()}>
+              Leaderboard
+            </button>
+            <button className={styles.dropdownButton} onClick={() => handleLogout.mutate()}>
+              Logout
+            </button>
+            <button className={styles.dropdownButton} onClick={() => handleDeleteUser.mutate()}>
+              Delete User
+            </button>
+          </div>
+        )}
+      </div>
+    </header>
+  );
 };
 
 export default Header;

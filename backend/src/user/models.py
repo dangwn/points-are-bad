@@ -1,23 +1,34 @@
 from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy.orm import relationship, RelationshipProperty
+
 from db import Base
-import config
+from config import USERNAME_MAX_LENGTH
 
 class User(Base):
     '''
-    User model in database
+    User table in database
     '''
-    __tablename__ = 'users'
+    __tablename__: str = 'users'
 
-    id = Column(Integer, primary_key = True, autoincrement = True)
-    display_name = Column(String(config.USERNAME_MAX_LENGTH), unique = True, nullable = False)
-    email = Column(String(255), nullable = False)
-    avatar = Column(String(510), nullable = False)
-    provider = Column(String(255), nullable = False)
-    is_admin = Column(Boolean(), nullable = False, default = False)
+    user_id: Column = Column(Integer, primary_key=True, autoincrement=True)
+    username: Column = Column(String(USERNAME_MAX_LENGTH), nullable=False)
+    email: Column = Column(String(255), unique=True, nullable=False)
+    hashed_password: Column = Column(String(255), nullable=False)
+    is_admin: Column = Column(Boolean(), nullable = False, default=False)
+    is_validated: Column = Column(Boolean(), nullable=False, default=False)
 
-    def __init__(self, display_name: str, email: str, avatar: str, provider: str, is_admin: str = False) -> None:
-        self.display_name = display_name
-        self.email = email
-        self.avatar = avatar
-        self.provider = provider
-        self.is_admin = is_admin
+    user_points: RelationshipProperty = relationship('Points', back_populates='user', uselist=False)
+
+    def __init__(
+        self,
+        username: str,
+        email: str,
+        hashed_password: str,
+        is_admin: bool = False,
+        is_validated: bool = False
+    ) -> None:
+        self.username: str = username
+        self.email: str = email
+        self.hashed_password: str = hashed_password
+        self.is_admin: bool = is_admin
+        self.is_validated: bool = is_validated

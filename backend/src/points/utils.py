@@ -1,145 +1,65 @@
-from typing import List, Tuple
-from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
+from fastapi import HTTPException, status
+from sqlalchemy import func
 
-from fastapi import HTTPException
-from points.models import PlayerPoints as PlayerPointsModel
-from user.models import User as UserModel
-from points.schema import DayScore, DayScoreWithUserId, PlayerPosition, PlayerPositionWithDisplayName
-from http_exceptions import USER_NOT_FOUND_EXCEPION, COULD_NOT_UPDATE_EXCEPTION
+from points.models import Points as PointsModel
 
-PlayerPosition_keys = PlayerPosition.__fields__.keys()
-PlayerPositionWithDisplayName_keys = PlayerPositionWithDisplayName.__fields__.keys()
+from sqlalchemy.orm import Session, Query
+from sqlalchemy.sql.expression import Select
+from typing import Optional, List
 
-async def get_all_player_scores(database: Session) -> List[PlayerPointsModel]:
-    '''
-    Runs db query to get all users' scores
-    '''
-    player_scores = database.query(PlayerPointsModel).all()
-    return player_scores
-
-async def get_player_score_by_id(user_id: int, database: Session) -> PlayerPointsModel:
-    '''
-    Runs db query to get particular user's score
-    '''
-    player_score = database.query(PlayerPointsModel).filter(PlayerPointsModel.user_id == user_id).first()
-    if player_score is None:
-        raise USER_NOT_FOUND_EXCEPION
-    return player_score
-
-async def get_user_position(user_id: int, database: Session) -> PlayerPointsModel:
-    '''
-    Gets the rank of the given user in the points table
-    Ordered by points, descending correct score, largest error
-    '''
-    subq = database.query(
-        PlayerPointsModel, 
-        func.rank().over(
-            order_by = [
-                PlayerPointsModel.points,
-                PlayerPointsModel.correct_scores.desc(),
-                PlayerPointsModel.largest_error
-            ]
-        ).label('position')
-    ).subquery()
-
-    # Result comes back as a tuple
-    query_result = database.query(
-        subq.c.points,
-        subq.c.correct_scores,
-        subq.c.largest_error,
-        subq.c.position
-    ).filter(subq.c.user_id == user_id).first()
-
-    player_position = PlayerPosition(**dict(zip(PlayerPosition_keys, query_result)))
-
-    return player_position
-
-async def update_player_score_by_id(
+async def insert_points_into_db(
     user_id: int,
-    score: DayScore,
-    database: Session
-) -> PlayerPointsModel:
+    db: Session
+) -> PointsModel:
     '''
-    Updates the given user's points, correct scores and largest error
+    Runs SQL query to insert a new player points into the db
     '''
-    player_score = database.query(PlayerPointsModel).filter(PlayerPointsModel.user_id == user_id).first()
-    if player_score is None:
-        raise USER_NOT_FOUND_EXCEPION
+    try:
+        new_points: PointsModel = PointsModel(
+            user_id=user_id
+        )
+        db.add(new_points)
+        db.commit()
+        db.refresh(new_points)
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Could not insert player points into database'
+        )
     
-    # Update player score
-    player_score.points += score.points
-    player_score.correct_scores += score.correct_scores
-    if score.largest_error > player_score.largest_error:
-        player_score.largest_error = score.largest_error
+    return new_points
 
-    # Commit changes to DB
-    database.commit()
-    
-    return player_score
-
-async def update_multiple_scores(
-    scores: List[DayScoreWithUserId],
-    database: Session
-) -> List[PlayerPointsModel]:
+async def get_points_by_user_id(
+    user_id: int,
+    db: Session
+) -> Optional[PointsModel]:
     '''
-    Updates multiple scores in the database
+    Returns a user's points
     '''
-    new_scores = []
-    for score in scores:
-        try:
-            player_score = database.query(PlayerPointsModel).filter(PlayerPointsModel.user_id == score.user_id).first()
-            if player_score is None:
-                raise USER_NOT_FOUND_EXCEPION
-            
-            # Update player score
-            player_score.points += score.points
-            player_score.correct_scores += score.correct_scores
-            if score.largest_error > player_score.largest_error:
-                player_score.largest_error = score.largest_error
+    user_points: Optional[PointsModel] = db.query(PointsModel).filter(
+        PointsModel.user_id == user_id
+    ).first()
 
-            new_scores.append(player_score)
-        except HTTPException:
-            continue
-        except:
-            raise COULD_NOT_UPDATE_EXCEPTION(f'points table due to non-http error')
-        
-    if new_scores != []:
-        database.commit()
-    return new_scores
+    if not user_points:
+        return
+    return user_points
 
 async def get_leaderboard(
-    table_start: int,
-    table_end: int,
-    database: Session
-):
-    '''
-    Returns the leaderboard from table start (inc) to table end (exc)
-    '''
-    subq = database.query(
-        PlayerPointsModel, 
-        func.rank().over(
-            order_by = [
-                PlayerPointsModel.points,
-                PlayerPointsModel.correct_scores.desc(),
-                PlayerPointsModel.largest_error
-            ]
-        ).label('position')
-    ).subquery()
+    limit: int,
+    offset: int, 
+    db: Session
+) -> List[PointsModel]:
+    leaderboard: Optional[List[PointsModel]] = db.query(
+        PointsModel
+    ).order_by(
+        PointsModel.position
+    ).offset(
+        offset=offset
+    ).limit(
+        limit=limit
+    ).all()
 
-    player_position_result = database.query(
-        subq.c.points,
-        subq.c.correct_scores,
-        subq.c.largest_error,
-        subq.c.position,
-        UserModel.display_name
-    ).filter(and_(
-        subq.c.position >= table_start,
-        subq.c.position < table_end,
-    )).join(UserModel, subq.c.user_id == UserModel.id, isouter = True).all()
-
-    player_positions = [
-        PlayerPositionWithDisplayName(**dict(zip(PlayerPositionWithDisplayName_keys, ppr))) for ppr in player_position_result
-    ]
-
-    return player_positions
+    if not leaderboard:
+        return
+    return leaderboard
