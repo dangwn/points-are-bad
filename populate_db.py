@@ -42,6 +42,7 @@ def create_match(
     )
     return r.status_code
 
+requests.get(HOST)
 add_user('dan@dan.com','dan','password')
 add_user('chris@chris.com','chris','password')
 add_user('b@b.com','bbb','password')
