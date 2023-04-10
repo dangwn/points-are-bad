@@ -147,7 +147,7 @@ async def refresh_access_token(
 async def create_email_verification_code(
     email: str,
     db: Session = Depends(get_db)
-) -> str:
+) -> Token:
     email_is_valid: bool = await validate_email(email=email)
     if not email_is_valid:
         raise HTTPException(
@@ -162,8 +162,8 @@ async def create_email_verification_code(
     if email_in_db:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Email address already in db'
+            detail='Email address not available'
         )
     
     verification_token: str = await create_verification_token(email=email)
-    return verification_token
+    return Token(access_token=verification_token, token_type='verification')
