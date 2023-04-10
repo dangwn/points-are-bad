@@ -15,6 +15,11 @@ from typing import (
 )
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
+
+from auth.redis_client import (
+    redis_get,
+    redis_set
+)
 from user.models import User as UserModel
 from config import ACCESS_TOKEN_SECRET
 
@@ -132,13 +137,20 @@ async def create_verification_token(
     '''
     Create the validation string
     '''
+    token_sauce: str = create_token_sauce()
     validation_dict: Dict[str,str] = {
-        email: create_token_sauce()
+        email: token_sauce
     }
-    # @TODO: send token to redis
 
     json_str: str = json.dumps(validation_dict)
     encoded_str: str = base64.b64encode(json_str.encode('utf-8')).decode('utf-8')
+
+    redis_set(
+        key=email,
+        value=token_sauce,
+        expire_minutes=30
+    )
+
     return encoded_str
 
 async def validate_verification_token(
@@ -153,6 +165,11 @@ async def validate_verification_token(
     except:
         return
     
-    # @TODO: verify with redis
+    user_email: str = tuple(token_dict.keys())[0]
+    token_sauce: str = token_dict[user_email]
+    redis_token_sauce: str = redis_get(user_email)
 
-    return tuple(token_dict.keys())[0]
+    if token_sauce != redis_token_sauce:
+        return
+
+    return user_email
