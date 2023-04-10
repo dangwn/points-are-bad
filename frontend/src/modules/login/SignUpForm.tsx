@@ -50,16 +50,17 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }: SignUpFormProps) =
         }
       );
       if (!response.ok) {
+        console.log(response.status)
         if (response.status === 400) {
-          const { detail } = await response.json()
+          const { detail } = await response.json();
           setSignUpError(detail);
-        }
+        };
         throw new Error('Could not sign up');
       };
 
       // @TODO: Make this display "check email" message
       const data: VerificationToken = await response.json();
-      router.push(`/signup?token=${data.access_token}`)
+      router.push(`/signup?token=${data.access_token}`);
     }
   )
 
@@ -93,6 +94,11 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }: SignUpFormProps) =
           if (response.status === 403){
             const { detail } = await response.json()
             setSignUpError(detail);
+          }
+          if (response.status === 401) {
+            const { detail } = await response.json();
+            router.push('/signup');
+            setSignUpError(`${detail}. Please refresh.`);
           }
           throw new Error('Could not sign up');
         };

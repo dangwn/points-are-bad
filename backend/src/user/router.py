@@ -76,28 +76,14 @@ async def create_new_user(
     Post request endpoint for creating a new, non-verified user
         in the db
     '''
-    # valid_email_and_username: bool = await validate_user_entries(
-    #     username=new_user.username,
-    #     email=new_user.email
-    # )
-    # if not valid_email_and_username:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN,
-    #         detail='Please enter a valid email and username'
-    #     )
-
-    # user_in_db: bool = await is_user_email_in_db(
-    #     email=new_user.email,
-    #     db=db
-    # )
-    # if user_in_db:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN,
-    #         detail='Email already exists'
-    #     )
     email: Optional[str] = await validate_verification_token(
         token=new_user.token
     )
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Invalid verification token'
+        )
 
     hashed_password: str = hash_password(new_user.password)
 

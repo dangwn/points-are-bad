@@ -144,11 +144,14 @@ async def create_verification_token(
 async def validate_verification_token(
     token: str
 ) -> Optional[str]:
-    token_dict: Dict[str,str] = json.loads(
-        base64.b64decode(
-            token.encode('utf-8')
+    try:
+        token_dict: Dict[str,str] = json.loads(
+            base64.b64decode(
+                token.encode('utf-8')
+            )
         )
-    )
+    except:
+        return
     
     # @TODO: verify with redis
 
