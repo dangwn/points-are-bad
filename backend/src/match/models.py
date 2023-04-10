@@ -17,7 +17,7 @@ class Match(Base):
     home_goals: Column = Column(Integer, nullable=True, default=None)
     away_goals: Column = Column(Integer, nullable=True, default=None)
 
-    # predictions: RelationshipProperty = relationship('Prediction', back_populates='match', uselist=True)
+    predictions: RelationshipProperty = relationship('Prediction', back_populates='match', uselist=True)
 
     def __init__(
         self,

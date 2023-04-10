@@ -17,4 +17,4 @@ class Prediction(Base):
     match_id: Column = Column(Integer, ForeignKey(Match.match_id, ondelete='CASCADE', onupdate='CASCADE'))
 
     user: RelationshipProperty = relationship('User', back_populates='predictions')
-    # match: RelationshipProperty = relationship('Match', back_populates='predictions', uselist=False)
+    match: RelationshipProperty = relationship('Match', back_populates='predictions', uselist=False)
