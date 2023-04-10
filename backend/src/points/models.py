@@ -2,7 +2,6 @@ from sqlalchemy import Column, Integer, Integer, ForeignKey
 from sqlalchemy.orm import relationship, RelationshipProperty
 
 from db import Base
-from user.models import User
 
 class Points(Base):
     '''
@@ -10,7 +9,7 @@ class Points(Base):
     '''
     __tablename__: str = 'points'
 
-    user_id: Column = Column(Integer, ForeignKey(User.user_id, ondelete='CASCADE', onupdate='CASCADE'), primary_key=True)
+    user_id: Column = Column(Integer, ForeignKey('users.user_id', ondelete='CASCADE', onupdate='CASCADE'), primary_key=True)
     points: Column = Column(Integer, nullable=False, index=True, default=0)
     correct_scores: Column = Column(Integer, nullable=False, index=True, default=0)
     largest_error: Column = Column(Integer, nullable=False, index=True, default=0)

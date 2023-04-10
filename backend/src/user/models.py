@@ -4,6 +4,10 @@ from sqlalchemy.orm import relationship, RelationshipProperty
 from db import Base
 from config import USERNAME_MAX_LENGTH
 
+# This is here to stop sqlalchemy bugging out
+# See https://stackoverflow.com/questions/9088957/sqlalchemy-cannot-find-a-class-name
+from prediction.models import Prediction
+
 class User(Base):
     '''
     User table in database
@@ -18,6 +22,7 @@ class User(Base):
     is_validated: Column = Column(Boolean(), nullable=False, default=False)
 
     user_points: RelationshipProperty = relationship('Points', back_populates='user', uselist=False)
+    predictions: RelationshipProperty = relationship('Prediction', back_populates='user', uselist=True)
 
     def __init__(
         self,

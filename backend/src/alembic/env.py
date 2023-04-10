@@ -29,7 +29,7 @@ from config import (
 from user.models import User
 from points.models import Points
 from match.models import Match
-# from predictions.models import Prediction
+from prediction.models import Prediction
 
 target_metadata = Base.metadata
 
