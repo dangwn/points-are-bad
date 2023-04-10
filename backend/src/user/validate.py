@@ -7,14 +7,6 @@ from config import (
     USERNAME_MAX_LENGTH
 )
 
-def validate_email(email: str) -> bool:
-    '''
-    Validates email format
-    '''  
-    if re.match(r"[^@]+@[^@]+\.[^@]+", email):  
-        return True  
-    return False   
-
 async def validate_user_entries(
     username: str,
     email: str
@@ -23,8 +15,6 @@ async def validate_user_entries(
     Validates user email and username
     @TODO: Add username filtering
     '''
-    if not validate_email(email):
-        return False    
     if len(username) < USERNAME_MIN_LENGTH or len(username) > USERNAME_MAX_LENGTH:
         return False
     return True

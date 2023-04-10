@@ -13,8 +13,8 @@ class User(BaseModel):
         orm_mode: bool = True
 
 class NewUser(BaseModel):
+    token: str
     username: str
-    email: str
     password: str
 
 class Username(BaseModel):

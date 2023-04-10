@@ -2,12 +2,16 @@ from jose import jwt
 from passlib.context import CryptContext
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
+import re
+import json
+import base64
 
 from db import get_db
 
 from typing import (
     Union,
-    Optional
+    Optional,
+    Dict
 )
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
@@ -93,3 +97,59 @@ def verify_password(
         plain_password,
         hashed_password
     )
+
+async def validate_email(email: str) -> bool:
+    '''
+    Validates email format
+    '''  
+    if re.match(r"[^@]+@[^@]+\.[^@]+", email):  
+        return True  
+    return False   
+
+async def is_user_email_in_db(
+    email: str,
+    db: Session
+) -> bool:
+    '''
+    Checks whether there is a user in the database that has the
+        provided email
+    '''
+    if db.query(UserModel).filter(
+        UserModel.email == email
+    ).first():
+        return True
+    return False
+
+def create_token_sauce() -> str:
+    '''
+    Creates the random number key for the email
+    '''
+    return '123456'
+
+async def create_verification_token(
+    email: str
+) -> str:
+    '''
+    Create the validation string
+    '''
+    validation_dict: Dict[str,str] = {
+        email: create_token_sauce()
+    }
+    # @TODO: send token to redis
+
+    json_str: str = json.dumps(validation_dict)
+    encoded_str: str = base64.b64encode(json_str.encode('utf-8')).decode('utf-8')
+    return encoded_str
+
+async def validate_verification_token(
+    token: str
+) -> Optional[str]:
+    token_dict: Dict[str,str] = json.loads(
+        base64.b64decode(
+            token.encode('utf-8')
+        )
+    )
+    
+    # @TODO: verify with redis
+
+    return tuple(token_dict.keys())[0]

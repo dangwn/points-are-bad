@@ -13,7 +13,8 @@ from db import get_db
 from auth.utils import (
     hash_password,
     generate_jwt_token,
-    get_current_user
+    get_current_user,
+    validate_verification_token
 )
 from auth.schema import Token
 from auth.csrf import CsrfSettings
@@ -31,9 +32,13 @@ from user.utils import (
     insert_user_into_db,
     delete_user_by_id
 )
-from user.validate import (
-    validate_user_entries,
-    is_user_email_in_db
+# from user.validate import (
+#     validate_user_entries,
+#     is_user_email_in_db
+# )
+
+from typing import (
+    Optional
 )
 
 router: APIRouter = APIRouter(
@@ -71,31 +76,34 @@ async def create_new_user(
     Post request endpoint for creating a new, non-verified user
         in the db
     '''
-    valid_email_and_username: bool = await validate_user_entries(
-        username=new_user.username,
-        email=new_user.email
-    )
-    if not valid_email_and_username:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail='Please enter a valid email and username'
-        )
+    # valid_email_and_username: bool = await validate_user_entries(
+    #     username=new_user.username,
+    #     email=new_user.email
+    # )
+    # if not valid_email_and_username:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN,
+    #         detail='Please enter a valid email and username'
+    #     )
 
-    user_in_db: bool = await is_user_email_in_db(
-        email=new_user.email,
-        db=db
+    # user_in_db: bool = await is_user_email_in_db(
+    #     email=new_user.email,
+    #     db=db
+    # )
+    # if user_in_db:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN,
+    #         detail='Email already exists'
+    #     )
+    email: Optional[str] = await validate_verification_token(
+        token=new_user.token
     )
-    if user_in_db:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail='Email already exists'
-        )
 
     hashed_password: str = hash_password(new_user.password)
 
     new_user: UserModel = await insert_user_into_db(
         username=new_user.username,
-        email=new_user.email,
+        email=email,
         hashed_password=hashed_password,
         db=db
     )
@@ -152,3 +160,53 @@ async def delete_current_user(
     response.delete_cookie(CSRF_TOKEN_COOKIE_KEY)
     response.status_code = status.HTTP_204_NO_CONTENT
     return response
+
+
+@router.post('/testCreateUser')
+async def test_create_user(
+    username: str,
+    email: str,
+    password: str,
+    response: Response,
+    db: Session = Depends(get_db),
+    csrf_protect: CsrfProtect = Depends()
+) -> Token:
+    hashed_password: str = hash_password(password)
+
+    new_user: UserModel = await insert_user_into_db(
+        username=username,
+        email=email,
+        hashed_password=hashed_password,
+        db=db
+    )
+    if not new_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Could not create new user'
+        )
+    
+    # Generate tokens
+    access_token: str = generate_jwt_token(
+        subject=str(new_user.user_id),
+        expire_time=timedelta(minutes=ACCESS_TOKEN_LIFETIME_MINUTES),
+        secret_key=ACCESS_TOKEN_SECRET
+    )
+    refresh_token: str = generate_jwt_token(
+        subject=str(new_user.user_id),
+        expire_time=timedelta(days=REFRESH_TOKEN_LIFETIME_DAYS),
+        secret_key=REFRESH_TOKEN_SECRET
+    )
+    csrf_token: str = csrf_protect.generate_csrf()
+
+    # Set cookies
+    response.set_cookie(
+        key=REFRESH_TOKEN_COOKIE_KEY,
+        value=refresh_token,
+        secure=True
+    )
+    response.set_cookie(
+        key=CSRF_TOKEN_COOKIE_KEY,
+        value=csrf_token,
+        secure=True
+    )
+    return Token(access_token=access_token, token_type='Bearer')

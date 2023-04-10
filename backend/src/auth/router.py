@@ -14,7 +14,12 @@ from jose import jwt
 from auth.schema import LoginUser, Token
 from auth.validate import validate_login_user
 from auth.csrf import CsrfSettings
-from auth.utils import generate_jwt_token
+from auth.utils import (
+    generate_jwt_token,
+    create_verification_token,
+    is_user_email_in_db,
+    validate_email
+)
 from config import (
     ACCESS_TOKEN_LIFETIME_MINUTES,
     ACCESS_TOKEN_SECRET,
@@ -27,7 +32,8 @@ from user.schema import User
 from db import get_db
 
 from typing import (
-    Optional
+    Optional,
+    Dict
 )
 
 router: APIRouter = APIRouter(
@@ -137,3 +143,27 @@ async def refresh_access_token(
 
     return Token(access_token=access_token, token_type='Bearer')
     
+@router.post('/verify/')
+async def create_email_verification_code(
+    email: str,
+    db: Session = Depends(get_db)
+) -> str:
+    email_is_valid: bool = await validate_email(email=email)
+    if not email_is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Email address format not valid'
+        )
+    
+    email_in_db: bool = await is_user_email_in_db(
+        email=email,
+        db=db
+    )
+    if email_in_db:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Email address already in db'
+        )
+    
+    verification_token: str = await create_verification_token(email=email)
+    return verification_token
