@@ -4,6 +4,7 @@ from sqlalchemy import and_
 from points.utils import insert_points_into_db
 from points.models import Points as PointsModel
 from user.models import User as UserModel
+from prediction.populate import populate_predictions_for_user
 
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -51,6 +52,19 @@ async def insert_user_into_db(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Could not insert new user into database as could not create new points entry'
+        )
+    
+    num_new_predictions: Optional[int] = await populate_predictions_for_user(
+        user_id=new_user.user_id,
+        db=db
+    )
+    if num_new_predictions is None:
+        db.delete(new_user)
+        db.delete(new_points)
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Could not insert new user into database as could not create predictions'
         )
     
     return new_user

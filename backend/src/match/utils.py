@@ -1,7 +1,9 @@
+from match.models import Match as MatchModel
+from prediction.populate import populate_predictions_for_match
+
 from datetime import date
 from typing import Optional, List
 from sqlalchemy.orm import Session, Query
-from match.models import Match as MatchModel
 
 async def get_matches_in_date_range(
     start_date: Optional[date],
@@ -34,6 +36,15 @@ async def insert_match_into_db(
         db.refresh(new_match)
     except Exception as e:
         print(e)
+        return
+    
+    num_new_predictions: Optional[int] = await populate_predictions_for_match(
+        match_id=new_match.match_id,
+        db=db
+    )
+    if num_new_predictions is None:
+        db.delete(new_match)
+        db.commit()
         return
     
     return new_match

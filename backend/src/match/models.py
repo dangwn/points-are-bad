@@ -11,7 +11,7 @@ class Match(Base):
     __tablename__: str = 'matches'
     
     match_id: Column = Column(Integer, primary_key=True, autoincrement=True)
-    match_date: Column = Column(Date, nullable=False)
+    match_date: Column = Column(Date, nullable=False, index=True)
     home: Column = Column(String(64), nullable=False)
     away: Column = Column(String(64), nullable=False)
     home_goals: Column = Column(Integer, nullable=True, default=None)

@@ -18,3 +18,11 @@ class Prediction(Base):
 
     user: RelationshipProperty = relationship('User', back_populates='predictions')
     match: RelationshipProperty = relationship('Match', back_populates='predictions', uselist=False)
+
+    def __init__(
+        self,
+        user_id: int,
+        match_id: int
+    ):
+        self.user_id = user_id
+        self.match_id = match_id
