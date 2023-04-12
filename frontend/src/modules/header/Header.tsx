@@ -16,8 +16,16 @@ const Header: React.FC<HeaderProps> = ({username, isAdmin}) => {
   const queryClient = useQueryClient();
   const router = useRouter();
 
+  const handleHome = useMutation(async () => {
+    router.push('/')
+  })
+
   const handleLeaderboard = useMutation(async () => {
     router.push('/leaderboard')
+  })
+
+  const handlePredictions = useMutation(async () => {
+    router.push('/predictions')
   })
 
   const handleLogout = useMutation(async () => {
@@ -63,14 +71,20 @@ const Header: React.FC<HeaderProps> = ({username, isAdmin}) => {
         </button>
         {showDropdown && (
           <div className={styles.dropdown}>
+            <button className={styles.dropdownButton} onClick={() => handleHome.mutate()}>
+              Home
+            </button>
             <button className={styles.dropdownButton}>Settings</button>
+            <button className={styles.dropdownButton} onClick={() => handlePredictions.mutate()}>
+              Predictions
+            </button>
+            <button className={styles.dropdownButton} onClick={() => handleLeaderboard.mutate()}>
+              Leaderboard
+            </button>
             { isAdmin ? 
               <button className={styles.dropdownButton}>Admin</button> :
               null
             }
-            <button className={styles.dropdownButton} onClick={() => handleLeaderboard.mutate()}>
-              Leaderboard
-            </button>
             <button className={styles.dropdownButton} onClick={() => handleLogout.mutate()}>
               Logout
             </button>

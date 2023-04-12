@@ -33,6 +33,11 @@ async def get_user_points(
     current_user: Optional[UserModel] = Depends(get_current_user),
     db: Session = Depends(get_db)
 ) -> UserWithPoints:
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='No current user'
+        )
     user_points: Optional[PointsModel] = await get_points_by_user_id(
         user_id=current_user.user_id,
         db=db

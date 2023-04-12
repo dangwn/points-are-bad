@@ -29,10 +29,10 @@ CSRF_TOKEN_SECRET: str = 'csrf_secret'
 CSRF_TOKEN_COOKIE_KEY: str = 'X-CSRF-Token'
 
 # Redis Config
-REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
-REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
-REDIS_DB = int(os.getenv('REDIS_DB', 0))
-REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', None)
+REDIS_HOST: str = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT: int = int(os.getenv('REDIS_PORT', 6379))
+REDIS_DB: int = int(os.getenv('REDIS_DB', 0))
+REDIS_PASSWORD: str = os.getenv('REDIS_PASSWORD', None)
 
 # User Config
 USERNAME_MIN_LENGTH: int = 3
