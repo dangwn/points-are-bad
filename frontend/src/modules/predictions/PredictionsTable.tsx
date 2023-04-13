@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
@@ -29,7 +29,7 @@ type newPrediction = {
 };
 
 const PredictionsTable: React.FC = () => {
-  const [editedPredictions, setEditedPredictions] = useState<newPrediction[]>([]);
+  const [predictionsData, setPredictionsData] = useState<userPrediction[]>([]);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [predictionError, setPredictionError] = useState<string>('')
   const router = useRouter();
@@ -59,9 +59,24 @@ const PredictionsTable: React.FC = () => {
   );
 
   const submitEditedPredictions = useMutation(async () => {
+    // Reduce data to new prediction type, and remove nulls and NaNs
+    const newUserPredictions: newPrediction[] = predictionsData.map((pred) => {
+        return {
+          prediction_id: pred.prediction_id,
+          home_goals: pred.home_goals,
+          away_goals: pred.away_goals
+        }
+      }).filter(
+        (pred) => (
+              pred.home_goals !== null && 
+              !isNaN(pred.home_goals) && 
+              pred.away_goals !== null && 
+              !isNaN(pred.away_goals)
+            )
+      )
+
     const accessToken = localStorage.getItem('access_token');
-    const requestBody = JSON.stringify(editedPredictions);
-    console.log(requestBody)
+    const requestBody = JSON.stringify(newUserPredictions);
 
     const response = await fetch(`${API_HOST}/prediction/`, {
       method: 'PUT',
@@ -84,40 +99,25 @@ const PredictionsTable: React.FC = () => {
     router.reload();
   });
 
-  const predictionsData: userPrediction[] = data || [];
-  const newPredictionsData: newPrediction[] = predictionsData.map((pred) => {
-    return {
-      prediction_id: pred.prediction_id,
-      home_goals: pred.home_goals,
-      away_goals: pred.away_goals
-    }
-  })
+  useEffect(() => {
+    setPredictionsData(data || []);
+  }, [data])
 
   const handlePredictionsChange = (
     predictionId: number,
     goals: number|null,
     isHome: boolean
   ) => {
-    const predictionIndex: number = newPredictionsData.findIndex(
+    const newPredictions: userPrediction[] = [...predictionsData]
+    const predictionIndex: number = newPredictions.findIndex(
       pred => (pred.prediction_id === predictionId)
     );
-    console.log(newPredictionsData[predictionIndex])
     if (isHome) {
-      newPredictionsData[predictionIndex].home_goals = goals
+      newPredictions[predictionIndex].home_goals = goals
     } else {
-      newPredictionsData[predictionIndex].away_goals = goals
+      newPredictions[predictionIndex].away_goals = goals
     };
-    console.log(newPredictionsData[predictionIndex])
-
-    const nonNullPredictions: newPrediction[] = newPredictionsData.filter(
-      (pred) => (
-        pred.home_goals !== null && 
-        !isNaN(pred.home_goals) && 
-        pred.away_goals !== null && 
-        !isNaN(pred.away_goals)
-      )
-    );
-    setEditedPredictions(nonNullPredictions);
+    setPredictionsData(newPredictions);
   }
 
   const preventNegativeInputs = (e: React.KeyboardEvent<HTMLInputElement>) => {
