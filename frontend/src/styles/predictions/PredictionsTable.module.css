@@ -57,3 +57,12 @@
     font-size: 1.2em;
     width: calc(100% / 5);
   }
+
+  .tableInput {
+    padding: 10px;
+    text-align: center;
+    font-size: 0.8em;
+    width: calc(100% /1.2);
+    background-color: #f8f8f8;
+    font-family: 'Montserrat', sans-serif;
+  }

@@ -74,6 +74,10 @@ const PredictionsTable: React.FC = () => {
               !isNaN(pred.away_goals)
             )
       )
+      // No need to send the request if there are no predictions to send
+      if (newUserPredictions.length === 0) {
+        router.reload();
+      }
 
     const accessToken = localStorage.getItem('access_token');
     const requestBody = JSON.stringify(newUserPredictions);
@@ -154,10 +158,15 @@ const PredictionsTable: React.FC = () => {
               { 
                 isEditing ? 
                   <input 
+                    className={styles.tableInput}
                     type='number'
                     onKeyDown={preventNegativeInputs}
                     min={0}
-                    placeholder={(prediction.home_goals !== null) ? prediction.home_goals.toString() : 'Home goals'}
+                    placeholder={
+                      (prediction.home_goals !== null && !isNaN(prediction.home_goals)) ?
+                      prediction.home_goals.toString() :
+                      'Home goals'
+                    }
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       handlePredictionsChange(
                         prediction.prediction_id,
@@ -174,10 +183,15 @@ const PredictionsTable: React.FC = () => {
               { 
                 isEditing ? 
                   <input 
+                    className={styles.tableInput}
                     type='number'
                     onKeyDown={preventNegativeInputs}
                     min={0}
-                    placeholder={(prediction.away_goals !== null) ? prediction.away_goals.toString() : 'Away goals'}
+                    placeholder={
+                      (prediction.away_goals !== null && !isNaN(prediction.away_goals)) ? 
+                      prediction.away_goals.toString() : 
+                      'Away goals'
+                    }
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       handlePredictionsChange(
                         prediction.prediction_id,
