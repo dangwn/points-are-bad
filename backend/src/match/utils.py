@@ -14,7 +14,7 @@ async def get_matches_in_date_range(
     if start_date:
         matches_query = matches_query.filter(MatchModel.match_date >= start_date)
     if end_date:
-        matches_query = matches_query.filter(MatchModel.match_date <= end_date)
+        matches_query = matches_query.filter(MatchModel.match_date < end_date)
 
     matches: List[MatchModel] = matches_query.order_by(MatchModel.match_date).all()
     return matches

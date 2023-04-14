@@ -29,7 +29,7 @@ async def get_user_predictions_by_id(
     if start_date:
         predictions_query = predictions_query.filter(MatchModel.match_date >= start_date)
     if end_date:
-        predictions_query = predictions_query.filter(MatchModel.match_date <= end_date)
+        predictions_query = predictions_query.filter(MatchModel.match_date < end_date)
 
     predictions: List[PredictionModel] = predictions_query.order_by(
         MatchModel.match_date
