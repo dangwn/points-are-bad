@@ -24,7 +24,7 @@ async def insert_match_into_db(
     home: str,
     away: str,
     db: Session
-) -> MatchModel:
+) -> Optional[MatchModel]:
     try:
         new_match: MatchModel = MatchModel(
             match_date=match_date,

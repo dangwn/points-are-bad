@@ -4,7 +4,7 @@ import React from "react";
 import LoginForm from "../modules/login/LoginForm";
 import withLogin from "../modules/auth/withLogin";
 
-import styles from '../styles/login/LogInPage.module.css'
+import styles from '../styles/login/LogInForm.module.css'
 
 const LoginPage = () => {
   const router = useRouter();
@@ -23,7 +23,6 @@ const LoginPage = () => {
       <div>
         <div className={styles.buttonContainer}>
           <h3 className={styles.h3}>New here?</h3>
-          <br />
           <button className={styles.button} onClick={() => {
             router.push('/signup');
           }}>

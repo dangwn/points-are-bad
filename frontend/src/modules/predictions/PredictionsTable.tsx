@@ -235,7 +235,7 @@ const PredictionsTable: React.FC = () => {
       {
         (predictionError === '') ? 
         null :
-        <div>{predictionError}</div>
+        <div className={styles.predictionError}>{predictionError}</div>
       }
     </div>
   );

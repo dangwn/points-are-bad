@@ -1,15 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
 
 .container {
-    background-color: #f8f8f8;
-    border-radius: 10px;
-    padding: 20px;
-    margin: 0 auto;
-    max-width: 50%;
-    font-family: 'Montserrat', sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
+    background-color: #f8f8f8;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 0 auto;
+    max-width: 60%;
+    font-family: 'Montserrat', sans-serif;
   }
   
   .tableTitle {
@@ -66,7 +66,6 @@
     background-color: #f8f8f8;
     font-family: 'Montserrat', sans-serif;
     border-radius: 5px;
-    /* border: none; */
   }
 
   .button {
@@ -82,4 +81,9 @@
   }
   .button:hover{
     background-color: #0a8e0a;
+  }
+
+  .predictionError{
+    text-align: center;
+    color: #ab0000;
   }

@@ -37,8 +37,8 @@ const DangerZone: React.FC = () =>{
 
   return (
     <>
-    <div className={styles.deleteUserContainer}>
-      <h2>Danger Zone</h2>
+    <div className={styles.dangerZoneContainer}>
+      <h2 className={styles.h2}>Danger Zone</h2>
       <button className={styles.button} onClick={() => setShowConfirmation(true)}>Delete Account</button>
     </div>
     {
@@ -54,7 +54,7 @@ const DangerZone: React.FC = () =>{
           }}>Cancel</button>
           {
             deleteUserError ?
-            <p>{deleteUserError}</p> :
+            <p className={styles.deleteUserError}>{deleteUserError}</p> :
             null
           }
         </div>

@@ -71,7 +71,10 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }: SignUpFormProps) =
         throw new Error('Passwords do not match');
       } else if (formData.password.length < 8) {
         setSignUpError('Password must be at least 8 characters!');
-        throw new Error('Password not long enough')
+        throw new Error('Password not long enough');
+      } else if (formData.username.length < 3) {
+        setSignUpError('Username must be at least 3 characters long!');
+        throw new Error('Username must be 3 characters or more');
       } else {
         const response = await fetch(
           `${API_HOST}/user/`,
