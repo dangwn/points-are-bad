@@ -9,6 +9,7 @@ secrets:
   dbName: ''
   dbUser: ''
   dbPassword: ''
+  redisPassword: ''
 docker: 
   registry: docker.io
   username: ''

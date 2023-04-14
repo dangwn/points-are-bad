@@ -1,16 +1,18 @@
 global:
   appName: ''
 postgres:
-  imageTag: latest
+  imageTag: '15'
   nodeAffinity:
     hostname: docker-desktop  # name of the node
+redis:
+  imageTag: '7.0.10'
 backend:
   imageName: dangawne/points-are-bad-backend
   imageTag: latest
   api:
     replicas: ''
 nginx:
-  imageTag: latest
+  imageTag: '1.24.0'
   nodePort: ''
 secrets:
   authSecretKey: ''
@@ -21,3 +23,8 @@ secrets:
   dbHost: cG9zdGdyZXMtc2VydmljZQ==
   pgData: L3Zhci9saWIvcG9zdGdyZXNxbC9kYXRhL3BnX2RhdGEv
   dockerConfig: ''
+  redisHost: 'cmVkaXMtc2VydmljZQ=='
+  redisPassword: ''
+  accessTokenSecret: ''
+  refreshTokenSecret: ''
+  csrfTokenSecret: ''
