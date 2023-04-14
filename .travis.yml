@@ -1,0 +1,12 @@
+language: generic
+
+sudo: required
+
+services:
+  - docker
+ 
+deploy:
+  provider: script
+  script: bash CI/travis-deploy.sh
+  on:
+    branch: main
