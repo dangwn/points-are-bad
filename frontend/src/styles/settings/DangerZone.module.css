@@ -1,0 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+.deleteUserPopup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+  
+.deleteUserPopupContainer {
+    background-color: #f8f8f8;
+    padding: 20px;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    font-family: 'Montserrat', sans-serif;
+    width: calc(100%/2.5)
+}
+  
+.button {
+  background-color: #006400;
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
+  margin-top: 5px;
+  cursor: pointer;
+  font-size: 0.8em;
+  width: calc(100% / 3)
+}
+.button:hover{
+background-color: #0a8e0a;
+}
+
+.popupButton {
+  background-color: #006400;
+  color: white;
+  padding: 15px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  font-size: 1em;
+  width: calc(100% / 3)
+}
+.popupButton:hover{
+background-color: #0a8e0a;
+}
+
+.h2 {
+    color: black;
+    margin-top: 10px;
+    font-size: 30px;
+    text-align: center;
+}

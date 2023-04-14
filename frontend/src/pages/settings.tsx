@@ -1,14 +1,14 @@
 import React from 'react';
 
 import Header from '../modules/header/Header';
-import DeleteUser from '../modules/settings/DeleteUser';
+import DangerZone from '../modules/settings/DangerZone';
 import withAuth from '../modules/auth/withAuth';
 
 const Leaderboard: React.FC = () => {
   return (
     <div>
       <Header />
-      <DeleteUser />
+      <DangerZone />
     </div>
   )
 }
