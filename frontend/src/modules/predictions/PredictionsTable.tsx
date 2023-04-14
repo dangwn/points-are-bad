@@ -213,16 +213,16 @@ const PredictionsTable: React.FC = () => {
             isEditing ? 
             <tr>
               <td colSpan={5}>
-                <button onClick={() => {
+                <button className={styles.button} onClick={() => {
                   submitEditedPredictions.mutate();
-                }}>Submit</button>
+                }}>Save</button>
               </td>
             </tr> :
             null 
           }
           <tr>
             <td colSpan={5}>
-              <button onClick={() => {
+              <button className={styles.button} onClick={() => {
                 setIsEditing(!isEditing);
                 setPredictionError('');
               }}>

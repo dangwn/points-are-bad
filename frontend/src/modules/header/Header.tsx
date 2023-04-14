@@ -1,32 +1,42 @@
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient, useQuery } from 'react-query';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
-import { API_HOST } from '../../lib/constants';
+import { API_HOST, QUERY_OPTIONS } from '../../lib/constants';
 import styles from '../../styles/header/Header.module.css';
 
-interface HeaderProps {
+type SessionUser = {
   username: string,
-  isAdmin: boolean
+  is_admin: boolean
 }
 
-const Header: React.FC<HeaderProps> = ({username, isAdmin}) => {
+const Header: React.FC = () => {
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const queryClient = useQueryClient();
   const router = useRouter();
 
-  const handleHome = useMutation(async () => {
-    router.push('/')
-  })
-
-  const handleLeaderboard = useMutation(async () => {
-    router.push('/leaderboard')
-  })
-
-  const handlePredictions = useMutation(async () => {
-    router.push('/predictions')
-  })
+  const { data, isLoading, isError } = useQuery<SessionUser>(
+    'user',
+    async () => {
+      const authToken = localStorage.getItem('access_token');
+  
+      if (authToken === 'undefined') {
+        throw new Error('Auth token could not be found');
+      };
+      const response = await fetch(`${API_HOST}/user/`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+    
+      if (!response.ok){
+        throw new Error('Error fetching user data');
+      };
+      return response.json();
+    },
+    QUERY_OPTIONS
+  );
 
   const handleLogout = useMutation(async () => {
     await fetch(`${API_HOST}/auth/login/`, {
@@ -39,29 +49,24 @@ const Header: React.FC<HeaderProps> = ({username, isAdmin}) => {
     router.push('/login');
   });
 
-  const handleDeleteUser = useMutation(async () => {
-    const accessToken = localStorage.getItem('access_token');
-    await fetch(`${API_HOST}/user/`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`
-      },
-      credentials: 'include',
-    });
-
-    queryClient.removeQueries();
-
-    router.push('/login');
-  })
-
   const handleDropdownClick = () => {
     setShowDropdown(!showDropdown);
+  };
+
+  const isAdmin: boolean = data?.is_admin || false
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  };
+
+  if (isError) {
+    return <div>Error fetching home page data</div>
   };
 
   return (
     <header className={styles.header}>
       <div className={styles.title}>
-        <Link href="/">
+        <Link className={styles.a} href="/">
           Points Are Bad
         </Link>
       </div>
@@ -71,14 +76,26 @@ const Header: React.FC<HeaderProps> = ({username, isAdmin}) => {
         </button>
         {showDropdown && (
           <div className={styles.dropdown}>
-            <button className={styles.dropdownButton} onClick={() => handleHome.mutate()}>
+            <button 
+              className={styles.dropdownButton} 
+              onClick={() => router.push('/')}>
               Home
             </button>
-            <button className={styles.dropdownButton}>Settings</button>
-            <button className={styles.dropdownButton} onClick={() => handlePredictions.mutate()}>
+            <button 
+              className={styles.dropdownButton}
+              onClick={() => router.push('/settings')}
+            >
+              Settings
+            </button>
+            <button 
+              className={styles.dropdownButton} 
+              onClick={() => router.push('/predictions')}>
               Predictions
             </button>
-            <button className={styles.dropdownButton} onClick={() => handleLeaderboard.mutate()}>
+            <button 
+              className={styles.dropdownButton} 
+              onClick={() => router.push('/leaderboard')}
+            >
               Leaderboard
             </button>
             { isAdmin ? 
@@ -87,9 +104,6 @@ const Header: React.FC<HeaderProps> = ({username, isAdmin}) => {
             }
             <button className={styles.dropdownButton} onClick={() => handleLogout.mutate()}>
               Logout
-            </button>
-            <button className={styles.dropdownButton} onClick={() => handleDeleteUser.mutate()}>
-              Delete User
             </button>
           </div>
         )}
