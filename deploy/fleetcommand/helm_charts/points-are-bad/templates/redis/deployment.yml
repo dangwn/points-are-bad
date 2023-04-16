@@ -18,7 +18,8 @@ spec:
         tier: backend
     spec:
       containers:
-        - image: "dangawne/redis:{{ .Values.redis.imageTag }}" 
-          envFrom:
-            - secretRef:
-                name: redis-secrets
+        - name: redis
+          image: "dangawne/redis:{{ .Values.redis.imageTag }}" 
+          # envFrom:
+          #   - secretRef:
+          #       name: redis-secrets
