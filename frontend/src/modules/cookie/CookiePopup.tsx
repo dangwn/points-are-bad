@@ -26,7 +26,7 @@ const CookiePopup = () => {
           Points are Bad only uses necessary cookies.
         </p>
         <p className={styles.p}>
-          Click "Accept" to continue.
+          Click `&quot;`Accept`&quot;` to continue.
         </p>
         <button className={styles.button} onClick={handleAcceptCookies}>Accept</button>
       </div>
