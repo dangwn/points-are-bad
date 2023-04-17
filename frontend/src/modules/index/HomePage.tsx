@@ -34,7 +34,15 @@ const HomePage: React.FC<HomePageProps> = ({}) => {
     return <div>Error fetching data</div>
   };
 
-  const sessionUserPoints: SessionUserPoints = queryResults[0].data;
+  const sessionUserPoints: SessionUserPoints = queryResults[0].data || {
+    points: 0,
+    correct_scores: 0,
+    largest_error: 0,
+    user: {
+      username: '',
+      is_admin: false
+    }
+  };
   const upcomingMatches: MatchWithoutGoals[] = queryResults[1].data || [];
 
   return (
