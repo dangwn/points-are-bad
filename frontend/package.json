@@ -21,5 +21,8 @@
     "react-dom": "18.2.0",
     "react-query": "^3.39.3",
     "typescript": "5.0.2"
+  },
+  "devDependencies": {
+    "@types/js-cookie": "^3.0.3"
   }
 }
