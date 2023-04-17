@@ -1,16 +1,42 @@
 import React from "react";
+import { useQuery } from "react-query";
 
-import { MatchWithoutGoals } from "../../types/match";
 import styles from "../../styles/index/IndexTables.module.css";
+import { API_HOST, QUERY_OPTIONS } from "../../lib/constants";
 
-interface UpcomingMatchesProps {
-  matchData: MatchWithoutGoals[]
+type Match = {
+  match_date: string,
+  home: string, 
+  away: string
 }
 
-const UpcomingMatches: React.FC<UpcomingMatchesProps> = ({matchData}) => {
+const AdminMatches: React.FC = () => {
+  const { data, isLoading, isError } = useQuery<Match[]>(
+    'adminMatches',
+    async () => {
+      const response = await fetch(`${API_HOST}/match/`);
+    
+      if (!response.ok){
+        throw new Error('Error fetching matches data');
+      };
+      return response.json();
+    },
+    QUERY_OPTIONS
+  );
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  };
+
+  if (isError) {
+    return <div>Error fetching upcoming matches</div>
+  };
+
+  const matchData: Match[] = data || []
+  
   return (
     <div className={styles.container}>
-      <div className={styles.tableTitle}>Upcoming Fixtures</div>
+      <div className={styles.tableTitle}>All Matches</div>
       <table className={styles.table}>
         <thead>
           <tr>
@@ -33,4 +59,4 @@ const UpcomingMatches: React.FC<UpcomingMatchesProps> = ({matchData}) => {
   );
 }
 
-export default UpcomingMatches;
+export default AdminMatches;

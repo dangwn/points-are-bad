@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from 'react-query';
 
 import withAuth from '../modules/auth/withAuth';
-import Header from '../modules/header/Header';
+import Header from '../modules/shared/Header';
 import PredictionsTable from '../modules/predictions/PredictionsTable';
 
 import { API_HOST, QUERY_OPTIONS } from '../lib/constants';
@@ -46,7 +46,6 @@ const PredictionsPage: React.FC = () => {
   return (
     <div>
       <Header 
-        username={data?.username}
         isAdmin={data?.is_admin}
       />
       <PredictionsTable />

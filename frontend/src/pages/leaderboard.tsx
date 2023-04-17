@@ -1,16 +1,4 @@
-import React from "react";
-
-import Header from "../modules/header/Header";
-import LeaderboardTable from "../modules/leaderboard/LeaderboardTable";
+import LeaderboardPage from "../modules/leaderboard/LeaderboardPage";
 import withAuth from "../modules/auth/withAuth";
 
-const Leaderboard: React.FC = () => {
-  return (
-    <div>
-      <Header />
-      <LeaderboardTable limit={20} />
-    </div>
-  )
-}
-
-export default withAuth(Leaderboard);
+export default withAuth(LeaderboardPage);

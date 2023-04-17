@@ -2,52 +2,44 @@ import { useRouter } from 'next/router';
 import React, { useEffect } from 'react';
 import Cookies from 'js-cookie';
 
-import { API_HOST } from '../../lib/constants';
+import { refreshAccessToken } from '../../lib/requests';
+import { setAccessToken } from '../../lib/accessToken';
+import type { Token } from '../../types/token';
 
-type Token = {
-  access_token: string,
-  token_type: string
-}
+interface WithAuthProps {}
 
-const withAuth = (WrappedComponent: React.FC) => {
+const withAuth = (WrappedComponent: React.FC<WithAuthProps>) => {
   const AuthWrapper: React.FC = (props) => {
     const router = useRouter();
 
+    const csrfToken: string|undefined = Cookies.get('X-CSRF-Token');
+    const refreshToken: string|undefined = Cookies.get('X-Refresh-Token');
+    const deleteSession = (): void => {
+      try {
+        Cookies.remove('X-CSRF-Token');
+        Cookies.remove('X-Refresh-Token');
+      } catch {};
+      router.push('/login');
+    };
+
     useEffect(() => {
-      const csrfToken = Cookies.get('X-CSRF-Token');
-      const refreshToken = Cookies.get('X-Refresh-Token');
-
       if (csrfToken === undefined || refreshToken === undefined) {
-        try {
-          Cookies.remove('X-CSRF-Token');
-          Cookies.remove('X-Refresh-Token');
-        } catch {};
-        router.push('/login');
-      }
-
-      const setAccessToken = async () => {
-        const response = await fetch(
-          `${API_HOST}/auth/refresh/`,
-          {
-            method: 'POST',
-            headers: {
-              'accept': 'application/json'
-            },
-            credentials: 'include'
-          }
-        );
-        if (!response.ok) {
-          router.push('/login');
-        };
-        const data: Token = await response.json();
-        localStorage.setItem('access_token', data.access_token);
+        deleteSession();
       };
 
-      setAccessToken();
+      const injectUserSession = async (): Promise<void> => {
+        try {
+          const { access_token }: Token = await refreshAccessToken();
+          setAccessToken(access_token);
+        } catch {
+          deleteSession();
+        };
+      };
 
+      injectUserSession();
     }, []);
 
-    return <WrappedComponent {...props} />
+    return <WrappedComponent {...props}/>
   };
 
   return AuthWrapper;

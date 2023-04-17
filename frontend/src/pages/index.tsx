@@ -1,18 +1,4 @@
-import React from 'react';
-
+import HomePage from '../modules/index/HomePage';
 import withAuth from '../modules/auth/withAuth';
-import Header from '../modules/header/Header';
-import PointsTable from '../modules/index/PointsTable';
-import UpcomingMatches from '../modules/index/UpcomingMatches';
-
-const HomePage: React.FC = () => {  
-  return (
-    <div>
-      <Header />
-      <PointsTable />
-      <UpcomingMatches />
-    </div>
-  );
-};
 
 export default withAuth(HomePage);
