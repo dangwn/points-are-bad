@@ -40,3 +40,6 @@ frontend/dist-ssr
 
 workbench
 notes.txt
+populate_db.py
+
+**/alembic/versions

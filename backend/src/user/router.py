@@ -1,167 +1,198 @@
-from fastapi import APIRouter, Depends, status, Response
+from fastapi import (
+    APIRouter,
+    Depends,
+    status,
+    Response,
+    HTTPException
+)
+from fastapi_csrf_protect import CsrfProtect
+from datetime import timedelta
 from sqlalchemy.orm import Session
-from typing import Optional, Dict, List
 
-from user.schema import DisplayUser, CreateUser
-from user.models import User as UserModel
-from user.utils import (
-    create_user,
-    delete_user_by_id,
-    get_user_by_email_and_provider,
-    get_all_users,
-    get_user_by_id,
-    alter_admin_status_by_id
-)
-from authentication.schema import SessionUser, HeaderCredentials
-from authentication.utils import get_current_user, is_current_user_admin
-from authentication.auth_handler import pab_auth_handler
-from authentication.session_manager import create_user_session, delete_user_session
-from authentication.validate import validate_token
-from http_exceptions import (
-    NOT_AUTHORIZED_EXCEPTION,
-    USERNAME_EXISTS_EXCEPTION,
-    NOT_ADMIN_EXCEPTION,
-    USER_NOT_FOUND_EXCEPION,
-    COULD_NOT_UPDATE_EXCEPTION
-)
 from db import get_db
+from auth.utils import (
+    hash_password,
+    generate_jwt_token,
+    get_current_user,
+    validate_verification_token
+)
+from auth.schema import Token
+from auth.csrf import CsrfSettings
+from config import (
+    ACCESS_TOKEN_LIFETIME_MINUTES,
+    ACCESS_TOKEN_SECRET,
+    REFRESH_TOKEN_LIFETIME_DAYS,
+    REFRESH_TOKEN_SECRET,
+    REFRESH_TOKEN_COOKIE_KEY,
+    CSRF_TOKEN_COOKIE_KEY
+)
+from user.models import User as UserModel
+from user.schema import NewUser, SessionUser
+from user.utils import (
+    insert_user_into_db,
+    delete_user_by_id
+)
+# from user.validate import (
+#     validate_user_entries,
+#     is_user_email_in_db
+# )
+
+from typing import (
+    Optional
+)
 
 router: APIRouter = APIRouter(
-    prefix='/user',
-    tags=['user']
+    prefix='/user'
 )
 
-@router.get('/', response_model=DisplayUser)
+@CsrfProtect.load_config
+def get_csrf_confg() -> CsrfSettings:
+    '''
+    Loads the CSRF settings into module
+    '''
+    return CsrfSettings()
+
+@router.get('/', response_model=SessionUser)
 async def display_current_user(
-    current_user: SessionUser = Depends(get_current_user)
-) -> DisplayUser:
+    current_user: UserModel = Depends(get_current_user)
+) -> SessionUser:
     if not current_user:
-        raise USER_NOT_FOUND_EXCEPION
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='No current user'
+        )
+    
     return current_user
 
-@router.post('/', response_model=DisplayUser)
+
+@router.post('/', status_code=status.HTTP_201_CREATED)
 async def create_new_user(
-    new_user: CreateUser,
-    database: Session = Depends(get_db),
-    credentials: HeaderCredentials = Depends(pab_auth_handler)
-) -> DisplayUser:
-    # See if access token is valid
-    token_email: str = await validate_token(
-        token=credentials.access_token,
-        provider=credentials.provider
+    new_user: NewUser,
+    response: Response,
+    db: Session = Depends(get_db),
+    csrf_protect: CsrfProtect = Depends()
+) -> Token:
+    '''
+    Post request endpoint for creating a new, non-verified user
+        in the db
+    '''
+    email: Optional[str] = await validate_verification_token(
+        token=new_user.token
     )
-    if not token_email:
-        raise NOT_AUTHORIZED_EXCEPTION
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Invalid verification token'
+        )
 
-    # See if a user with same email and provider exists
-    user_already_exists: UserModel = await get_user_by_email_and_provider(
-        email=token_email,
-        provider=credentials.provider,
-        database=database
+    hashed_password: str = hash_password(new_user.password)
+
+    new_user: UserModel = await insert_user_into_db(
+        username=new_user.username,
+        email=email,
+        hashed_password=hashed_password,
+        db=db
     )
-    if user_already_exists:
-        raise USERNAME_EXISTS_EXCEPTION
-
-    # Create the new user
-    user: UserModel = await create_user(
-        display_name=new_user.display_name,
-        email=token_email,
-        provider=credentials.provider,
-        avatar=new_user.avatar,
-        database=database
+    if not new_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Could not create new user'
+        )
+    
+    # Generate tokens
+    access_token: str = generate_jwt_token(
+        subject=str(new_user.user_id),
+        expire_time=timedelta(minutes=ACCESS_TOKEN_LIFETIME_MINUTES),
+        secret_key=ACCESS_TOKEN_SECRET
     )
+    refresh_token: str = generate_jwt_token(
+        subject=str(new_user.user_id),
+        expire_time=timedelta(days=REFRESH_TOKEN_LIFETIME_DAYS),
+        secret_key=REFRESH_TOKEN_SECRET
+    )
+    csrf_token: str = csrf_protect.generate_csrf()
 
-    # Create user session
-    await create_user_session(credentials.access_token, credentials.provider, user)
+    # Set cookies
+    response.set_cookie(
+        key=REFRESH_TOKEN_COOKIE_KEY,
+        value=refresh_token,
+        secure=True
+    )
+    response.set_cookie(
+        key=CSRF_TOKEN_COOKIE_KEY,
+        value=csrf_token,
+        secure=True
+    )
+    return Token(access_token=access_token, token_type='Bearer')
 
-    return user
-
-@router.delete('/', status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
+@router.delete('/', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_current_user(
-    database: Session = Depends(get_db),
-    current_user: SessionUser = Depends(get_current_user),
-    credentials: HeaderCredentials = Depends(pab_auth_handler)
+    response: Response,
+    current_user: UserModel = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ) -> Response:
-    await delete_user_session(credentials.access_token, credentials.provider)
-    return await delete_user_by_id(current_user.id, database)
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='No current user'
+        )
+    
+    await delete_user_by_id(
+        user_id=current_user.user_id,
+        db=db
+    )
 
-@router.get('/all', response_model=List[DisplayUser])
-async def display_all_users(
-    database: Session = Depends(get_db), 
-    is_admin: bool = Depends(is_current_user_admin)
-) -> List[DisplayUser]:
-    '''
-    Returns all users in the database (ADMIN ONLY)
-    '''
-    if not is_admin:
-        raise NOT_ADMIN_EXCEPTION
-    db_users: List[UserModel] =  await get_all_users(database)
-    return db_users 
+    response.delete_cookie(REFRESH_TOKEN_COOKIE_KEY)
+    response.delete_cookie(CSRF_TOKEN_COOKIE_KEY)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
 
-@router.get('/{user_id}', response_model=DisplayUser)
-async def get_user(
-    user_id: int, 
-    database: Session = Depends(get_db),
-    is_admin: bool = Depends(is_current_user_admin)
-) -> DisplayUser:
-    '''
-    Returns a user by user id (ADMIN ONLY)
-    '''
-    if not is_admin:
-        raise NOT_ADMIN_EXCEPTION
-    db_user: Optional[UserModel] = await get_user_by_id(user_id, database)
 
-    if not db_user:
-        raise USER_NOT_FOUND_EXCEPION
-    return db_user
+@router.post('/testCreateUser')
+async def test_create_user(
+    username: str,
+    email: str,
+    password: str,
+    response: Response,
+    db: Session = Depends(get_db),
+    csrf_protect: CsrfProtect = Depends()
+) -> Token:
+    hashed_password: str = hash_password(password)
 
-@router.delete('/{user_id}', status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
-async def remove_user_by_id(
-    user_id: int,
-    database: Session = Depends(get_db),
-    current_user: SessionUser = Depends(get_current_user)
-) -> Response:
-    '''
-    Deletes a user from the database
-    '''
-    if (current_user.id != user_id and not current_user.is_admin) or current_user is None:
-        raise NOT_AUTHORIZED_EXCEPTION
+    new_user: UserModel = await insert_user_into_db(
+        username=username,
+        email=email,
+        hashed_password=hashed_password,
+        db=db
+    )
+    if not new_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Could not create new user'
+        )
+    
+    # Generate tokens
+    access_token: str = generate_jwt_token(
+        subject=str(new_user.user_id),
+        expire_time=timedelta(minutes=ACCESS_TOKEN_LIFETIME_MINUTES),
+        secret_key=ACCESS_TOKEN_SECRET
+    )
+    refresh_token: str = generate_jwt_token(
+        subject=str(new_user.user_id),
+        expire_time=timedelta(days=REFRESH_TOKEN_LIFETIME_DAYS),
+        secret_key=REFRESH_TOKEN_SECRET
+    )
+    csrf_token: str = csrf_protect.generate_csrf()
 
-    return await delete_user_by_id(user_id, database)
-
-@router.delete('/end_session', status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
-async def end_current_user_session(
-    credentials: HeaderCredentials = Depends(pab_auth_handler)
-) -> None:
-    await delete_user_session(credentials.access_token, credentials.provider)
-
-@router.put('/make_admin/{user_id}', status_code=status.HTTP_202_ACCEPTED, response_class=Response)
-async def make_user_admin(
-    user_id: int,
-    database: Session = Depends(get_db),
-    is_admin: bool = Depends(is_current_user_admin) 
-) -> Response:
-    '''
-    Updates the DB to make the given user an admin user
-    '''
-    if not is_admin:
-        raise NOT_ADMIN_EXCEPTION
-
-    return await alter_admin_status_by_id(user_id, True, database)
-
-@router.put('/revoke_admin/{user_id}', status_code=status.HTTP_202_ACCEPTED, response_class=Response)
-async def revoke_user_admin(
-    user_id: int,
-    database: Session = Depends(get_db),
-    current_user: SessionUser = Depends(get_current_user) 
-) -> Response:
-    '''
-    Updates the DB to make the given user an admin user
-    '''
-    if not current_user.is_admin:
-        raise NOT_ADMIN_EXCEPTION
-
-    if current_user.id == user_id:
-        raise COULD_NOT_UPDATE_EXCEPTION("current user's admin status")
-
-    return await alter_admin_status_by_id(user_id, False, database)
+    # Set cookies
+    response.set_cookie(
+        key=REFRESH_TOKEN_COOKIE_KEY,
+        value=refresh_token,
+        secure=True
+    )
+    response.set_cookie(
+        key=CSRF_TOKEN_COOKIE_KEY,
+        value=csrf_token,
+        secure=True
+    )
+    return Token(access_token=access_token, token_type='Bearer')

@@ -1,18 +1,20 @@
 from pydantic import BaseModel
 
-class DayScore(BaseModel):
+from user.schema import Username, SessionUser
+
+from typing import Optional
+
+class Points(BaseModel):
     points: int
     correct_scores: int
     largest_error: int
 
     class Config:
-        orm_mode = True
+        orm_mode: bool = True
 
-class DayScoreWithUserId(DayScore):
-    user_id: int
+class UserWithPoints(Points):
+    user: SessionUser
 
-class PlayerPosition(DayScore):
-    position: int
-
-class PlayerPositionWithUsername(PlayerPosition):
-    username: str
+class LeaderBoardUser(Points):
+    user: Username
+    position: Optional[int]

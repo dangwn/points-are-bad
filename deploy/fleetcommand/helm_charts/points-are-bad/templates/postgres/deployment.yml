@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: "postgres:{{ .Values.postgres.imageTag }}" #10.17
+          image: "dangawne/postgres:{{ .Values.postgres.imageTag }}" #10.17
           envFrom:
             - secretRef:
                 name: postgres-secrets

@@ -1,19 +1,19 @@
-import React from 'react';
-import type { AppProps } from 'next/app';
-import { SessionProvider } from "next-auth/react";
+import { AppProps } from 'next/app';
+import { QueryClientProvider } from 'react-query';
+import { queryClient } from '../lib/queryClient';
+import CookiePopup from '../modules/cookie/CookiePopup';
 
-import type { Session } from "next-auth";
+import '../styles/global.css'
 
-import "../styles/loginPage.css";
-
-const App: React.FC<AppProps> = ({ 
-  Component, pageProps: { session, ...pageProps }
-}: AppProps<{ session: Session}>) => {
+function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <SessionProvider session={session}>
-      <Component {...pageProps} />
-    </SessionProvider>
-  )
-};
+    <>
+      <QueryClientProvider client={queryClient}>
+        <Component {...pageProps} />
+      </QueryClientProvider>
+      <CookiePopup />
+    </>
+  );
+}
 
-export default App;
+export default MyApp;

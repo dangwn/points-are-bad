@@ -7,7 +7,7 @@ kubectl delete po --ignore-not-found=true fleetcommand-agent
 kubectl create configmap \
   fleetcommand-agent-config \
   -o yaml --dry-run=client \
-  --from-file=pab.yml | kubectl apply -f -
+  --from-file=pab_master.yml | kubectl apply -f -
 
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -38,7 +38,7 @@ spec:
   containers:
   - name: fleetcommand-agent
     image: dangawne/points-are-bad-fleetcommand-agent
-    args: ["run", "-f", "/builduser/fleetcommand/pab.yml"]
+    args: ["run", "-f", "/builduser/fleetcommand/pab_master.yml"]
     imagePullPolicy: Always
     volumeMounts:
     - name: install-config

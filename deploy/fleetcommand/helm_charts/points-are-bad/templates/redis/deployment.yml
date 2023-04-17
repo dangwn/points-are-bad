@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-deployment
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.global.appName }}
+    version: {{ .Chart.AppVersion }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-container
+  template:
+    metadata:
+      labels:
+        app: redis-container
+        tier: backend
+    spec:
+      containers:
+        - name: redis
+          image: "dangawne/redis:{{ .Values.redis.imageTag }}" 
+          # envFrom:
+          #   - secretRef:
+          #       name: redis-secrets
