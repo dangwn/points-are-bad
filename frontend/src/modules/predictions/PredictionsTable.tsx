@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+import { getAccessToken } from '../../lib/accessToken';
 import { API_HOST } from '../../lib/constants';
 import styles from '../../styles/predictions/PredictionsTable.module.css';
 import type { UserPrediction, NewPrediction } from '../../types/predictions';
@@ -37,8 +38,8 @@ const PredictionsTable: React.FC<PredictionTableProps> = ({predictions}) => {
         router.reload();
       };
 
-    const accessToken = localStorage.getItem('access_token');
-    const requestBody = JSON.stringify(newUserPredictions);
+    const accessToken: string|null = getAccessToken();
+    const requestBody: string = JSON.stringify(newUserPredictions);
 
     const response = await fetch(`${API_HOST}/prediction/`, {
       method: 'PUT',
@@ -51,10 +52,7 @@ const PredictionsTable: React.FC<PredictionTableProps> = ({predictions}) => {
     });
 
     if (!response.ok) {
-      if (response.status === 406) {
-        setPredictionError("Something wrong with predictions. Please ensure if you've started a prediction that you finish it!");
-      };
-
+      setPredictionError("Something went wrong when updating your predictions. Please try again.");
       return;
     };
 

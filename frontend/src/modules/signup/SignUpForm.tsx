@@ -1,33 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
+import { useMutation } from 'react-query';
 
-import { API_HOST } from '../../lib/constants';
+import Loading from '../shared/Loading';
+import { setAccessToken } from '../../lib/accessToken';
+import { createUser, getVerificationToken } from '../../lib/requests';
 import styles from '../../styles/login/SignUpForm.module.css';
+import type { SignUpData } from '../../types/auth';
+import type { Token } from '../../types/token';
 
-type SignUpFormProps = {
-  onSuccess: () => void;
-};
-
-type VerificationToken = {
-  access_token: string,
-  token_type: string
+interface SignUpFormProps {
+  onSuccess: () => void
 }
 
-type SignUpData = {
-  username: string,
-  password: string,
-  confirmPassword: string,
-};
-
-const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }: SignUpFormProps) => {
+const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
   const [email, setEmail] = useState<string>('');
   const [verificationToken, setVerificationToken] = useState<string>('');
   const [formData, setFormData] = useState<SignUpData>({
-    username: '',
-    password: '',
-    confirmPassword: '',
-  });
+    username:'',
+    password:'',
+    confirmPassword:''
+  })
   const [signUpError, setSignUpError] = useState<string>('');
   const router = useRouter();
 
@@ -40,80 +33,40 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }: SignUpFormProps) =
 
   const createVerificationToken = useMutation(
     async () => {
-      const response = await fetch(
-        `${API_HOST}/auth/verify/?email=${email}`,
-        {
-          method: 'POST',
-          headers: {
-            'accept': 'application/json'
-          }
-        }
-      );
-      if (!response.ok) {
-        console.log(response.status)
-        if (response.status === 400) {
-          const { detail } = await response.json();
-          setSignUpError(detail);
-        };
-        throw new Error('Could not sign up');
-      };
+      const token: Token = await getVerificationToken(email);
 
       // @TODO: Make this display "check email" message
-      const data: VerificationToken = await response.json();
-      router.push(`/signup?token=${data.access_token}`);
+      router.push(`/signup?token=${token.access_token}`);
     }
   )
 
-  const createUser = useMutation(
+  const signUpUser = useMutation(
     async () => {
       if (formData.password !== formData.confirmPassword) {
         setSignUpError('Passwords do not match!');
-        throw new Error('Passwords do not match');
       } else if (formData.password.length < 8) {
         setSignUpError('Password must be at least 8 characters!');
-        throw new Error('Password not long enough');
       } else if (formData.username.length < 3) {
         setSignUpError('Username must be at least 3 characters long!');
-        throw new Error('Username must be 3 characters or more');
       } else {
-        const response = await fetch(
-          `${API_HOST}/user/`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'accept': 'application/json'
-            },
-            body: JSON.stringify({
-              token: verificationToken,
-              username: formData.username,
-              password: formData.password
-            }),
-            credentials: 'include'
-          }
-        );
-
-        if (!response.ok) {
-          if (response.status === 403){
-            const { detail } = await response.json()
-            setSignUpError(detail);
-          }
-          if (response.status === 401) {
-            const { detail } = await response.json();
-            router.push('/signup');
-            setSignUpError(`${detail}. Please refresh.`);
-          }
-          throw new Error('Could not sign up');
+        try {
+          const data: Token = await createUser(
+            verificationToken,
+            formData.username,
+            formData.password
+          );
+          setAccessToken(data.access_token);
+          return;
+        } catch {
+          setSignUpError('Could not sign user up. Please start again.')
         };
-
-        const data = await response.json();
-        localStorage.setItem('access_token', data.access_token);
-      }
+      };
+      throw new Error('Could not sign up user.')
     },
     {
-      onSuccess,
+      onSuccess
     }
-  );
+  )
 
   const handleCreateVerificationTokenSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -124,7 +77,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }: SignUpFormProps) =
   const handleCreateUserSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSignUpError('');
-    createUser.mutate();
+    signUpUser.mutate();
   };
 
   const handleCreateVerificationTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,7 +111,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }: SignUpFormProps) =
               type='submit' 
               disabled={createVerificationToken.isLoading}
             >
-              {createVerificationToken.isLoading ? 'Loading...': 'Verify Email'}
+              {createVerificationToken.isLoading ? 'Loading...' : 'Verify Email'}
             </button>
             </label>
           </form> :
@@ -198,9 +151,9 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }: SignUpFormProps) =
             <button 
               className={styles.button} 
               type='submit' 
-              disabled={createUser.isLoading}
+              disabled={signUpUser.isLoading}
             >
-              {createUser.isLoading ? 'Loading...': 'Sign Up'}
+              {signUpUser.isLoading ? 'Loading...': 'Sign Up'}
             </button>
           </form>
         }

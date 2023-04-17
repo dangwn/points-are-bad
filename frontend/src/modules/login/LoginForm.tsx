@@ -1,19 +1,17 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useMutation } from 'react-query';
 
-import { API_HOST } from '../../lib/constants';
+import { setAccessToken } from '../../lib/accessToken';
+import { logUserIn } from '../../lib/requests';
 import styles from '../../styles/login/LogInForm.module.css'
+import type { Token } from '../../types/token';
+import { LoginData } from '../../types/auth';
 
 type LoginFormProps = {
   onSuccess: () => void;
 };
 
-type LoginData = {
-  email: string;
-  password: string;
-};
-
-const LoginForm = ({ onSuccess }: LoginFormProps) => {
+const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
   const [formData, setFormData] = useState<LoginData>({
     email: '',
     password: '',
@@ -22,28 +20,12 @@ const LoginForm = ({ onSuccess }: LoginFormProps) => {
 
   const mutation = useMutation(
     async () => {
-      const response = await fetch(
-        `${API_HOST}/auth/login/`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'accept': 'application/json'
-          },
-          body: JSON.stringify(formData),
-          credentials: 'include'
-        }
+      const token: Token = await logUserIn(
+        formData.email,
+        formData.password
       );
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          setLogInError('Incorrect email or password');
-        }
-        throw new Error('Invalid credentials');
-      };
-
-      const data = await response.json();
-      localStorage.setItem('access_token', data.access_token);
+      setAccessToken(token.access_token);
     },
     {
       onSuccess,

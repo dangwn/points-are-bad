@@ -8,6 +8,46 @@ import type { LeaderboardApiResponse, LeaderboardUser } from '../types/leaderboa
 import type { Token } from '../types/token';
 import type { UserPrediction } from '../types/predictions';
 
+export const createUser = async (token: string, username: string, password: string): Promise<Token> => {
+  const response = await fetch(
+    `${API_HOST}/user/`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'accept': 'application/json'
+      },
+      body: JSON.stringify({
+        token: token,
+        username: username,
+        password: password
+      }),
+      credentials: 'include'
+    }
+  );
+  if (!response.ok) {
+    throw new Error('Could not create new user.')
+  };
+  return response.json();
+}
+
+export const getVerificationToken = async (email: string): Promise<Token> => {
+  const response = await fetch(
+    `${API_HOST}/auth/verify/?email=${email}`,
+    {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json'
+      }
+    }
+  );
+  if (!response.ok){
+    throw new Error('Error creating verification token.');
+  };
+
+  return response.json();
+}
+
 export const getLeaderboard = async (pageIndex: number, pageSize: number): Promise<LeaderboardApiResponse> => {
   const offset: number = pageIndex * pageSize;
   const response: Response = await fetch(
@@ -92,6 +132,30 @@ export const getUpcomingUserPredictions = async(): Promise<UserPrediction[]> => 
   if (!response.ok){
     throw new Error('Error fetching predictions data');
   };
+  return response.json();
+}
+
+export const logUserIn = async (email: string, password: string): Promise<Token> => {
+  const response = await fetch(
+    `${API_HOST}/auth/login/`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'accept': 'application/json'
+      },
+      body: JSON.stringify({
+        email: email,
+        password: password
+      }),
+      credentials: 'include'
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Could not log in');
+  };
+
   return response.json();
 }
 
