@@ -1,66 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { useQuery, useMutation } from 'react-query';
+import React, { useState } from 'react';
+import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
+import { API_HOST } from '../../lib/constants';
 import styles from '../../styles/predictions/PredictionsTable.module.css';
-import { API_HOST, QUERY_OPTIONS } from '../../lib/constants';
+import type { UserPrediction, NewPrediction } from '../../types/predictions';
 
-type userPrediction =   {
-  prediction_id: number,
-  home_goals: number|null,
-  away_goals: number|null,
-  match: {
-    match_date: string,
-    home: string,
-    away: string,
-    home_goals: number|null,
-    away_goals: number|null
-  },
-  user: {
-    username: string,
-    is_admin: boolean
-  }
-};
+interface PredictionTableProps {
+  predictions: UserPrediction[]
+}
 
-type newPrediction = {
-  prediction_id: number,
-  home_goals: number|null,
-  away_goals: number|null
-};
-
-const PredictionsTable: React.FC = () => {
-  const [predictionsData, setPredictionsData] = useState<userPrediction[]>([]);
+const PredictionsTable: React.FC<PredictionTableProps> = ({predictions}) => {
+  const [predictionsData, setPredictionsData] = useState<UserPrediction[]>(predictions);
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [predictionError, setPredictionError] = useState<string>('')
+  const [predictionError, setPredictionError] = useState<string>('');
   const router = useRouter();
-  
-  const { data, isLoading, isError } = useQuery<userPrediction[]>(
-    'userPredictions',
-    async () => {
-      const accessToken = localStorage.getItem('access_token');
-      const today = new Date();
-      const todayDateString = today.toISOString().slice(0, 10);
-
-      const response = await fetch(
-        `${API_HOST}/prediction/?start_date=${todayDateString}`,
-        {
-            headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        }
-      );
-    
-      if (!response.ok){
-        throw new Error('Error fetching matches data');
-      };
-      return response.json();
-    },
-    QUERY_OPTIONS
-  );
 
   const submitEditedPredictions = useMutation(async () => {
     // Reduce data to new prediction type, and remove nulls and NaNs
-    const newUserPredictions: newPrediction[] = predictionsData.map((pred) => {
+    const newUserPredictions: NewPrediction[] = predictionsData.map((pred) => {
         return {
           prediction_id: pred.prediction_id,
           home_goals: pred.home_goals,
@@ -73,11 +31,11 @@ const PredictionsTable: React.FC = () => {
               pred.away_goals !== null && 
               !isNaN(pred.away_goals)
             )
-      )
+      );
       // No need to send the request if there are no predictions to send
       if (newUserPredictions.length === 0) {
         router.reload();
-      }
+      };
 
     const accessToken = localStorage.getItem('access_token');
     const requestBody = JSON.stringify(newUserPredictions);
@@ -95,7 +53,7 @@ const PredictionsTable: React.FC = () => {
     if (!response.ok) {
       if (response.status === 406) {
         setPredictionError("Something wrong with predictions. Please ensure if you've started a prediction that you finish it!");
-      } 
+      };
 
       return;
     };
@@ -103,16 +61,12 @@ const PredictionsTable: React.FC = () => {
     router.reload();
   });
 
-  useEffect(() => {
-    setPredictionsData(data || []);
-  }, [data])
-
   const handlePredictionsChange = (
     predictionId: number,
     goals: number|null,
     isHome: boolean
   ) => {
-    const newPredictions: userPrediction[] = [...predictionsData]
+    const newPredictions: UserPrediction[] = [...predictionsData]
     const predictionIndex: number = newPredictions.findIndex(
       pred => (pred.prediction_id === predictionId)
     );
@@ -122,20 +76,12 @@ const PredictionsTable: React.FC = () => {
       newPredictions[predictionIndex].away_goals = goals
     };
     setPredictionsData(newPredictions);
-  }
+  };
 
   const preventNegativeInputs = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === '-' || e.key === '_') {
       e.preventDefault();
     };
-  };
-  
-  if (isLoading) {
-    return <div>Loading...</div>;
-  };
-
-  if (isError) {
-    return <div>Error fetching user predictions</div>
   };
 
   return (

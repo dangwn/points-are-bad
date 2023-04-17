@@ -6,6 +6,7 @@ import type { SessionUserPoints } from '../types/points';
 import type { MatchWithoutGoals } from '../types/match';
 import type { LeaderboardApiResponse, LeaderboardUser } from '../types/leaderboard';
 import type { Token } from '../types/token';
+import type { UserPrediction } from '../types/predictions';
 
 export const getLeaderboard = async (pageIndex: number, pageSize: number): Promise<LeaderboardApiResponse> => {
   const offset: number = pageIndex * pageSize;
@@ -71,6 +72,29 @@ export const getUpcomingMatches = async (): Promise<MatchWithoutGoals[]> => {
   return response.json();
 };
 
+export const getUpcomingUserPredictions = async(): Promise<UserPrediction[]> => {
+  const accessToken: string|null = getAccessToken();
+  if (accessToken === null || accessToken === 'undefined') {
+    throw new Error('Auth token could not be found');
+  };
+  const today = new Date();
+  const todayDateString = today.toISOString().slice(0, 10);
+
+  const response = await fetch(
+    `${API_HOST}/prediction/?start_date=${todayDateString}`,
+    {
+        headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    }
+  );
+
+  if (!response.ok){
+    throw new Error('Error fetching predictions data');
+  };
+  return response.json();
+}
+
 export const refreshAccessToken = async (): Promise<Token> => {
   const response: Response = await fetch(
     `${API_HOST}/auth/refresh/`,
@@ -86,4 +110,4 @@ export const refreshAccessToken = async (): Promise<Token> => {
     throw new Error('Error fetching refreshed access token');
   };
   return response.json();
-}
+};

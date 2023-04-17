@@ -9,7 +9,7 @@ export type LeaderboardUser = {
 }
 
 export type LeaderboardApiResponse = {
-  data: LeaderboardUser[];
-  hasMore: boolean;
+  data: LeaderboardUser[],
+  hasMore: boolean,
   pageIndex: number
 }
