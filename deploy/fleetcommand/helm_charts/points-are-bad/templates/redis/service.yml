@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.global.appName }}
+    version: {{ .Chart.AppVersion }}
+spec:
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379
+  selector:
+    app: redis-container

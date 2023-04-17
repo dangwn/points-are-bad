@@ -1,0 +1,60 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #f8f8f8;
+    font-family: 'Montserrat', sans-serif;
+  }
+  
+  .title a {
+    color: #006400;
+    font-size: 30px;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  .a:hover{
+    color:  #0a8e0a;
+  }
+  
+  .username {
+    background-color: #006400;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    margin-top: 10px;
+    cursor: pointer;
+    font-size: 20px;
+  }
+  .username:hover{
+    background-color: #0a8e0a;
+  }
+  
+  .dropdown {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    background-color: #f8f8f8;
+    border-radius: 5px;
+    border: 1px solid #006400;
+    z-index: 1;
+  }
+  
+  .dropdownButton {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    color: #006400;
+  }
+  
+  .dropdownButton:hover {
+    background-color: #006400;
+    color: white;
+  }
+  
+  

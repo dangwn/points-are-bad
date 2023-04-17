@@ -63,6 +63,10 @@ def create_values_yaml(
     values_dict['secrets']['dbName'] = base64_encode(pab_dict['secrets']['dbName'])
     values_dict['secrets']['dbUser'] = base64_encode(pab_dict['secrets']['dbUser'])
     values_dict['secrets']['dbPassword'] = base64_encode(pab_dict['secrets']['dbPassword'])
+    values_dict['secrets']['redisPassword'] = base64_encode(pab_dict['secrets']['redisPassword'])
+    values_dict['secrets']['accessTokenSecret'] = base64_encode(create_auth_secret_key())
+    values_dict['secrets']['refreshTokenSecret'] = base64_encode(create_auth_secret_key())
+    values_dict['secrets']['csrfTokenSecret'] = base64_encode(create_auth_secret_key())
 
     # Docker
     values_dict['secrets']['dockerConfig'] = create_docker_auth_secret(
