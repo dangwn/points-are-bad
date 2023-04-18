@@ -38,7 +38,7 @@ const PredictionsTable: React.FC<PredictionTableProps> = ({predictions}) => {
         router.reload();
       };
 
-    const accessToken: string|null = getAccessToken();
+    const accessToken: string = getAccessToken();
     const requestBody: string = JSON.stringify(newUserPredictions);
 
     const response = await fetch(`${API_HOST}/prediction/`, {

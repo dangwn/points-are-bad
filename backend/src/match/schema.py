@@ -14,3 +14,6 @@ class MatchWithoutGoals(BaseModel):
 class Match(MatchWithoutGoals):
     home_goals: Optional[int]
     away_goals: Optional[int]
+
+class MatchWithId(Match):
+    match_id: int

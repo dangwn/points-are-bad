@@ -15,6 +15,12 @@ USER_IS_NOT_ADMIN_EXCEPTION: HTTPException = HTTPException(
     detail='User is not an admin.'
 )
 
+def COULD_NOT_DELETE_EXCEPTION(what: str) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_406_NOT_ACCEPTABLE,
+        detail=f'Could not delete {what}.'
+    )
+
 def COULD_NOT_UPDATE_EXCEPTION(what: str, why: str) -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_406_NOT_ACCEPTABLE,

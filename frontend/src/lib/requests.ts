@@ -3,7 +3,7 @@ import { API_HOST } from './constants';
 
 import type { SessionUser } from '../types/user';
 import type { SessionUserPoints } from '../types/points';
-import type { MatchWithoutGoals } from '../types/match';
+import type { MatchWithoutGoals, Match } from '../types/match';
 import type { LeaderboardApiResponse, LeaderboardUser } from '../types/leaderboard';
 import type { Token } from '../types/token';
 import type { UserPrediction } from '../types/predictions';
@@ -65,10 +65,7 @@ export const getLeaderboard = async (pageIndex: number, pageSize: number): Promi
 };
 
 export const getSessionUser = async (): Promise<SessionUser> => {
-  const accessToken: string|null = getAccessToken();
-  if (accessToken === null || accessToken === 'undefined') {
-    throw new Error('Auth token could not be found');
-  };
+  const accessToken: string = getAccessToken();
 
   const response: Response = await fetch(`${API_HOST}/user/`, {
     headers: {
@@ -84,10 +81,7 @@ export const getSessionUser = async (): Promise<SessionUser> => {
 }
 
 export const getSessionUserPoints = async (): Promise<SessionUserPoints> => {
-  const accessToken: string|null = getAccessToken();
-  if (accessToken === null || accessToken === 'undefined') {
-    throw new Error('Auth token could not be found');
-  };
+  const accessToken: string = getAccessToken();
 
   const response: Response = await fetch(`${API_HOST}/points/`, {
     headers: {
@@ -113,10 +107,7 @@ export const getUpcomingMatches = async (): Promise<MatchWithoutGoals[]> => {
 };
 
 export const getUpcomingUserPredictions = async(): Promise<UserPrediction[]> => {
-  const accessToken: string|null = getAccessToken();
-  if (accessToken === null || accessToken === 'undefined') {
-    throw new Error('Auth token could not be found');
-  };
+  const accessToken: string = getAccessToken();
   const today = new Date();
   const todayDateString = today.toISOString().slice(0, 10);
 
@@ -133,7 +124,24 @@ export const getUpcomingUserPredictions = async(): Promise<UserPrediction[]> => 
     throw new Error('Error fetching predictions data');
   };
   return response.json();
-}
+};
+
+export const getMatchesWithGoals = async (startDate?: string, endDate?: string): Promise<Match> => {
+  const queryParams: any = {}
+  if (startDate) {
+    queryParams['start_date'] = startDate;
+  };
+  if (endDate) {
+    queryParams['end_date'] = endDate;
+  };
+  const queryParamsString: string = new URLSearchParams(queryParams).toString();
+  
+  const response: Response = await fetch(`${API_HOST}/match/with-goals/?${queryParamsString}`);
+  if (!response.ok){
+    throw new Error('Error fetching upcoming matches');
+  };
+  return response.json();
+};
 
 export const logUserIn = async (email: string, password: string): Promise<Token> => {
   const response = await fetch(
