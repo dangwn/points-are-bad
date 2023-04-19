@@ -36,11 +36,11 @@ router: APIRouter = APIRouter(
     prefix='/points',
 )
 
-@router.get('/', response_model=LeaderBoardUser)
+@router.get('/', response_model=UserWithPoints)
 async def get_user_points(
     current_user: Optional[UserModel] = Depends(get_current_user),
     db: Session = Depends(get_db)
-) -> LeaderBoardUser:
+) -> UserWithPoints:
     if not current_user:
         raise NO_CURRENT_USER_EXCEPTION
     
