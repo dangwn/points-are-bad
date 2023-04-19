@@ -5,6 +5,16 @@ COULD_NOT_CREATE_MATCH_EXCEPTION: HTTPException = HTTPException(
     detail='Could not create match.'
 )
 
+COULD_NOT_GET_POINTS_EXCEPTION: HTTPException = HTTPException(
+    status_code=status.HTTP_400_BAD_REQUEST,
+    detail='Could not get points'
+)
+
+COULD_NOT_GET_LEADERBOARD_EXCEPTION: HTTPException = HTTPException(
+    status_code=status.HTTP_400_BAD_REQUEST,
+    detail='Could not get leaderboard'
+)
+
 NO_CURRENT_USER_EXCEPTION: HTTPException = HTTPException(
     status_code=status.HTTP_403_FORBIDDEN,
     detail='Could not retrieve current user.'
