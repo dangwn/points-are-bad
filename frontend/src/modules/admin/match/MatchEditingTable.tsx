@@ -86,9 +86,9 @@ const MatchEditingTable: React.FC<MatchEditingTableProps> = ({ inputMatchData })
                 match={match}
                 index={index}
                 homeOnChange={(e) => {setIsEditingMatch(prevState => ({...prevState, home: e.target.value}))}}
-                homeGoalsOnChange={(e) => {setIsEditingMatch(prevState => ({...prevState, home_goals: parseInt(e.target.value)}))}}
+                homeGoalsOnChange={(e) => {setIsEditingMatch(prevState => ({...prevState, home_goals: parseInt(e.target.value, 10)}))}}
                 matchDateOnChange={(e) => {setIsEditingMatch(prevState => ({...prevState, date: e.target.value}))}}
-                awayGoalsOnChange={(e) => {setIsEditingMatch(prevState => ({...prevState, away_goals: parseInt(e.target.value)}))}}
+                awayGoalsOnChange={(e) => {setIsEditingMatch(prevState => ({...prevState, away_goals: parseInt(e.target.value, 10)}))}}
                 awayOnChange={(e) => {setIsEditingMatch(prevState => ({...prevState, away: e.target.value}))}}
                 cancelOnClick={() => setIsEditingIndex(null)}
                 submitOnClick={() => submitEditedMatch.mutate()}

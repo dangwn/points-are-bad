@@ -72,6 +72,26 @@ export const updateMatch = async (match: MatchWithId): Promise<MatchWithId> => {
   return response.json();
 }
 
+export const updatePoints = async (): Promise<void> => {
+  const accessToken: string = getAccessToken();
+
+  const response: Response = await fetch(
+    `${API_HOST}/points/calculate`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'accept': '*/*'
+      },
+      credentials: 'include'
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Could not update points');
+  };
+}
+
 export const deleteMatch = async (matchId: number): Promise<void> => {
   const accessToken: string = getAccessToken();
 

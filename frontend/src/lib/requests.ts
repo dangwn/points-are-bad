@@ -2,7 +2,7 @@ import { getAccessToken, setAccessToken } from './accessToken';
 import { API_HOST } from './constants';
 
 import type { SessionUser } from '../types/user';
-import type { SessionUserPoints } from '../types/points';
+import type { SessionUserPoints, LeaderboardPoints } from '../types/points';
 import type { MatchWithoutGoals, Match } from '../types/match';
 import type { LeaderboardApiResponse, LeaderboardUser } from '../types/leaderboard';
 import type { Token } from '../types/token';
@@ -80,7 +80,7 @@ export const getSessionUser = async (): Promise<SessionUser> => {
 
 }
 
-export const getSessionUserPoints = async (): Promise<SessionUserPoints> => {
+export const getSessionUserPoints = async (): Promise<LeaderboardPoints> => {
   const accessToken: string = getAccessToken();
 
   const response: Response = await fetch(`${API_HOST}/points/`, {

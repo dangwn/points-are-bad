@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
-import { useQueries } from 'react-query';
 
 import withUser from '../auth/withUser';
 import MatchAdmin from './MatchAdmin';
-import Loading from '../shared/Loading';
 import Error from '../shared/Error';
-import { getFullMatches } from '../../lib/adminRequests';
-import type { MatchWithId } from '../../types/match';
+
+import { updatePoints } from '@/lib/adminRequests';
 
 interface AdminPageProps {
   username: string;
@@ -24,7 +22,7 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({text, onClick}) => {
 }
 
 const AdminPage: React.FC<AdminPageProps> = ({username, isAdmin}) => {
-  const [adminState, setAdminState] = useState<string>('')
+  const [adminState, setAdminState] = useState<string>('');
   const router = useRouter();
 
   if (!isAdmin) {
@@ -37,6 +35,17 @@ const AdminPage: React.FC<AdminPageProps> = ({username, isAdmin}) => {
       <NavigationButton text='PAB Home' onClick={() => router.push('/')} />
       <NavigationButton text='Users' onClick={() => setAdminState('user')} />
       <NavigationButton text='Matches' onClick={() => setAdminState('match')} />
+      <button
+        onClick={async () => {
+          try {
+            await updatePoints()
+          } catch (e) {
+            console.log(e);
+          }
+        }}
+      >
+        Update Points
+      </button>
       {
         (adminState === 'match') &&
         <MatchAdmin />

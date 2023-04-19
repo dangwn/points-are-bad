@@ -95,7 +95,7 @@ const PredictionsTable: React.FC<PredictionTableProps> = ({predictions}) => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       handlePredictionsChange(
                         prediction.prediction_id,
-                        parseInt(e.target.value),
+                        parseInt(e.target.value, 10),
                         true
                       );
                     }}
@@ -120,7 +120,7 @@ const PredictionsTable: React.FC<PredictionTableProps> = ({predictions}) => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       handlePredictionsChange(
                         prediction.prediction_id,
-                        parseInt(e.target.value),
+                        parseInt(e.target.value, 10),
                         false
                       );
                     }}
