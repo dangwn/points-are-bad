@@ -51,7 +51,7 @@ async def get_matches_without_goals(
 
     return matches
 
-@router.post('/', response_model=Match)
+@router.post('/', response_model=MatchWithId)
 async def create_match(
     match: MatchWithoutGoals,
     user_is_admin: bool = Depends(is_current_user_admin),

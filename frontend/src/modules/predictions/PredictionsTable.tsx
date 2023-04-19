@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
-import { getAccessToken } from '../../lib/accessToken';
-import { API_HOST } from '../../lib/constants';
-import styles from '../../styles/predictions/PredictionsTable.module.css';
-import type { UserPrediction, NewPrediction } from '../../types/predictions';
+import { getAccessToken } from '@/lib/accessToken';
+import { preventNegativeInputs } from '@/lib/change';
+import { API_HOST } from '@/lib/constants';
+import styles from '@/styles/predictions/PredictionsTable.module.css';
+import type { UserPrediction, NewPrediction } from '@/types/predictions';
 
 interface PredictionTableProps {
   predictions: UserPrediction[]
@@ -74,12 +75,6 @@ const PredictionsTable: React.FC<PredictionTableProps> = ({predictions}) => {
       newPredictions[predictionIndex].away_goals = goals
     };
     setPredictionsData(newPredictions);
-  };
-
-  const preventNegativeInputs = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === '-' || e.key === '_') {
-      e.preventDefault();
-    };
   };
 
   return (

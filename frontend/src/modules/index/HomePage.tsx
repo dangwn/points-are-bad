@@ -5,6 +5,7 @@ import PointsTable from './PointsTable';
 import UpcomingMatches from './UpcomingMatches';
 import Header from '../shared/Header';
 import Loading from '../shared/Loading';
+import Error from '../shared/Error';
 
 import { getSessionUserPoints, getUpcomingMatches } from '../../lib/requests';
 import { SessionUserPoints } from '../../types/points';
@@ -31,7 +32,7 @@ const HomePage: React.FC<HomePageProps> = ({}) => {
   };
 
   if (queryResults.some((result) => result.isError)) {
-    return <div>Error fetching data</div>
+    return <Error />
   };
 
   const sessionUserPoints: SessionUserPoints = queryResults[0].data || {

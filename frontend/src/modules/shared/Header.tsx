@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from 'react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
-import { API_HOST } from '../../lib/constants';
+import { API_HOST, CLIENT_HOST } from '../../lib/constants';
 import { deleteAccessToken } from '../../lib/accessToken';
 import styles from '../../styles/header/Header.module.css';
 
@@ -58,7 +58,7 @@ const Header: React.FC<HeaderProps> = ({ isAdmin }) => {
             <DropdownButton text='Leaderboard' onClick={() => router.push('/leaderboard')} />
             {
               isAdmin && (
-              <DropdownButton text='Admin' onClick={() => router.push('/admin')} />
+              <DropdownButton text='Admin' onClick={() => window.open(`${CLIENT_HOST}/admin`,'_blank')} />
             )}
             <DropdownButton text='Logout' onClick={() => handleLogout.mutate()} />
           </div>

@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
+import { useQueries } from 'react-query';
 
+import withUser from '../auth/withUser';
 import MatchAdmin from './MatchAdmin';
+import Loading from '../shared/Loading';
+import Error from '../shared/Error';
+import { getFullMatches } from '../../lib/adminRequests';
 import type { MatchWithId } from '../../types/match';
 
 interface AdminPageProps {
@@ -23,27 +28,9 @@ const AdminPage: React.FC<AdminPageProps> = ({username, isAdmin}) => {
   const router = useRouter();
 
   if (!isAdmin) {
-    return <>404</>
+    return <Error />
   }
 
-  const Matches: MatchWithId[] = [
-    {
-      match_id: 1,
-      match_date: '2023-01-01',
-      home: 'England',
-      away: 'Germany',
-      home_goals: 2,
-      away_goals: 0
-    },
-    {
-      match_id: 2,
-      match_date: '2023-01-01',
-      home: 'Italy',
-      away: 'France',
-      home_goals: null,
-      away_goals: null
-    }
-  ]
 
   return (
     <div>
@@ -52,10 +39,10 @@ const AdminPage: React.FC<AdminPageProps> = ({username, isAdmin}) => {
       <NavigationButton text='Matches' onClick={() => setAdminState('match')} />
       {
         (adminState === 'match') &&
-        <MatchAdmin inputMatchData={Matches} />
+        <MatchAdmin />
       }
     </div>
   )
 };
 
-export default AdminPage;
+export default withUser(AdminPage);
