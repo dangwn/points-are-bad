@@ -6,7 +6,7 @@ import type { SessionUserPoints } from '../types/points';
 import type { MatchWithoutGoals, Match } from '../types/match';
 import type { LeaderboardApiResponse, LeaderboardUser } from '../types/leaderboard';
 import type { Token } from '../types/token';
-import type { UserPrediction } from '../types/predictions';
+import type { UserPrediction, NewPrediction } from '../types/predictions';
 
 export const createUser = async (token: string, username: string, password: string): Promise<Token> => {
   const response = await fetch(
@@ -183,3 +183,22 @@ export const refreshAccessToken = async (): Promise<Token> => {
   };
   return response.json();
 };
+
+export const updateUserPredictions = async (newUserPredictions: NewPrediction[]): Promise<void> => {
+  const accessToken: string = getAccessToken();
+  const requestBody: string = JSON.stringify(newUserPredictions);
+
+  const response = await fetch(`${API_HOST}/prediction/`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: requestBody,
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error('Could not update user predictions')
+  };
+}

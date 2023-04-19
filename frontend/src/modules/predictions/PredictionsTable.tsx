@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
-import { getAccessToken } from '@/lib/accessToken';
+import { updateUserPredictions } from '@/lib/requests';
 import { preventNegativeInputs } from '@/lib/change';
-import { API_HOST } from '@/lib/constants';
 import styles from '@/styles/predictions/PredictionsTable.module.css';
 import type { UserPrediction, NewPrediction } from '@/types/predictions';
 
@@ -39,25 +38,12 @@ const PredictionsTable: React.FC<PredictionTableProps> = ({predictions}) => {
         router.reload();
       };
 
-    const accessToken: string = getAccessToken();
-    const requestBody: string = JSON.stringify(newUserPredictions);
-
-    const response = await fetch(`${API_HOST}/prediction/`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: requestBody,
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
+    try {
+      await updateUserPredictions(newUserPredictions);
+      router.reload();
+    } catch {
       setPredictionError("Something went wrong when updating your predictions. Please try again.");
-      return;
-    };
-
-    router.reload();
+    }
   });
 
   const handlePredictionsChange = (
