@@ -8,6 +8,7 @@ class Points(BaseModel):
     points: int
     correct_scores: int
     largest_error: int
+    position: Optional[int]
 
     class Config:
         orm_mode: bool = True
@@ -17,4 +18,3 @@ class UserWithPoints(Points):
 
 class LeaderBoardUser(Points):
     user: Username
-    position: Optional[int]

@@ -6,3 +6,7 @@ export type SessionUserPoints = {
   largest_error: number,
   user: SessionUser
 }
+
+export type LeaderboardPoints = SessionUserPoints & {
+  position: number|null
+}

@@ -37,3 +37,6 @@ REDIS_PASSWORD: str = os.getenv('REDIS_PASSWORD', None)
 # User Config
 USERNAME_MIN_LENGTH: int = 3
 USERNAME_MAX_LENGTH: int = 30
+
+# Points config
+NULL_PREDICTION_PENALTY: int = int(os.getenv('NULL_PREDICTION_PENALTY', 10))
