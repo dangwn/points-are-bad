@@ -14,9 +14,9 @@ const UpcomingMatches: React.FC<UpcomingMatchesProps> = ({ matchData }) => {
       <table className={styles.upcomingMatchesTable}>
         <thead>
           <tr>
-            <th className={styles.upcomingMatchesTableElement}>Home</th>
-            <th className={styles.upcomingMatchesTableElement}>Match Date</th>
-            <th className={styles.upcomingMatchesTableElement}>Away</th>
+            <th className={styles.upcomingMatchesTh}>Home</th>
+            <th className={styles.upcomingMatchesTh}>Date</th>
+            <th className={styles.upcomingMatchesTh}>Away</th>
           </tr>
         </thead>
         <tbody>
