@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useMutation, useQueryClient} from 'react-query';
 import { useRouter } from 'next/router';
 
-import { API_HOST } from '../../lib/constants';
-import styles from '../../styles/settings/DangerZone.module.css'
+import { API_HOST } from '@/lib/constants';
+import styles from '@/styles/settings/DangerZone.module.css'
 
 const DangerZone: React.FC = () =>{
   const queryClient = useQueryClient();
