@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Cookie from "js-cookie";
 
-import styles from '../../styles/cookie/CookiePopup.module.css'
+import styles from '../../styles/CookiePopup.module.css';
 
 const CookiePopup = () => {
   const [showPopup, setShowPopup] = useState(false);
