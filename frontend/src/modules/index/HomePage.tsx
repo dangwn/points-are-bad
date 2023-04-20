@@ -7,9 +7,9 @@ import Header from '../shared/Header';
 import Loading from '../shared/Loading';
 import Error from '../shared/Error';
 
-import { createPositionString } from '@/lib/change';
 import { getSessionUserPoints, getUpcomingMatches } from '@/lib/requests';
-import type { SessionUserPoints, LeaderboardPoints } from '@/types/points';
+import styles from '@/styles/HomePage.module.css'
+import type { LeaderboardPoints } from '@/types/points';
 import type { MatchWithoutGoals } from '@/types/match';
 
 interface HomePageProps {}
@@ -54,10 +54,11 @@ const HomePage: React.FC<HomePageProps> = ({}) => {
         isAdmin={sessionUserPoints.user.is_admin}
       />
       <PointsTable 
-        username={`${sessionUserPoints.user.username} | ${createPositionString(sessionUserPoints.position)}`}
+        username={sessionUserPoints.user.username}
         points={sessionUserPoints.points}
         correctScores={sessionUserPoints.correct_scores}
         largestError={sessionUserPoints.largest_error}
+        position={sessionUserPoints.position}
       />
       <UpcomingMatches 
         matchData={upcomingMatches}
