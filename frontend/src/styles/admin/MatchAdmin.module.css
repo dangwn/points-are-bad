@@ -1,22 +1,29 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+@import url(https://fonts.googleapis.com/css?family=Inter);
 
 .container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    background-color: #f8f8f8;
     padding: 20px;
     border-radius: 10px;
     margin: 0 auto;
-    max-width: 60%;
-    font-family: 'Montserrat', sans-serif;
+    max-width: 80%;
+    font-family: 'inter';
   }
+
+  .createMatchPanelContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
   
   .tableTitle {
-    font-size: 2em;
-    color: #006400;
+    font-size: 3em;
+    color: white;
     margin-bottom: 20px;
     text-align: center;
+    font-weight: bold;
   }
   
   .table {
@@ -25,32 +32,6 @@
     text-align: center;
   }
   
-  .th {
-    background-color: #006400;
-    color: #f8f8f8;
-    font-weight: bold;
-    padding: 10px;
-    text-align: center;
-    width: calc(100% / 5);
-  }
-  
-  .td {
-    border: 1px solid #006400;
-    padding: 10px;
-    text-align: center;
-    font-size: 1.2em;
-    color: #006400;
-    width: calc(100% / 5);
-  }
-  
-  .tr:nth-child(even) {
-    background-color: #f8f8f8;
-  }
-  
-  .tr:nth-child(odd) {
-    background-color: #d3d3d3;
-  }
-
   .tableElement {
     padding: 10px;
     text-align: center;
@@ -59,27 +40,30 @@
   }
 
   .tableInput {
+    margin: 10px;
     padding: 10px;
     text-align: center;
     font-size: 0.8em;
     width: calc(100% /1.2);
-    background-color: #f8f8f8;
-    font-family: 'Montserrat', sans-serif;
+    background-color: #7e7d7d;
+    color: #e6e6e6;
+    border-color: #e6e6e6;
     border-radius: 5px;
+    border: solid;
   }
 
   .button {
-      background-color: #006400;
+      background-color: #6699FC;
       color: white;
       padding: 10px;
       border-radius: 5px;
       border: none;
-      margin-top: 5px;
       cursor: pointer;
       font-size: 0.8em;
+      margin: 0 5px
   }
   .button:hover{
-    background-color: #0a8e0a;
+    background-color: #4c87fe;
   }
 
   .Error{
@@ -93,19 +77,21 @@
   }
 
   .newMatchInput {
-    width: 30%;
-    padding: 10px;
     margin: 10px;
+    padding: 10px;
     text-align: center;
     font-size: 0.8em;
-    background-color: #f8f8f8;
-    font-family: 'Montserrat', sans-serif;
+    width: calc(100% /1.2);
+    background-color: #7e7d7d;
+    color: #e6e6e6;
+    border-color: #e6e6e6;
     border-radius: 5px;
+    border: solid;
   }
 
   .newMatchButton {
     width: 30%;
-    background-color: #006400;
+    background-color: #6699FC;
     color: white;
     padding: 10px;
     border-radius: 5px;
@@ -116,5 +102,12 @@
     font-size: 1em;
   }
   .newMatchButton:hover{
-    background-color: #0a8e0a;
+    background-color: #4c87fe;
+  }
+
+  .hr {
+    width: 60%;
+    background-color: white;
+    border-top: None;
+    height: 1px
   }

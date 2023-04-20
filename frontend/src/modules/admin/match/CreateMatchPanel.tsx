@@ -30,7 +30,7 @@ const CreateMatchPanel: React.FC<CreateMatchPanelProps> = ({}) => {
   });
   
   return (
-    <div>
+    <div className={styles.createMatchPanelContainer}>
       {
         isCreatingNewMatch ?
         <>
@@ -55,10 +55,10 @@ const CreateMatchPanel: React.FC<CreateMatchPanelProps> = ({}) => {
           />
           </div>
           <div className={styles.newMatchContainer}>
-            <button className={styles.newMatchButton} onClick={() => handleCreateMatch.mutate()}>
+            <button className={styles.button} onClick={() => handleCreateMatch.mutate()}>
               Submit
             </button>
-            <button className={styles.newMatchButton} onClick={() => setIsCreatingNewMatch(false)}>
+            <button className={styles.button} onClick={() => setIsCreatingNewMatch(false)}>
               Cancel
             </button>
           </div> 
