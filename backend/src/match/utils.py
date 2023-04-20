@@ -48,3 +48,43 @@ async def insert_match_into_db(
         return
     
     return new_match
+
+async def delete_match_by_id(
+    match_id: int,
+    db: Session
+) -> bool:
+    try:
+        db.query(MatchModel).filter(MatchModel.match_id == match_id).delete()
+        db.commit()
+        return True
+    except:
+        return False
+    
+async def update_match_in_db(
+    match_id: int,
+    home: str,
+    away: str,
+    match_date: date,
+    home_goals: int,
+    away_goals: int,
+    db: Session
+) -> Optional[MatchModel]:
+    match: Optional[MatchModel] = db.query(MatchModel).filter(
+        MatchModel.match_id == match_id
+    ).first()
+
+    if not match:
+        return
+    
+    try:
+        match.home = home
+        match.away = away
+        match.match_date = match_date
+        match.home_goals = home_goals
+        match.away_goals = away_goals
+
+        db.commit()
+
+        return match
+    except:
+        return

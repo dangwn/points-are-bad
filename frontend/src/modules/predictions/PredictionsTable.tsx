@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useMutation } from 'react-query';
 import { useRouter } from 'next/router';
 
-import { getAccessToken } from '../../lib/accessToken';
-import { API_HOST } from '../../lib/constants';
-import styles from '../../styles/predictions/PredictionsTable.module.css';
-import type { UserPrediction, NewPrediction } from '../../types/predictions';
+import { updateUserPredictions } from '@/lib/requests';
+import { preventNegativeInputs } from '@/lib/change';
+import styles from '@/styles/predictions/PredictionsTable.module.css';
+import type { UserPrediction, NewPrediction } from '@/types/predictions';
 
 interface PredictionTableProps {
   predictions: UserPrediction[]
@@ -38,25 +38,12 @@ const PredictionsTable: React.FC<PredictionTableProps> = ({predictions}) => {
         router.reload();
       };
 
-    const accessToken: string|null = getAccessToken();
-    const requestBody: string = JSON.stringify(newUserPredictions);
-
-    const response = await fetch(`${API_HOST}/prediction/`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: requestBody,
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
+    try {
+      await updateUserPredictions(newUserPredictions);
+      router.reload();
+    } catch {
       setPredictionError("Something went wrong when updating your predictions. Please try again.");
-      return;
-    };
-
-    router.reload();
+    }
   });
 
   const handlePredictionsChange = (
@@ -74,12 +61,6 @@ const PredictionsTable: React.FC<PredictionTableProps> = ({predictions}) => {
       newPredictions[predictionIndex].away_goals = goals
     };
     setPredictionsData(newPredictions);
-  };
-
-  const preventNegativeInputs = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === '-' || e.key === '_') {
-      e.preventDefault();
-    };
   };
 
   return (
@@ -114,7 +95,7 @@ const PredictionsTable: React.FC<PredictionTableProps> = ({predictions}) => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       handlePredictionsChange(
                         prediction.prediction_id,
-                        parseInt(e.target.value),
+                        parseInt(e.target.value, 10),
                         true
                       );
                     }}
@@ -139,7 +120,7 @@ const PredictionsTable: React.FC<PredictionTableProps> = ({predictions}) => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       handlePredictionsChange(
                         prediction.prediction_id,
-                        parseInt(e.target.value),
+                        parseInt(e.target.value, 10),
                         false
                       );
                     }}
