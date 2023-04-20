@@ -1,6 +1,4 @@
 @import url(https://fonts.googleapis.com/css?family=Inter);
-@import url(https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap);
-@import url(https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap);
 
 .cookiePopup {
     position: fixed;
@@ -24,7 +22,7 @@
     align-items: center;
     justify-content: center;
     min-height: 300px;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'inter';
 }
   
 .button {
