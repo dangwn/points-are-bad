@@ -3,9 +3,9 @@ import { useMutation, useQueryClient } from 'react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
-import { API_HOST, CLIENT_HOST } from '../../lib/constants';
-import { deleteAccessToken } from '../../lib/accessToken';
-import styles from '../../styles/header/Header.module.css';
+import { API_HOST, CLIENT_HOST } from '@/lib/constants';
+import { deleteAccessToken } from '@/lib/accessToken';
+import styles from '@/styles/Header.module.css';
 
 interface DropdownButtonProps {
   text: string;
@@ -47,12 +47,12 @@ const Header: React.FC<HeaderProps> = ({ isAdmin }) => {
         </Link>
       </div>
       <div className={styles.user}>
-        <button className={styles.username} onClick={handleDropdownClick}>
+        <button className={styles.menu} onClick={handleDropdownClick}>
           Menu
         </button>
         {showDropdown && (
           <div className={styles.dropdown}>
-            <DropdownButton text='Home' onClick={() => router.push('/')} />
+            <button className={styles.dropdownButtonTop} onClick={() => router.push('/')}>Home</button> 
             <DropdownButton text='Settings' onClick={() => router.push('/settings')} />
             <DropdownButton text='Predictions' onClick={() => router.push('/predictions')} />
             <DropdownButton text='Leaderboard' onClick={() => router.push('/leaderboard')} />
@@ -60,7 +60,7 @@ const Header: React.FC<HeaderProps> = ({ isAdmin }) => {
               isAdmin && (
               <DropdownButton text='Admin' onClick={() => window.open(`${CLIENT_HOST}/admin`,'_blank')} />
             )}
-            <DropdownButton text='Logout' onClick={() => handleLogout.mutate()} />
+            <button className={styles.dropdownButtonBottom} onClick={() => handleLogout.mutate()}>Logout</button> 
           </div>
         )}
       </div>
