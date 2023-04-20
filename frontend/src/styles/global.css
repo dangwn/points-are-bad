@@ -1,3 +1,32 @@
+@import url(https://fonts.googleapis.com/css?family=Inter);
+@import url(https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap);
+@import url(https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap);
+
 * {
-    background-color: #f8f8f8
+    background-color: #1F2933;
+    font-family: 'inter';
+    color: #FFFFFF
 }
+
+::placeholder {
+    color: #FFFFFF;
+}
+:-ms-input-placeholder {
+    color: #FFFFFF
+}
+::-ms-input-placeholder {
+    color: #FFFFFF
+}
+::placeholder:focus {
+    color: black;
+}
+:-ms-input-placeholder focus {
+    color: black;
+}
+::-ms-input-placeholderfocus {
+    color: black;
+}
+
+/* * {
+    background-color: #f8f8f8
+} */

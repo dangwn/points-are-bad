@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useMutation } from 'react-query';
 
-import Loading from '../shared/Loading';
-import { setAccessToken } from '../../lib/accessToken';
-import { createUser, getVerificationToken } from '../../lib/requests';
-import styles from '../../styles/login/SignUpForm.module.css';
-import type { SignUpData } from '../../types/auth';
-import type { Token } from '../../types/token';
+import { setAccessToken } from '@/lib/accessToken';
+import { createUser, getVerificationToken } from '@/lib/requests';
+
+import styles from '@/styles/SignUpPage.module.css';
+import type { SignUpData } from '@/types/auth';
+import type { Token } from '@/types/token';
 
 interface SignUpFormProps {
   onSuccess: () => void
@@ -92,20 +92,19 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
   };
 
   return (
-    <div className={styles.container}>
       <div>
         {
           (verificationToken === '') ?
-          <form onSubmit={handleCreateVerificationTokenSubmit}>
-            <label className={styles.label}>
-              Email:
-              <input 
-                className={styles.input}
-                type='email'
-                name='email'
-                value={email}
-                onChange={handleCreateVerificationTokenChange}
-              />
+          <div className={styles.signUpForm}>
+          <form className={styles.signUpForm} onSubmit={handleCreateVerificationTokenSubmit}>
+            <input 
+              className={styles.input}
+              type='email'
+              name='email'
+              value={email}
+              onChange={handleCreateVerificationTokenChange}
+              placeholder='Email'
+            />
             <button 
               className={styles.button} 
               type='submit' 
@@ -113,53 +112,51 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
             >
               {createVerificationToken.isLoading ? 'Loading...' : 'Verify Email'}
             </button>
-            </label>
-          </form> :
-          <form onSubmit={handleCreateUserSubmit}>
-            <label className={styles.label}>
-              Username:
+          </form>
+          <hr className={styles.signUpHR}/>
+          <p className={styles.h3}>Already got an account?</p>
+          <button className={styles.button} onClick={() => {
+            router.push('/login');
+          }}>
+            Log In
+          </button>
+          </div> :
+          <form className={styles.signUpForm} onSubmit={handleCreateUserSubmit}>
               <input 
                 className={styles.input}
                 type='text'
                 name='username'
                 value={formData.username}
                 onChange={handleCreateUserChange}
+                placeholder='Username'
               />
-            </label>
-            <br />
-            <label className={styles.label}>
-              Password:
               <input 
                 className={styles.input}
                 type='password'
                 name='password'
                 value={formData.password}
                 onChange={handleCreateUserChange}
+                placeholder='Password'
               />
-            </label>
-            <br />
-            <label className={styles.label}>
-              Confirm Password:
               <input 
                 className={styles.input}
                 type='password'
                 name='confirmPassword'
                 value={formData.confirmPassword}
                 onChange={handleCreateUserChange}
+                placeholder='Confirm Password'
               />
-            </label>
             <button 
               className={styles.button} 
               type='submit' 
               disabled={signUpUser.isLoading}
             >
-              {signUpUser.isLoading ? 'Loading...': 'Sign Up'}
+              {signUpUser.isLoading ? 'Loading...': 'Create Account'}
             </button>
           </form>
         }
+        {(signUpError === '') ? null : (<div className={styles.error}>{signUpError}</div>)}
       </div>
-      {(signUpError === '') ? null : (<div className={styles.error}>{signUpError}</div>)}
-    </div>
   )
 }
 
