@@ -5,6 +5,8 @@ from fastapi.security import OAuth2PasswordBearer
 import re
 import json
 import base64
+from random import choice
+from string import ascii_letters
 
 from db import get_db
 
@@ -127,9 +129,9 @@ async def is_user_email_in_db(
 
 def create_token_sauce() -> str:
     '''
-    Creates the random number key for the email
+    Creates the random string key for the email
     '''
-    return '123456'
+    return ''.join(choice(ascii_letters) for _ in range(12))
 
 async def create_verification_token(
     email: str
