@@ -1,0 +1,46 @@
+.loadingContainer{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .spinnerDot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: white;
+    margin: 0 6px;
+    animation: spinnerAnimation 1s ease-in-out infinite;
+  }
+  
+  .spinnerDot:nth-child(2) {
+    animation-delay: -0.4s;
+  }
+  
+  .spinnerDot:nth-child(3) {
+    animation-delay: -0.2s;
+  }
+  
+  .spinnerDot:nth-child(4) {
+    animation-delay: 0s;
+  }
+  
+  @keyframes spinnerAnimation {
+    0% {
+      transform: scale(0);
+    }
+    50% {
+      transform: scale(1);
+    }
+    100% {
+      transform: scale(0);
+    }
+  }
+  
