@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation } from 'react-query';
+import { useRouter } from 'next/router';
 
 import { updateUsername, updatePassword } from '@/lib/requests';
 import styles from '@/styles/settings/EditUser.module.css';
@@ -17,7 +18,6 @@ type newPasswordForm = {
 const EditUser: React.FC<EditUserProps> = ({ username }) => {
   const [isEditingUsername, setIsEditingUsername] = useState<boolean>(false);
   const [isEditingPassword, setIsEditingPassword] = useState<boolean>(false);
-  const [message, setMessage] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [newUsername, setNewUsername] = useState<string>('');
   const [passwordForm, setPasswordForm] = useState<newPasswordForm>({
@@ -25,15 +25,13 @@ const EditUser: React.FC<EditUserProps> = ({ username }) => {
     newPassword: '',
     confirmPassword: ''
   });
+  const router = useRouter();
 
   const submitUsernameMutation = useMutation(
     async () => {
       try {
         await updateUsername(newUsername);
-        setNewUsername('');
-        setIsEditingUsername(false);
-        setError('');
-        setMessage('Username updated successfully!');
+        router.reload();
       } catch {
         setError('Unable to update username');
       }
@@ -43,14 +41,7 @@ const EditUser: React.FC<EditUserProps> = ({ username }) => {
     async () => {
       try {
         await updatePassword(passwordForm.oldPassword, passwordForm.newPassword);
-        setPasswordForm({
-          oldPassword: '',
-          newPassword: '',
-          confirmPassword: ''
-        });
-        setIsEditingPassword(false);
-        setError('');
-        setMessage('Password updated successfully!');
+        router.reload();
       } catch (e: any) {
         setError(e.message);
       }
@@ -122,10 +113,7 @@ const EditUser: React.FC<EditUserProps> = ({ username }) => {
         </> :
         <button 
           className={styles.button} 
-          onClick={() => {
-            setIsEditingUsername(true);
-            setMessage('');
-          }}
+          onClick={() => setIsEditingUsername(true)}
         >
           Change Username
         </button> 
@@ -171,7 +159,6 @@ const EditUser: React.FC<EditUserProps> = ({ username }) => {
               onClick={() => {
                 setIsEditingPassword(false);
                 setError('');
-                setMessage('');
               }}
             >
               Cancel
@@ -179,17 +166,10 @@ const EditUser: React.FC<EditUserProps> = ({ username }) => {
         </> :
         <button 
           className={styles.button} 
-          onClick={() => {
-            setIsEditingPassword(true);
-            setMessage('');
-          }}
+          onClick={() => setIsEditingPassword(true)}
         >
           Change Password
         </button> 
-      }
-      {
-        message && 
-        <p className={styles.message}>{message}</p>
       }
       {
         error &&
