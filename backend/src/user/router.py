@@ -157,7 +157,7 @@ async def edit_username(
     username: str = Body(),
     current_user: UserModel = Depends(get_current_user),
     db: Session = Depends(get_db)
-) -> str:
+) -> Response:
     if not current_user:
         raise NO_CURRENT_USER_EXCEPTION
     

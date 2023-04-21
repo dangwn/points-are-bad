@@ -32,6 +32,7 @@ const EditUser: React.FC<EditUserProps> = ({ username }) => {
         await updateUsername(newUsername);
         setNewUsername('');
         setIsEditingUsername(false);
+        setError('');
         setMessage('Username updated successfully!');
       } catch {
         setError('Unable to update username');
