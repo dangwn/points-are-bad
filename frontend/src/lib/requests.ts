@@ -184,9 +184,9 @@ export const refreshAccessToken = async (): Promise<Token> => {
   return response.json();
 };
 
-export const updateUsername = async (newUsername: string) => {
+export const updateUsername = async (newUsername: string): Promise<void> => {
   const accessToken: string = getAccessToken();
-  const response = await fetch(`${API_HOST}/user/username`,
+  const response: Response = await fetch(`${API_HOST}/user/username`,
    {
       method: 'PUT',
       headers: {
@@ -200,7 +200,32 @@ export const updateUsername = async (newUsername: string) => {
   if (!response.ok){
     throw new Error('Could not update username');
   };
-  return response.json()
+}
+
+export const updatePassword = async (oldPassword: string, newPassword: string): Promise<void> => {
+  const accessToken: string = getAccessToken();
+
+  const response: Response = await fetch(`${API_HOST}/user/password`,
+   {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'accept': 'application/json'
+      },
+      body: JSON.stringify({
+        current_password: oldPassword,
+        new_password: newPassword
+      }),
+      credentials: 'include'
+   }
+  );
+  if (!response.ok){
+    if (response.status === 401) {
+      throw new Error('Incorrect password');
+    }
+    throw new Error('Unable to change password');
+  };
 }
 
 export const updateUserPredictions = async (newUserPredictions: NewPrediction[]): Promise<void> => {

@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy import and_
 
+from auth.utils import verify_password, hash_password
 from points.utils import insert_points_into_db
 from points.models import Points as PointsModel
 from user.models import User as UserModel
@@ -102,11 +103,44 @@ async def change_username_by_id(
     user_id: int,
     new_username: str,
     db: Session
-) -> Optional[str]:
+) -> bool:
     user: Optional[UserModel] = db.query(UserModel).filter(UserModel.user_id == user_id).first()
     if not user:
-        return
+        return False
     
-    user.username = new_username
-    db.commit()
-    return new_username
+    try:
+        user.username = new_username
+        db.commit()
+        return True
+    except: 
+        return False
+
+async def verify_current_password(
+    user_id: int,
+    current_password: str,
+    db: Session
+) -> bool:
+    user: Optional[UserModel] = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+    if not user:
+        return False
+    return verify_password(
+        plain_password=current_password,
+        hashed_password=user.hashed_password
+    )
+    
+
+async def change_password_by_id(
+    user_id: int,
+    password: str,
+    db: Session
+) -> Optional[bool]:
+    user: Optional[UserModel] = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+    if not user:
+        return False
+    
+    try:
+        user.password = password
+        db.commit()
+        return True
+    except: 
+        return False

@@ -17,6 +17,10 @@ const CreateMatchPanel: React.FC<CreateMatchPanelProps> = ({}) => {
   const [newMatchMessage, setNewMatchMessage] = useState<string>('');
   
   const handleCreateMatch = useMutation(async () => {
+    if (!newMatch.match_date || !newMatch.home || !newMatch.away) {
+      setNewMatchMessage('Please fill all fields.');
+      return;
+    }
     try {
       const match: MatchWithId = await createMatch(newMatch);
       if (!match) {
@@ -58,7 +62,10 @@ const CreateMatchPanel: React.FC<CreateMatchPanelProps> = ({}) => {
             <button className={styles.button} onClick={() => handleCreateMatch.mutate()}>
               Submit
             </button>
-            <button className={styles.button} onClick={() => setIsCreatingNewMatch(false)}>
+            <button className={styles.button} onClick={() => {
+              setIsCreatingNewMatch(false);
+              setNewMatchMessage('');
+            }}>
               Cancel
             </button>
           </div> 
@@ -67,7 +74,7 @@ const CreateMatchPanel: React.FC<CreateMatchPanelProps> = ({}) => {
           Create Match
         </button>
       }
-      <h3 className={styles.Error}>{newMatchMessage}</h3>
+      <p className={styles.Error}>{newMatchMessage}</p>
     </div>
   )
 }

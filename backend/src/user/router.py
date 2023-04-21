@@ -28,6 +28,7 @@ from config import (
     CSRF_TOKEN_COOKIE_KEY
 )
 from exceptions import (
+    INCORRECT_PASSWORD_EXCEPTION,
     NO_CURRENT_USER_EXCEPTION,
     COULD_NOT_UPDATE_EXCEPTION
 )
@@ -36,7 +37,9 @@ from user.schema import NewUser, SessionUser
 from user.utils import (
     insert_user_into_db,
     delete_user_by_id,
-    change_username_by_id
+    change_username_by_id,
+    change_password_by_id,
+    verify_current_password
 )
 
 from typing import (
@@ -158,7 +161,7 @@ async def edit_username(
     if not current_user:
         raise NO_CURRENT_USER_EXCEPTION
     
-    new_username: Optional[str] = await change_username_by_id(
+    new_username: bool = await change_username_by_id(
         user_id=current_user.user_id,
         new_username=username,
         db=db
@@ -166,7 +169,33 @@ async def edit_username(
     if not new_username:
         raise COULD_NOT_UPDATE_EXCEPTION(what="user's username")
 
-    return new_username
+
+@router.put('/password')
+async def edit_password(
+    new_password: str = Body(),
+    current_password: str = Body(),
+    current_user: UserModel = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> Response:
+    if not current_user:
+        raise NO_CURRENT_USER_EXCEPTION
+    
+    current_password_match: bool = await verify_current_password(
+        user_id=current_user.user_id,
+        current_password=current_password,
+        db=db
+    )
+    if not current_password_match:
+        raise INCORRECT_PASSWORD_EXCEPTION
+    
+    new_password_created: bool = await change_password_by_id(
+        user_id=current_user.user_id,
+        password=new_password,
+        db=db
+    )
+    if not new_password_created:
+        raise COULD_NOT_UPDATE_EXCEPTION(what="user's password")
+
 
 @router.post('/testCreateUser')
 async def test_create_user(

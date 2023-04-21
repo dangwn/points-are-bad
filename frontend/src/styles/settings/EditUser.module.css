@@ -68,3 +68,11 @@ background-color: #4c87fe;
   text-align: center;
   color: #ab0000;
 }
+
+.error {
+  color: #ab0000;
+}
+
+.message {
+  color: #45A29E;
+}

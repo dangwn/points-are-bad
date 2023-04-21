@@ -3,8 +3,7 @@ import { useMutation } from 'react-query';
 
 import { setAccessToken } from '../../lib/accessToken';
 import { logUserIn } from '../../lib/requests';
-
-import styles from '@/styles/LoginPage.module.css';
+import styles from '@/styles/LoginPage.module.css'
 import type { Token } from '../../types/token';
 import type { LoginData } from '../../types/auth';
 

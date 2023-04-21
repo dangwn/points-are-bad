@@ -16,6 +16,11 @@ COULD_NOT_GET_LEADERBOARD_EXCEPTION: HTTPException = HTTPException(
     detail='Could not get leaderboard'
 )
 
+INCORRECT_PASSWORD_EXCEPTION: HTTPException = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail='Incorrect password.'
+)
+
 NO_CURRENT_USER_EXCEPTION: HTTPException = HTTPException(
     status_code=status.HTTP_403_FORBIDDEN,
     detail='Could not retrieve current user.'

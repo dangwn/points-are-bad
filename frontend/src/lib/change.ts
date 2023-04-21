@@ -2,7 +2,7 @@ export const preventNegativeInputs = (e: React.KeyboardEvent<HTMLInputElement>):
   if (e.key === '-' || e.key === '_') {
     e.preventDefault();
   };
-};
+}
 
 export const createPositionString = (position: number|string|null): string => {
   if (position === null){
