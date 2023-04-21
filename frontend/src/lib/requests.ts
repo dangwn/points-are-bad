@@ -2,7 +2,7 @@ import { getAccessToken, setAccessToken } from './accessToken';
 import { API_HOST } from './constants';
 
 import type { SessionUser } from '../types/user';
-import type { SessionUserPoints, LeaderboardPoints } from '../types/points';
+import type { LeaderboardPoints } from '../types/points';
 import type { MatchWithoutGoals, Match } from '../types/match';
 import type { LeaderboardApiResponse, LeaderboardUser } from '../types/leaderboard';
 import type { Token } from '../types/token';
@@ -183,6 +183,25 @@ export const refreshAccessToken = async (): Promise<Token> => {
   };
   return response.json();
 };
+
+export const updateUsername = async (newUsername: string) => {
+  const accessToken: string = getAccessToken();
+  const response = await fetch(`${API_HOST}/user/username`,
+   {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'accept': 'application/json'
+      },
+      body: newUsername,
+      credentials: 'include'
+   }
+  );
+  if (!response.ok){
+    throw new Error('Could not update username');
+  };
+  return response.json()
+}
 
 export const updateUserPredictions = async (newUserPredictions: NewPrediction[]): Promise<void> => {
   const accessToken: string = getAccessToken();

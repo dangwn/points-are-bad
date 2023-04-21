@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status
+from typing import Optional
 
 COULD_NOT_CREATE_MATCH_EXCEPTION: HTTPException = HTTPException(
     status_code=status.HTTP_400_BAD_REQUEST,
@@ -31,8 +32,8 @@ def COULD_NOT_DELETE_EXCEPTION(what: str) -> HTTPException:
         detail=f'Could not delete {what}.'
     )
 
-def COULD_NOT_UPDATE_EXCEPTION(what: str, why: str) -> HTTPException:
+def COULD_NOT_UPDATE_EXCEPTION(what: str, why: Optional[str] = None) -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_406_NOT_ACCEPTABLE,
-        detail=f'Could not update {what} due to {why}.'
+        detail=f'Could not update {what}{"" if why is None else " due to "+why}.'
     )

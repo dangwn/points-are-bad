@@ -2,6 +2,7 @@ import React from 'react';
 
 import Header from '../shared/Header';
 import DangerZone from '../settings/DangerZone';
+import EditUser from './EditUser';
 import withUser from '../auth/withUser';
 
 interface LeaderboardProps {
@@ -13,6 +14,7 @@ const LeaderboardPage: React.FC<LeaderboardProps> = ({username, isAdmin}) => {
   return (
     <div>
       <Header isAdmin={isAdmin}/>
+      <EditUser username={username} />
       <DangerZone />
     </div>
   )

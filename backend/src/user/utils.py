@@ -97,3 +97,16 @@ async def delete_user_by_id(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Could not delete user'
         )
+    
+async def change_username_by_id(
+    user_id: int,
+    new_username: str,
+    db: Session
+) -> Optional[str]:
+    user: Optional[UserModel] = db.query(UserModel).filter(UserModel.user_id == user_id).first()
+    if not user:
+        return
+    
+    user.username = new_username
+    db.commit()
+    return new_username

@@ -52,6 +52,18 @@
     border-radius: 5px;
     border: solid;
   }
+  .tableInput::placeholder {
+    color: #dadada;
+    text-align: center;
+  }
+  .tableInput:-ms-input-placeholder {
+    color: #dadada;
+    text-align: center;
+  }
+  .tableInput::-ms-input-placeholder {
+    color: #dadada;
+    text-align: center;
+  }
   .tableInput:focus {
         background-color: #e6e6e6;
         color: #7e7d7d;

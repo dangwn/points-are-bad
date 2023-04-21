@@ -3,7 +3,8 @@ from fastapi import (
     Depends,
     status,
     Response,
-    HTTPException
+    HTTPException,
+    Body
 )
 from fastapi_csrf_protect import CsrfProtect
 from datetime import timedelta
@@ -26,16 +27,17 @@ from config import (
     REFRESH_TOKEN_COOKIE_KEY,
     CSRF_TOKEN_COOKIE_KEY
 )
+from exceptions import (
+    NO_CURRENT_USER_EXCEPTION,
+    COULD_NOT_UPDATE_EXCEPTION
+)
 from user.models import User as UserModel
 from user.schema import NewUser, SessionUser
 from user.utils import (
     insert_user_into_db,
-    delete_user_by_id
+    delete_user_by_id,
+    change_username_by_id
 )
-# from user.validate import (
-#     validate_user_entries,
-#     is_user_email_in_db
-# )
 
 from typing import (
     Optional
@@ -147,6 +149,24 @@ async def delete_current_user(
     response.status_code = status.HTTP_204_NO_CONTENT
     return response
 
+@router.put('/username')
+async def edit_username(
+    username: str = Body(),
+    current_user: UserModel = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> str:
+    if not current_user:
+        raise NO_CURRENT_USER_EXCEPTION
+    
+    new_username: Optional[str] = await change_username_by_id(
+        user_id=current_user.user_id,
+        new_username=username,
+        db=db
+    )
+    if not new_username:
+        raise COULD_NOT_UPDATE_EXCEPTION(what="user's username")
+
+    return new_username
 
 @router.post('/testCreateUser')
 async def test_create_user(
