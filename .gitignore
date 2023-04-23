@@ -47,3 +47,7 @@ notes.txt
 populate_db.py
 
 **/alembic/versions
+
+backend-clients/rabbitmq-client/*.egg-info
+backend-clients/rabbitmq-client/build
+backend-clients/rabbitmq-client/dist
