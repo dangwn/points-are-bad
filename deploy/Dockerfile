@@ -20,7 +20,7 @@ ENV PATH="/home/builduser/venv/bin:$PATH"
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install requirements
-COPY deploy/fleetcommand/requirements.txt requirements.txt
+COPY ./fleetcommand/requirements.txt requirements.txt
 RUN pip3 install --no-cache-dir wheel
 RUN pip3 install --no-cache-dir --upgrade pip
 RUN pip3 install --no-cache-dir -r requirements.txt
@@ -48,7 +48,7 @@ COPY --from=build-image /home/builduser/venv /home/builduser/venv
 
 RUN mkdir /home/builduser/fleetcommand
 WORKDIR /home/builduser/fleetcommand
-COPY --chown=builduser:builduser deploy/fleetcommand .
+COPY --chown=builduser:builduser ./fleetcommand .
 
 # Change User
 USER builduser
