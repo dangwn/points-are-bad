@@ -3,13 +3,14 @@ import { useQuery } from 'react-query';
 
 import Header from '../shared/Header';
 import PredictionsTable from './PredictionsTable';
+import ResultsTable from './ResultsTable';
 import Loading from '../shared/Loading';
 import Error from '../shared/Error';
 import withUser from '../auth/withUser';
 
-import { QUERY_OPTIONS } from '../../lib/constants';
-import { getUpcomingUserPredictions } from '../../lib/requests';
-import type { UserPrediction } from '../../types/predictions';
+import { QUERY_OPTIONS } from '@/lib/constants';
+import { getUserPredictions } from '@/lib/requests';
+import type { UserPrediction } from '@/types/predictions';
 
 interface PredictionsPageProps {
   username: string,
@@ -19,7 +20,7 @@ interface PredictionsPageProps {
 const PredictionsPage: React.FC<PredictionsPageProps> = ({username, isAdmin}) => {
   const { data, isLoading, isError } = useQuery<UserPrediction[]>(
     'userPredictions',
-    getUpcomingUserPredictions,
+    getUserPredictions,
     QUERY_OPTIONS
   );
 
@@ -31,14 +32,23 @@ const PredictionsPage: React.FC<PredictionsPageProps> = ({username, isAdmin}) =>
     return <Error />
   };
 
-  const userPredictions: UserPrediction[] = data || []
+  const today = new Date();
+  const todayDateString = today.toISOString().slice(0, 10);
+
+  const upcomingPredictions: UserPrediction[] = data?.filter(
+    (pred) => (pred.match.match_date > todayDateString)
+  ) || [];
+  const previousPredictions: UserPrediction[] = data?.filter(
+    (pred) => (pred.match.match_date <= todayDateString)
+  ) || [];
 
   return (
     <div>
       <Header 
         isAdmin={isAdmin}
       />
-      <PredictionsTable predictions={userPredictions}/>
+      <PredictionsTable predictions={upcomingPredictions}/>
+      <ResultsTable predictions={previousPredictions} />
     </div>
   )
 };

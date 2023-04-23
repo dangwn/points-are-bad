@@ -106,13 +106,11 @@ export const getUpcomingMatches = async (): Promise<MatchWithoutGoals[]> => {
   return response.json();
 };
 
-export const getUpcomingUserPredictions = async(): Promise<UserPrediction[]> => {
+export const getUserPredictions = async(): Promise<UserPrediction[]> => {
   const accessToken: string = getAccessToken();
-  const today = new Date();
-  const todayDateString = today.toISOString().slice(0, 10);
 
   const response = await fetch(
-    `${API_HOST}/prediction/?start_date=${todayDateString}`,
+    `${API_HOST}/prediction/`,
     {
         headers: {
         'Authorization': `Bearer ${accessToken}`

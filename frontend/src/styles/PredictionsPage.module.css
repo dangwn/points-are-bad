@@ -88,3 +88,8 @@
     text-align: center;
     color: #ab0000;
   }
+
+  .hr {
+    border-style: solid;
+    color: #93939366;
+  }
