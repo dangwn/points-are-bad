@@ -1,0 +1,13 @@
+PACKAGE_NAME=AsyncPikaClient
+VERSION=0.1.0
+SOURCE_DIR=AsyncPikaClient
+
+build:
+	python setup.py sdist bdist_wheel
+
+install:
+	pip install --force-reinstall dist/$(PACKAGE_NAME)-$(VERSION)-py3-none-any.whl
+
+clean:
+	rm -rf build dist *.egg-info
+

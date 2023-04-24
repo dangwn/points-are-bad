@@ -1,3 +1,3 @@
-__all__ = ['AsyncPikaClient']
+__all__ = ['AsyncConsumer','AsyncProducer']
 
-from .client import AsyncPikaClient
+from .client import AsyncConsumer, AsyncProducer

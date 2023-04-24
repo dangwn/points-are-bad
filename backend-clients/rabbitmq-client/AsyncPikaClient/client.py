@@ -1,38 +1,48 @@
 import aio_pika
 
-from exceptions import ClientNotInitializedException
+from exceptions import ClientNotInitializedException, QueueNotFoundError
 
 from aio_pika.connection import Connection
 from aio_pika.channel import Channel
 from aio_pika.queue import Queue
+from aio_pika.exchange import Exchange
 from custom_types import ConsumerCallback
-from typing import Optional, Dict
+from typing import Optional, Dict, Union, List
 
-class AsyncPikaClient:
+class AsyncClient:
     def __init__(
-        self, 
-        connection_string: str,
-        queue_name: str,
+        self,
+        queue_names: Union[List[str], str],
     ):
-        self.connection_string: str = connection_string
-        self.queue_name: str = queue_name
+        self.queue_names: Union[List[str], str] = queue_names
 
         self.connection: Optional[Connection] = None
         self.channel: Optional[Channel] = None
+
+    async def shutdown(self) -> None:
+        if (self.connection):
+            await self.channel.close()
+            await self.connection.close()
+
+
+class AsyncConsumer(AsyncClient):
+    def __init__(self, queue_name: str):
+        super().__init__(queue_names=queue_name)
+
         self.queue: Optional[Queue] = None
         self.consumer_callback: Optional[ConsumerCallback] = None
 
     @classmethod
     async def startup(
         cls,
-        connection_string: str, 
         queue_name: str,
+        connection_string: str,
         consumer_callback: ConsumerCallback
     ):
-        self = AsyncPikaClient(
-            connection_string=connection_string,
-            queue_name=queue_name
+        self = AsyncConsumer(
+            queue_name=queue_name,
         )
+
         self.connection = await aio_pika.connect_robust(
             url=connection_string
         )
@@ -44,25 +54,61 @@ class AsyncPikaClient:
         self.consumer_callback = consumer_callback
 
         return self
-
-    async def shutdown(self) -> None:
-        if (self.connection):
-            await self.channel.close()
-            await self.connection.close()
-
-    async def send_message(self, msg: str) -> Dict[str,str]:
-        if not (self.channel):
-            raise ClientNotInitializedException('Channel not initialized')
-        await self.channel.default_exchange.publish(
-            aio_pika.Message(
-                body=msg.encode()
-            ),
-            routing_key=self.queue_name
-        )
-        return {'status':'success'}
     
     async def consume_messages(self) -> None:
         if not self.queue:
             raise ClientNotInitializedException('Queue not initialized')
         
         await self.queue.consume(self.consumer_callback, no_ack=False)
+
+
+class AsyncProducer(AsyncClient):
+    def __init__(self, queue_names: Union[List[str], str]):
+        super().__init__(queue_names=([queue_names] if isinstance(queue_names, str) else queue_names))
+
+        self.exchange: Optional[Exchange] = None
+        self.queues: Optional[Dict[str,Queue]] = None
+
+    @classmethod
+    async def startup(
+        cls,
+        queue_names: Union[List[str],str],
+        connection_string: str,
+        exchange_name: Optional[str] = None
+    ):
+        self = AsyncProducer(
+            queue_names=queue_names,
+        )
+
+        self.connection = await aio_pika.connect_robust(
+            url=connection_string
+        )
+        self.channel = await self.connection.channel()
+        
+        self.queues = {
+            queue_name:self.channel.declare_queue(
+                name=queue_name,
+                durable=True
+            ) for queue_name in self.queue_names
+        }
+
+        if exchange_name:
+            self.exchange = await self.channel.declare_exchange(name=exchange_name, durable=True)
+        else:
+            self.exchange = self.channel.default_exchange
+
+        return self
+
+    async def send_message(self, msg: str, queue_name: str) -> Dict[str,str]:
+        if queue_name not in self.queue_names:
+            raise QueueNotFoundError(f'Could not find queue "{queue_name}". Available queues: {",".join(self.queue_names)}.')
+        if not self.channel:
+            raise ClientNotInitializedException('Channel not initialized')
+        
+        await self.exchange.publish(
+            aio_pika.Message(
+                body=msg.encode()
+            ),
+            routing_key=queue_name
+        )
+        return {'status':'success'}
