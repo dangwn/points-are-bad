@@ -2,10 +2,12 @@ import aio_pika
 
 from exceptions import ClientNotInitializedException, QueueNotFoundError
 
-from aio_pika.connection import Connection
-from aio_pika.channel import Channel
-from aio_pika.queue import Queue
-from aio_pika.exchange import Exchange
+from aio_pika.abc import (
+    AbstractRobustConnection,
+    AbstractRobustChannel,
+    AbstractQueue,
+    AbstractExchange
+)
 from custom_types import ConsumerCallback
 from typing import Optional, Dict, Union, List
 
@@ -16,8 +18,8 @@ class AsyncClient:
     ):
         self.queue_names: Union[List[str], str] = queue_names
 
-        self.connection: Optional[Connection] = None
-        self.channel: Optional[Channel] = None
+        self.connection: Optional[AbstractRobustConnection] = None
+        self.channel: Optional[AbstractRobustChannel] = None
 
     async def shutdown(self) -> None:
         if (self.connection):
@@ -29,7 +31,7 @@ class AsyncConsumer(AsyncClient):
     def __init__(self, queue_name: str):
         super().__init__(queue_names=queue_name)
 
-        self.queue: Optional[Queue] = None
+        self.queue: Optional[AbstractQueue] = None
         self.consumer_callback: Optional[ConsumerCallback] = None
 
     @classmethod
@@ -66,8 +68,8 @@ class AsyncProducer(AsyncClient):
     def __init__(self, queue_names: Union[List[str], str]):
         super().__init__(queue_names=([queue_names] if isinstance(queue_names, str) else queue_names))
 
-        self.exchange: Optional[Exchange] = None
-        self.queues: Optional[Dict[str,Queue]] = None
+        self.exchange: Optional[AbstractExchange] = None
+        self.queues: Optional[Dict[str, AbstractQueue]] = None
 
     @classmethod
     async def startup(
@@ -86,7 +88,7 @@ class AsyncProducer(AsyncClient):
         self.channel = await self.connection.channel()
         
         self.queues = {
-            queue_name:self.channel.declare_queue(
+            queue_name: await self.channel.declare_queue(
                 name=queue_name,
                 durable=True
             ) for queue_name in self.queue_names
