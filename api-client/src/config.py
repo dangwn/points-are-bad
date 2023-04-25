@@ -1,9 +1,10 @@
 import os
-from typing import List
+from typing import List, Optional
 
 # App Config
 API_HOST_NAME: str = os.getenv('API_HOST_NAME', '0.0.0.0')
 API_PORT: int = os.getenv('API_PORT', 8000)
+FRONTEND_URL: str = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 REQUEST_ORIGINS: List[str] = [
     'http://localhost',
     'http://localhost:3000',
@@ -27,6 +28,13 @@ REFRESH_TOKEN_COOKIE_KEY: str = os.getenv('REFRESH_TOKEN_COOKIE_KEY', 'X-Refresh
 CSRF_TOKEN_LIFETIME_DAYS: int = int(os.getenv('CSRF_TOKEN_LIFETIME_DAYS', 30))
 CSRF_TOKEN_SECRET: str = os.getenv('CSRF_TOKEN_SECRET', 'csrf_secret')
 CSRF_TOKEN_COOKIE_KEY: str = os.getenv('CSRF_TOKEN_COOKIE_KEY', 'X-CSRF-Token')
+
+# Rabbitmq config
+RABBITMQ_QUEUE_NAMES: List[str] = [
+    'email_client_queue'
+]
+RABBITMQ_CONNECTION_STRING: str = 'http://localhost:5672'
+RABBITMQ_EXCHANGE_NAME: Optional[str] = os.getenv('RABBITMQ_EXCHANGE_NAME', None)
 
 # Redis Config
 REDIS_HOST: str = os.getenv('REDIS_HOST', 'localhost')

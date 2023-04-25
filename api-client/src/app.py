@@ -1,7 +1,14 @@
-from fastapi import FastAPI
+# from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from config import REQUEST_ORIGINS
+from api_client import APIClient
+from AsyncPikaClient import AsyncProducer
+from config import (
+    REQUEST_ORIGINS,
+    RABBITMQ_CONNECTION_STRING,
+    RABBITMQ_EXCHANGE_NAME,
+    RABBITMQ_QUEUE_NAMES
+)
 
 from auth.router import router as AuthRouter
 from match.router import router as MatchRouter
@@ -11,7 +18,7 @@ from user.router import router as UserRouter
 
 from typing import Dict
 
-app: FastAPI = FastAPI()
+app: APIClient = APIClient() # FastAPI = FastAPI()
 
 app.include_router(router=AuthRouter)
 app.include_router(router=MatchRouter)
@@ -26,6 +33,18 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*']
 )
+
+@app.on_event('startup')
+async def app_startup():
+    app.rabbitmq_producer: AsyncProducer = await AsyncProducer.startup(
+        queue_names=RABBITMQ_QUEUE_NAMES,
+        connection_string=RABBITMQ_CONNECTION_STRING,
+        exchange_name=RABBITMQ_EXCHANGE_NAME
+    )
+
+@app.on_event('shutdown')
+async def app_shutdown():
+    await app.rabbitmq_producer.shutdown()
 
 @app.get('/')
 async def root() -> Dict[str,str]:

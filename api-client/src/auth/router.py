@@ -10,6 +10,7 @@ from datetime import timedelta
 from fastapi_csrf_protect import CsrfProtect
 from sqlalchemy.orm import Session
 from jose import jwt
+import json
 
 from auth.schema import LoginUser, Token
 from auth.validate import validate_login_user
@@ -26,7 +27,8 @@ from config import (
     REFRESH_TOKEN_LIFETIME_DAYS,
     REFRESH_TOKEN_SECRET,
     REFRESH_TOKEN_COOKIE_KEY,
-    CSRF_TOKEN_COOKIE_KEY
+    CSRF_TOKEN_COOKIE_KEY,
+    FRONTEND_URL
 )
 from user.schema import User
 from db import get_db
@@ -146,6 +148,7 @@ async def refresh_access_token(
 @router.post('/verify/')
 async def create_email_verification_code(
     email: str,
+    request: Request,
     db: Session = Depends(get_db)
 ) -> Token:
     email_is_valid: bool = await validate_email(email=email)
@@ -166,4 +169,11 @@ async def create_email_verification_code(
         )
     
     verification_token: str = await create_verification_token(email=email)
+
+    # Send email
+    await request.app.rabbitmq_producer.send_message(
+        json.dumps({
+        email: f'{FRONTEND_URL}/signup?token={verification_token}'
+    }), queue_name='email_client_queue')
+
     return Token(access_token=verification_token, token_type='verification')
