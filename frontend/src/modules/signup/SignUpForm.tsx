@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useMutation } from 'react-query';
 
 import { setAccessToken } from '@/lib/accessToken';
-import { createUser, getVerificationToken } from '@/lib/requests';
+import { createUser, sendVerificationEmail } from '@/lib/requests';
 
 import styles from '@/styles/SignUpPage.module.css';
 import type { SignUpData } from '@/types/auth';
@@ -16,6 +16,7 @@ interface SignUpFormProps {
 const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
   const [email, setEmail] = useState<string>('');
   const [verificationToken, setVerificationToken] = useState<string>('');
+  const [emailSent, setEmailSent] = useState<boolean>(false)
   const [formData, setFormData] = useState<SignUpData>({
     username:'',
     password:'',
@@ -27,16 +28,20 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
   useEffect(() => {
     const { token } = router.query;
     if (typeof(token) === 'string') {
+      // @TODO add token verification
       setVerificationToken(token);
     };
+    setEmailSent(false);
   }, [router.query]);
 
   const createVerificationToken = useMutation(
     async () => {
-      const token: Token = await getVerificationToken(email);
-
-      // @TODO: Make this display "check email" message
-      router.push(`/signup?token=${token.access_token}`);
+      try {
+        await sendVerificationEmail(email);
+        setEmailSent(true);
+      } catch (e: any) {
+        setSignUpError(e.message);
+      }
     }
   )
 
@@ -90,6 +95,10 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onSuccess }) => {
       [e.target.name]: e.target.value,
     }));
   };
+
+  if (emailSent) {
+    return <h3>Verification Email Sent!</h3>
+  }
 
   return (
       <div>

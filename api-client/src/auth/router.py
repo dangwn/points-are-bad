@@ -145,12 +145,12 @@ async def refresh_access_token(
 
     return Token(access_token=access_token, token_type='Bearer')
     
-@router.post('/verify/')
+@router.post('/verify/', status_code=status.HTTP_202_ACCEPTED)
 async def create_email_verification_code(
     email: str,
     request: Request,
     db: Session = Depends(get_db)
-) -> Token:
+) -> Response:
     email_is_valid: bool = await validate_email(email=email)
     if not email_is_valid:
         raise HTTPException(
@@ -164,8 +164,8 @@ async def create_email_verification_code(
     )
     if email_in_db:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Email address not available'
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='Email address already in use'
         )
     
     verification_token: str = await create_verification_token(email=email)
@@ -173,7 +173,7 @@ async def create_email_verification_code(
     # Send email
     await request.app.rabbitmq_producer.send_message(
         json.dumps({
-        email: f'{FRONTEND_URL}/signup?token={verification_token}'
-    }), queue_name='email_client_queue')
-
-    return Token(access_token=verification_token, token_type='verification')
+            email: f'{FRONTEND_URL}/signup?token={verification_token}'
+        }), 
+        queue_name='email_client_queue'
+    )

@@ -31,7 +31,7 @@ export const createUser = async (token: string, username: string, password: stri
   return response.json();
 }
 
-export const getVerificationToken = async (email: string): Promise<Token> => {
+export const sendVerificationEmail = async (email: string): Promise<void> => {
   const response = await fetch(
     `${API_HOST}/auth/verify/?email=${email}`,
     {
@@ -42,10 +42,14 @@ export const getVerificationToken = async (email: string): Promise<Token> => {
     }
   );
   if (!response.ok){
+    if (response.status === 403){
+      throw new Error('Email already in use!');
+    } else if (response.status === 400) {
+      throw new Error('Email address not valid');
+    }
     throw new Error('Error creating verification token.');
   };
 
-  return response.json();
 }
 
 export const getLeaderboard = async (pageIndex: number, pageSize: number): Promise<LeaderboardApiResponse> => {
