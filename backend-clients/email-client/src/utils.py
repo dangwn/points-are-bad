@@ -4,6 +4,8 @@ import re
 
 from config import (
     AWS_REGION,
+    SMTP_USER_ACCESS_KEY_ID,
+    SMTP_USER_SECRET_ACCESS_KEY_ID,
     EMAIL_CHARSET,
     EMAIL_SENDER_ADDRESS,
     EMAIL_SUBJECT
@@ -15,7 +17,12 @@ from botocore.exceptions import ClientError
 from typing import Dict, Union
 from re import Pattern
 
-client: BaseClient = boto3.client('ses', region_name=AWS_REGION)
+client: BaseClient = boto3.client(
+    'ses', 
+    region_name=AWS_REGION, 
+    aws_access_key_id=SMTP_USER_ACCESS_KEY_ID,
+    aws_secret_access_key=SMTP_USER_SECRET_ACCESS_KEY_ID
+)
 
 def clean_html(raw_html) -> str:
     cleaner: Pattern = re.compile('<.*?>')
@@ -27,7 +34,8 @@ def create_email_content(verification_link: str) -> str:
 <head></head>
 <body>
   <h1>Please Verify Your Email</h1>
-  <p>Please follow the link: {verification_link}</p>
+  <p>Please follow the link below to verify your email:</p>
+  <p>{verification_link}</p>
 </body>
 </html>
     '''
@@ -71,6 +79,7 @@ async def email_callback(message: IncomingMessage) -> None:
     body: Union[Dict[str,str], str] = json.loads(message.body.decode())
     if type(body) != dict:
         print('Could not decode body')
+        return
     
     email_address: str = next(iter(body.keys()))
     verification_link: str = body[email_address]

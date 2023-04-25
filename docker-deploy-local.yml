@@ -28,3 +28,9 @@ services:
       - "5672:5672"
       - "5673:5673"
       - "15672:15672"
+
+  # emailClient:
+  #   image:  dangawne/pab-email-client
+  #   command: "python main.py"
+  #   ports:
+  #     - "8001:8001"

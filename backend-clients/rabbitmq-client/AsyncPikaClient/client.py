@@ -1,6 +1,6 @@
 import aio_pika
 
-from exceptions import ClientNotInitializedException, QueueNotFoundError
+from .exceptions import ClientNotInitializedException, QueueNotFoundError
 
 from aio_pika.abc import (
     AbstractRobustConnection,
@@ -8,7 +8,7 @@ from aio_pika.abc import (
     AbstractQueue,
     AbstractExchange
 )
-from custom_types import ConsumerCallback
+from .custom_types import ConsumerCallback
 from typing import Optional, Dict, Union, List
 
 class AsyncClient:
@@ -39,14 +39,16 @@ class AsyncConsumer(AsyncClient):
         cls,
         queue_name: str,
         connection_string: str,
-        consumer_callback: ConsumerCallback
+        consumer_callback: ConsumerCallback,
+        **kwargs
     ):
         self = AsyncConsumer(
             queue_name=queue_name,
         )
 
         self.connection = await aio_pika.connect_robust(
-            url=connection_string
+            url=connection_string,
+            **kwargs
         )
         self.channel = await self.connection.channel()
         self.queue = await self.channel.declare_queue(
@@ -76,14 +78,16 @@ class AsyncProducer(AsyncClient):
         cls,
         queue_names: Union[List[str],str],
         connection_string: str,
-        exchange_name: Optional[str] = None
+        exchange_name: Optional[str] = None,
+        **kwargs
     ):
         self = AsyncProducer(
             queue_names=queue_names,
         )
 
         self.connection = await aio_pika.connect_robust(
-            url=connection_string
+            url=connection_string,
+            **kwargs
         )
         self.channel = await self.connection.channel()
         

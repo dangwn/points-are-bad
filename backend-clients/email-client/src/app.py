@@ -1,6 +1,8 @@
 import asyncio
 from fastapi import (
     FastAPI,
+    status,
+    Response
 )
 
 from AsyncPikaClient import AsyncConsumer
@@ -25,6 +27,10 @@ async def app_startup():
     loop: AbstractEventLoop = asyncio.get_running_loop()
     task: Task = loop.create_task(app.rabbitmq_client.consume_messages())
     await task
+
+@app.get('/', status_code=status.HTTP_204_NO_CONTENT)
+async def get_messages() -> Response:
+    await app.rabbitmq_client.consume_messages()
 
 @app.on_event('shutdown')
 async def app_shutdown():
