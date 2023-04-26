@@ -1,6 +1,5 @@
-PACKAGE_NAME=AsyncPikaClient
+PACKAGE_NAME=async_server
 VERSION=0.1.0
-SOURCE_DIR=AsyncPikaClient
 
 build:
 	python setup.py sdist bdist_wheel

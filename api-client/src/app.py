@@ -1,8 +1,7 @@
-# from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api_client import APIClient
-from AsyncPikaClient import AsyncProducer
+from rabbitmq_client import AsyncProducer
 from config import (
     REQUEST_ORIGINS,
     RABBITMQ_CONNECTION_STRING,
@@ -18,7 +17,7 @@ from user.router import router as UserRouter
 
 from typing import Dict
 
-app: APIClient = APIClient() # FastAPI = FastAPI()
+app: APIClient = APIClient()
 
 app.include_router(router=AuthRouter)
 app.include_router(router=MatchRouter)

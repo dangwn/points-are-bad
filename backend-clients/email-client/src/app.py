@@ -5,7 +5,7 @@ from fastapi import (
     Response
 )
 
-from AsyncPikaClient import AsyncConsumer
+from rabbitmq_client import AsyncConsumer
 from config import (
     RABBITMQ_CONNECTION_STRING,
     RABBITMQ_QUEUE_NAME
