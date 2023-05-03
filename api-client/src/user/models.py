@@ -19,7 +19,6 @@ class User(Base):
     email: Column = Column(String(255), unique=True, nullable=False)
     hashed_password: Column = Column(String(255), nullable=False)
     is_admin: Column = Column(Boolean(), nullable = False, default=False)
-    is_validated: Column = Column(Boolean(), nullable=False, default=False)
 
     user_points: RelationshipProperty = relationship('Points', back_populates='user', uselist=False)
     predictions: RelationshipProperty = relationship('Prediction', back_populates='user', uselist=True)

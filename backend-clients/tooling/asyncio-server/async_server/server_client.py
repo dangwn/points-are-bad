@@ -12,10 +12,9 @@ from typing import (
     Tuple
 )
 from types import FrameType
-from custom_types import (
-    Callback,
+from .custom_types import (
     EventType,
-    DecoratedCallable
+    DecoratedCallback
 )
 
 HANDLED_SIGNALS: Tuple[signal.Signals] = (
@@ -43,21 +42,21 @@ class AsyncServer:
         self.should_exit: bool = False
         self.force_exit: bool = False
 
-        self.startup_callbacks: List[Callback] = []
-        self.loop_callbacks: List[Callback] = []
-        self.shutdown_callbacks: List[Callback] = []
+        self.startup_callbacks: List[Callable[..., None]] = []
+        self.loop_callbacks: List[Callable[..., None]] = []
+        self.shutdown_callbacks: List[Callable[..., None]] = []
 
     @property    
     def server_is_initialized(self) -> bool:
         return isinstance(self.server, asyncio.AbstractServer)
     
-    def _add_on_startup(self, callback: Callback) -> None:
+    def _add_on_startup(self, callback: Callable[..., None]) -> None:
         self.startup_callbacks.append(callback)
 
-    def _add_on_loop(self, callback: Callback) -> None:
+    def _add_on_loop(self, callback: Callable[..., None]) -> None:
         self.loop_callbacks.append(callback)
 
-    def _add_on_shutdown(self, callback: Callback) -> None:
+    def _add_on_shutdown(self, callback: Callable[..., None]) -> None:
         self.shutdown_callbacks.append(callback)
 
     async def handle_request(
@@ -158,8 +157,8 @@ class AsyncServer:
     def on_event(
         self, 
         event_type: EventType
-    ) -> Callable[[DecoratedCallable], DecoratedCallable]:
-        def decorator(func: Callback) -> Callable:
+    ) -> Callable[[DecoratedCallback], DecoratedCallback]:
+        def decorator(func: Callable[..., None]) -> Callable[..., None]:
             if event_type == 'startup':
                 self._add_on_startup(func)
             elif event_type == 'loop':

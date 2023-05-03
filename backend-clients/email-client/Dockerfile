@@ -27,12 +27,15 @@ RUN pip3 install --no-cache-dir wheel
 RUN pip3 install --no-cache-dir --upgrade pip
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Install Pika Client
+# Install rabbit-mq Client
 COPY ./tooling/rabbitmq-client ${HOME}/rabbitmq-client
 WORKDIR ${HOME}/rabbitmq-client
-RUN ls && cat Makefile && sleep 10
 RUN make build && make install && make clean
 
+# Install async-server
+COPY ./tooling/asyncio-server ${HOME}/asyncio-server
+WORKDIR ${HOME}/asyncio-server
+RUN make build && make install && make clean
 
 # Run image
 FROM ubuntu:20.04 AS run-image

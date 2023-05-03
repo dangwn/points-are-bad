@@ -1,7 +1,6 @@
-from typing import Literal, Callable, Coroutine, Union, Any, TypeVar
+from typing import Callable, TypeVar
+from typing_extensions import Literal
 
-Callback = Union[Callable[..., None], Coroutine[Any, Any, None]]
-
-DecoratedCallable = TypeVar('DecoratedCallable', bound=Callable[..., Any])
+DecoratedCallback = TypeVar('DecoratedCallback', bound=Callable[..., None])
 
 EventType = Literal['startup','loop','shutdown']

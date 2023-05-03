@@ -1,17 +1,16 @@
 import asyncio
 
-from .custom_types import Callback
-from typing import Callable, Coroutine, List, Union
+from typing import Callable, List
 
-def is_async(func: Union[Callable, Coroutine]) -> bool:
+def is_async(func: Callable) -> bool:
     return asyncio.iscoroutinefunction(func)
 
-async def run_callback(callback: Callback) -> None:
+async def run_callback(callback: Callable[..., None]) -> None:
     if is_async(callback):
         await callback()
     else:
         callback()
 
-async def run_callbacks(callbacks: List[Callback]) -> None:
+async def run_callbacks(callbacks: List[Callable[..., None]]) -> None:
     for cb in callbacks:
         await run_callback(cb)

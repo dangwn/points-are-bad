@@ -7,7 +7,6 @@ class User(BaseModel):
     email: EmailStr
     hashed_password: str
     is_admin: bool
-    is_validated: bool
 
     class Config:
         orm_mode: bool = True
