@@ -1,7 +1,7 @@
 package main
 
 import (
-	"points-areb-bad/api-client/api-router"
+	"points-are-bad/api-client/api-router"
 )
 
 func main() {

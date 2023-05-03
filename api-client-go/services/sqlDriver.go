@@ -1,7 +1,7 @@
 package services
 
 import (
-	sqlDriver "points-areb-bad/api-client/sql-driver"
+	sqlDriver "points-are-bad/api-client/sql-driver"
 )
 
 var driver sqlDriver.SqlDriver = *sqlDriver.NewSqlDriver(

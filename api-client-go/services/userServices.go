@@ -4,7 +4,7 @@ import (
 	"log"
 	"errors"
 	
-	"points-areb-bad/api-client/schema"
+	"points-are-bad/api-client/schema"
 )
 
 func GetAllUsers() []schema.User{

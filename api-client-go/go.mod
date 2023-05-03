@@ -1,4 +1,4 @@
-module points-areb-bad/api-client
+module points-are-bad/api-client
 
 go 1.20
 

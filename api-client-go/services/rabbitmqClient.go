@@ -1,7 +1,7 @@
 package services
 
 import (
-	rmq "points-areb-bad/api-client/rabbitmq-client"
+	rmq "points-are-bad/api-client/rabbitmq-client"
 )
 
 var rabbit rmq.AsyncRabbitMQClient = *rmq.NewAsyncRabbitMQClient(

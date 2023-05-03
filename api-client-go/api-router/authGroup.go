@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 	"github.com/gin-gonic/gin"
-	"points-areb-bad/api-client/schema"
-	"points-areb-bad/api-client/services"
+	"points-are-bad/api-client/schema"
+	"points-are-bad/api-client/services"
 )
 
 func (r Router) addAuthGroup(rg *gin.RouterGroup) {
