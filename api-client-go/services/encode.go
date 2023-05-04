@@ -1,12 +1,12 @@
 package services
 
 import (
-	"time"
 	"errors"
 	"regexp"
-	
+	"time"
+
 	"github.com/golang-jwt/jwt"
-    "golang.org/x/crypto/bcrypt"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func JwtEncode(
@@ -44,17 +44,17 @@ func JwtDecode(
 	}
 
 	if !token.Valid {
-		return "", errors.New("Parsed JWT token is invalid")
+		return "", errors.New("parsed JWT token is invalid")
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return "", errors.New("Error getting JWT token claims")
+		return "", errors.New("error getting JWT token claims")
 	}
 
 	sub, ok := claims["sub"].(string)
 	if !ok {
-		return "", errors.New("Error getting JWT token sub claim")
+		return "", errors.New("error getting JWT token sub claim")
 	}
 
 	return sub, nil

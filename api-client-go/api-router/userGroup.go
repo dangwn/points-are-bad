@@ -1,19 +1,21 @@
 package apiRouter
 
 import (
-    "net/http"
-    "log"
-    "github.com/gin-gonic/gin"
-    "points-are-bad/api-client/schema"
-    "points-are-bad/api-client/services"
+	"log"
+	"net/http"
+	"points-are-bad/api-client/schema"
+	"points-are-bad/api-client/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (r Router) addUserGroup(rg *gin.RouterGroup) {
     user := rg.Group("/user")
     user.GET("/", displayCurrentUser)
+    user.POST("/", createNewUser)
+    user.DELETE("/", deleteCurrentUser)
     user.PUT("/username", editUsername)
     user.PUT("/password", editPassword)
-    user.DELETE("/", deleteCurrentUser)
 
     // Only for testing
     user.POST("/testCreateUser", testCreateUser)
@@ -230,5 +232,4 @@ func testCreateUser(c *gin.Context) {
 		})
 		return
 	}
-
 }

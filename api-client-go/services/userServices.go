@@ -1,12 +1,13 @@
 package services
 
 import (
-	"log"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"log"
+
 	"github.com/google/uuid"
-	
+
 	"points-are-bad/api-client/schema"
 )
 
@@ -23,13 +24,7 @@ func CreateNewUser(username string, email string, password string) (string, erro
 	}
 	isAdmin := !adminInDB
 
-	emailExists, err := driver.ValueExists("users", "email", email)
-	if err != nil {
-		log.Println(err)
-		return "", err
-	}
-	if emailExists {
-		err = errors.New("Email already exists in db")
+	if _, err = verifyEmailIsUnique(email); err != nil {
 		log.Println(err)
 		return "", err
 	}
@@ -41,23 +36,17 @@ func CreateNewUser(username string, email string, password string) (string, erro
 	}
 	userId := createUserId()
 
-	result, err := driver.Exec(
-		"INSERT INTO users (user_id, username, email, hashed_password, is_admin) VALUES ($1, $2, $3, $4, $5);",
-		userId,
-		username, 
-		email, 
-		hashedPassword, 
-		isAdmin,
-	)	
-	if err != nil {
+	if insertUserIntoDb(
+		userId, username, email, hashedPassword, isAdmin,
+	); err != nil {
 		log.Println(err)
 		return "", err
-	} 
+	}
 
-	if _, err:= result.RowsAffected(); err != nil {
+	if err = insertPointsIntoDb(userId); err != nil {
 		log.Println(err)
 		return "", err
-	} 
+	}
 
 	log.Println("New user created")
 	return userId, nil
@@ -81,7 +70,7 @@ func decodeVerificationToken(token string) (string, string, error) {
 	for key := range data {
 		return key, data[key], nil
 	}
-	return "", "", errors.New("Data was empty")
+	return "", "", errors.New("data was empty")
 }
 
 func DeleteUserById(userId string) error {
@@ -102,34 +91,15 @@ func DeleteUserById(userId string) error {
 	return nil
 }
 
-func GetAllUsers() []schema.User{
-	rows := driver.Query("SELECT * FROM users;")
-	users := []schema.User{}
-	for rows.Next() {
-		var user schema.User
-		if err := rows.Scan(
-			&user.UserId,
-			&user.Username,
-			&user.Email,
-			&user.HashedPassword,
-			&user.IsAdmin,
-		); err != nil {
-			log.Fatal(err)
-		}
-		users = append(users, user)
-	}
-	if err := rows.Err(); err != nil {
-		log.Fatal(err)
-	}
-	return users
-}
-
 func GetUserById(userId string) (schema.User, error) {
-	rows := driver.Query(
+	var user schema.User
+	rows, err := driver.Query(
 		"SELECT * FROM users WHERE users.user_id = $1 LIMIT 1",
 		userId,
 	)
-	var user schema.User
+	if err != nil {
+		return user, err
+	}
 	
 	for rows.Next() {
 		if err := rows.Scan(
@@ -147,11 +117,14 @@ func GetUserById(userId string) (schema.User, error) {
 }
 
 func getUserPasswordHash(userId string) (string, error) {
-	rows := driver.Query(
+	var hash string
+	rows, err := driver.Query(
 		"SELECT hashed_password FROM users WHERE user_id = $1 LIMIT 1",
 		userId,
 	)
-	var hash string
+	if err != nil {
+		return hash, err
+	}
 	
 	for rows.Next() {
 		if err := rows.Scan(
@@ -162,6 +135,26 @@ func getUserPasswordHash(userId string) (string, error) {
 		break
 	}
 	return hash, nil
+}
+
+func insertUserIntoDb(
+	userId string,
+	username string,
+	email string, 
+	hashedPassword string, 
+	isAdmin bool,
+) error {
+	_, err := driver.Insert(
+		"users",
+		"user_id, username, email, hashed_password, is_admin",
+		"$1, $2, $3, $4, $5",
+		userId,
+		username, 
+		email, 
+		hashedPassword, 
+		isAdmin,
+	)
+	return err
 }
 
 func UpdateUsernameByUserId(userId string, username string) error {
@@ -192,7 +185,7 @@ func UpdatePasswordByUserId(userId string, oldPassword string,	newPassword strin
 	}
 
 	if !verifyPasswordHash(oldPasswordHash, oldPassword) {
-		err := errors.New("Old password was not correct")
+		err := errors.New("old password was not correct")
 		log.Println(err)
 		return err
 	}
@@ -236,8 +229,20 @@ func ValidateVerificationToken(token string) (string, error) {
 	}
 
 	if decodedToken != tokenInRedis {
-		return "", errors.New("Token in redis did not match verified token")
+		return "", errors.New("token in redis did not match verified token")
 	}
 
 	return email[len("verify--"):], nil
+}
+
+func verifyEmailIsUnique(email string) (bool, error) {
+	emailExists, err := driver.ValueExists("users", "email", email)
+	if err != nil {
+		return false, err
+	}
+	if emailExists {
+		err = errors.New("email already exists in db")
+		return false, err
+	}
+	return true, nil
 }

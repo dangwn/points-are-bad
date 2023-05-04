@@ -1,8 +1,8 @@
-package apiRouter 
+package apiRouter
 
 import (
 	"net/http"
-	
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,6 +35,7 @@ func NewRouter() Router {
 	baseGroup := r.router.Group("")
 	r.addUserGroup(baseGroup)
 	r.addAuthGroup(baseGroup)
+	r.addPointsGroup(baseGroup)
 
 	return r
 }

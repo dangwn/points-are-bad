@@ -2,9 +2,10 @@ package apiRouter
 
 import (
 	"net/http"
-	"github.com/gin-gonic/gin"
 	"points-are-bad/api-client/schema"
 	"points-are-bad/api-client/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (r Router) addAuthGroup(rg *gin.RouterGroup) {
@@ -135,7 +136,7 @@ func refreshAccessToken(c *gin.Context) {
 }
 
 func verifyNewUserEmail(c *gin.Context) {
-	var newUserEmail schema.Email
+	var newUserEmail schema.EmailAddress
 	if err := c.BindJSON(&newUserEmail); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"detail":"Bad request",

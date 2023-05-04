@@ -1,9 +1,9 @@
 package driver
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
-	"database/sql"
 
 	_ "github.com/lib/pq"
 )
@@ -29,12 +29,8 @@ func NewSqlDriver(
 	}
 }
 
-func (d *SqlDriver) Query(queryStatement string, args ...any) *sql.Rows {
-	rows, err := d.DB.Query(queryStatement, args...)
-	if err != nil {
-		log.Fatal(err)
-	}	
-	return rows
+func (d *SqlDriver) Query(queryStatement string, args ...any) (*sql.Rows, error) {
+	return d.DB.Query(queryStatement, args...)
 }
 
 func (d *SqlDriver) Exec(statement string, args ...any) (sql.Result, error) {
@@ -53,4 +49,27 @@ func (d *SqlDriver) ValueExists(table string, column string, value any) (bool, e
 	}
 	
 	return exists, nil
+}
+
+func (d *SqlDriver) Insert(
+	table string,
+	columnsString string,
+	valuesString string,
+	args ...any,
+) (sql.Result, error) {
+	result, err := d.Exec(
+		"INSERT INTO " + table + "(" + columnsString + ") VALUES (" + valuesString + ")",
+		args...,
+	)
+	if err != nil {
+		return result, err
+	}
+	if _, err := result.RowsAffected(); err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (d *SqlDriver) QueryRow(queryStatement string, args ...any) *sql.Row {
+	return d.DB.QueryRow(queryStatement, args...)
 }

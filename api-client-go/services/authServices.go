@@ -1,10 +1,10 @@
 package services
 
 import (
-	"strings"
 	"errors"
 	"math/rand"
-	
+	"strings"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,12 +20,12 @@ func getAuthorizationToken(c *gin.Context) (string, error) {
 	authHeader := c.GetHeader("Authorization")
 
 	if authHeader == "" {
-		return "", errors.New("Authorization header not in header")
+		return "", errors.New("authorization header not in header")
 	}
 
 	authParts := strings.Split(authHeader, " ")
 	if len(authParts) != 2 || authParts[0] != "Bearer" {
-		return "", errors.New("Incorrect header format")
+		return "", errors.New("incorrect header format")
 	}
 
 	return authParts[1], nil
@@ -88,10 +88,14 @@ func ValidateLoginUser(email string, password string) (string, error) {
 	var userId string
 	var hashedPassword string
 	emailInDb := false
-	rows := driver.Query(
+	rows, err := driver.Query(
 		"SELECT user_id, hashed_password FROM users WHERE email = $1 LIMIT 1",
 		email,
 	)
+	if err != nil{
+		return "", err
+	}
+	
 	for rows.Next() {
 		if err := rows.Scan(
 			&userId,
@@ -105,5 +109,5 @@ func ValidateLoginUser(email string, password string) (string, error) {
 	if verifyPasswordHash(hashedPassword, password) && emailInDb {
 		return userId, nil
 	}
-	return "", errors.New("Incorrect username or password")
+	return "", errors.New("incorrect username or password")
 }
