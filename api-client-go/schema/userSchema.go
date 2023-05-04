@@ -15,7 +15,7 @@ type SessionUser struct {
 }
 
 type User struct {
-	UserId 			int 	`json:"user_id"`
+	UserId 			string 	`json:"user_id"`
 	Username 		string  `json:"username"`
 	Email 			string  `json:"email"`
 	HashedPassword 	string  `json:"hashed_password"`

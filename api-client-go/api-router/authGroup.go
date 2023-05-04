@@ -2,7 +2,6 @@ package apiRouter
 
 import (
 	"net/http"
-	"strconv"
 	"github.com/gin-gonic/gin"
 	"points-are-bad/api-client/schema"
 	"points-are-bad/api-client/services"
@@ -36,7 +35,7 @@ func login(c *gin.Context) {
 	}
 
 	accessToken, err := services.JwtEncode(
-		strconv.Itoa(userId),
+		userId,
 		services.ACCESS_TOKEN_SECRET_KEY,
 		services.ACCESS_TOKEN_EXPIRE_TIME,
 	)
@@ -47,7 +46,7 @@ func login(c *gin.Context) {
 		return
 	}
 	refreshToken, err := services.JwtEncode(
-		strconv.Itoa(userId),
+		userId,
 		services.REFRESH_TOKEN_SECRET_KEY,
 		services.REFRESH_TOKEN_EXPIRE_TIME,
 	)
