@@ -1,4 +1,4 @@
-package apiRouter
+package api
 
 import (
 	"net/http"
@@ -12,10 +12,10 @@ type Router struct {
 
 func CORSMiddleware() gin.HandlerFunc {
     return func(c *gin.Context) {
-        c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost, http://localhost:3000")
+        c.Writer.Header().Set("Access-Control-Allow-Origin", FRONTEND_DOMAIN)
         c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
         c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-        c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
 
         if c.Request.Method == "OPTIONS" {
             c.AbortWithStatus(http.StatusNoContent)
@@ -36,6 +36,11 @@ func NewRouter() Router {
 	r.addUserGroup(baseGroup)
 	r.addAuthGroup(baseGroup)
 	r.addPointsGroup(baseGroup)
+	r.addMatchGroup(baseGroup)
+
+    r.router.GET("/", func(c *gin.Context) {
+        c.JSON(200, gin.H{"message":"let's go"})
+    })
 
 	return r
 }

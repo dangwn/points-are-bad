@@ -1,4 +1,4 @@
-package services
+package api
 
 import (
 	"os"
@@ -12,6 +12,15 @@ func getEnv(varName string, defaultValue string) string {
 	}	
 	return envVar
 }
+
+var (
+	FRONTEND_DOMAIN string = getEnv("FRONTEND_DOMAIN", "http://localhost:3000")
+
+	CSRF_SECRET_KEY []byte = []byte(getEnv("CSRF_SECRET_KEY", "CSRF-Key"))
+	CSRF_TOKEN_NAME string = "X-CSRF-Token"
+
+	REFRESH_TOKEN_NAME string = "X-Refresh-Token"
+)
 
 var (
 	ACCESS_TOKEN_SECRET_KEY []byte = []byte(getEnv(
@@ -49,4 +58,6 @@ var (
 	REDIS_PORT string = getEnv("REDIS_PORT", "6379")
 	REDIS_PASSWORD string = getEnv("REDIS_PASSWORD", "")
 	REDIS_DB int = 0
+
+	NULL_PREDICTIONS_PENALTY int = 10
 )

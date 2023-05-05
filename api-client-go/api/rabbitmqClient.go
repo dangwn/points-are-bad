@@ -1,4 +1,4 @@
-package services
+package api
 
 import (
 	rmq "points-are-bad/api-client/rabbitmq-client"

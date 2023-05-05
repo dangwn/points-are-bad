@@ -29,8 +29,11 @@ services:
       - "5673:5673"
       - "15672:15672"
 
-  # emailClient:
-  #   image:  dangawne/pab-email-client
-  #   command: "python main.py"
-  #   ports:
-  #     - "8001:8001"
+  # api-client:
+  #   image: gin-app:latest
+  #   ports: 
+  #     - "8010:8010"
+  #   depends_on:
+  #     - rabbitmq
+  #   environment:
+  #     - RABBITMQ_HOST=rabbitmq

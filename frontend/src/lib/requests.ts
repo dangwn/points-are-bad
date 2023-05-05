@@ -1,12 +1,12 @@
-import { getAccessToken, setAccessToken } from './accessToken';
+import { getAccessToken } from './accessToken';
 import { API_HOST } from './constants';
 
-import type { SessionUser } from '../types/user';
-import type { LeaderboardPoints } from '../types/points';
-import type { MatchWithoutGoals, Match } from '../types/match';
 import type { LeaderboardApiResponse, LeaderboardUser } from '../types/leaderboard';
+import type { Match, MatchWithoutGoals } from '../types/match';
+import type { LeaderboardPoints } from '../types/points';
+import type { NewPrediction, UserPrediction } from '../types/predictions';
 import type { Token } from '../types/token';
-import type { UserPrediction, NewPrediction } from '../types/predictions';
+import type { SessionUser } from '../types/user';
 
 export const createUser = async (token: string, username: string, password: string): Promise<Token> => {
   const response = await fetch(
@@ -188,7 +188,7 @@ export const refreshAccessToken = async (): Promise<Token> => {
 
 export const updateUsername = async (newUsername: string): Promise<void> => {
   const accessToken: string = getAccessToken();
-  const response: Response = await fetch(`${API_HOST}/user/username`,
+  const response: Response = await fetch(`${API_HOST}/user/username/`,
    {
       method: 'PUT',
       headers: {
@@ -207,7 +207,7 @@ export const updateUsername = async (newUsername: string): Promise<void> => {
 export const updatePassword = async (oldPassword: string, newPassword: string): Promise<void> => {
   const accessToken: string = getAccessToken();
 
-  const response: Response = await fetch(`${API_HOST}/user/password`,
+  const response: Response = await fetch(`${API_HOST}/user/password/`,
    {
       method: 'PUT',
       headers: {

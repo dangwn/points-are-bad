@@ -1,4 +1,4 @@
-package services
+package api
 
 import (
 	sqlDriver "points-are-bad/api-client/sql-driver"

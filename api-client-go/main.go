@@ -1,10 +1,22 @@
 package main
 
 import (
-	"points-are-bad/api-client/api-router"
+	"os"
+
+	apiRouter "points-are-bad/api-client/api"
 )
+
+var API_PORT string = getEnv("API_PORT", "8020")
+
+func getEnv(varName string, defaultValue string) string {
+	envVar := os.Getenv(varName)
+	if envVar == "" {
+		return defaultValue
+	}	
+	return envVar
+}
 
 func main() {
 	router := apiRouter.NewRouter()
-	router.Run(":8000")
+	router.Run(":"+API_PORT)
 }

@@ -1,8 +1,9 @@
-package services
+package api
 
 import (
 	"context"
-    goRedis "github.com/redis/go-redis/v9"
+
+	goRedis "github.com/redis/go-redis/v9"
 )
 
 var redis goRedis.Client = *goRedis.NewClient(
