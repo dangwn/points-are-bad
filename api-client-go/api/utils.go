@@ -60,6 +60,13 @@ func JwtDecode(
 	return sub, nil
 }
 
+func validateDateString(dateString string) bool {
+	if _, err := time.Parse("2010-01-01", dateString); err != nil {
+		return false
+	}
+	return true
+}
+
 func hashPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword(
 		[]byte(password),

@@ -10,7 +10,7 @@ type Router struct {
 	router *gin.Engine
 }
 
-func CORSMiddleware() gin.HandlerFunc {
+func corsMiddleware() gin.HandlerFunc {
     return func(c *gin.Context) {
         c.Writer.Header().Set("Access-Control-Allow-Origin", FRONTEND_DOMAIN)
         c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -30,7 +30,7 @@ func NewRouter() Router {
 	r := Router{
 		router: gin.Default(),
 	}
-	r.router.Use(CORSMiddleware())
+	r.router.Use(corsMiddleware())
 
 	baseGroup := r.router.Group("")
 	r.addUserGroup(baseGroup)
