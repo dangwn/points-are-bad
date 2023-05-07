@@ -70,6 +70,19 @@ func (d *SqlDriver) Insert(
 	return result, nil
 }
 
+func (d *SqlDriver) InsertWithReturn(
+	table string,
+	columnsString string,
+	valuesString string,
+	returnString string,
+	args ...any,
+) *sql.Row {
+	return d.DB.QueryRow(
+		"INSERT INTO " + table + "(" + columnsString + ") VALUES (" + valuesString + ") RETURNING " + returnString,
+		args...,
+	)
+}
+
 func (d *SqlDriver) QueryRow(queryStatement string, args ...any) *sql.Row {
 	return d.DB.QueryRow(queryStatement, args...)
 }

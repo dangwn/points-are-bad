@@ -17,12 +17,9 @@ type MatchWithoutGoals struct {
 	Away 	  string  `json:"away"`
 }
 
-type StartDate struct {
-	MatchDate *Date `json:"start_date" form:"start_date"`
-}
-
-type EndDate struct {
-	MatchDate *Date `json:"end_date" form:"end_date"`
+type MatchWithId struct {
+	MatchId int `json:"match_id"`
+	MatchWithoutGoals
 }
 
 type DateRange struct {
@@ -35,9 +32,37 @@ type DateRange struct {
  */
  
 func (r Router) addMatchGroup(rg *gin.RouterGroup) {
-    points := rg.Group("/match")
+    matchGroup := rg.Group("/match")
 
-	points.GET("/", getMatchesWithoutGoals)
+	matchGroup.GET("/", getMatchesWithoutGoals)
+	matchGroup.POST("/", createMatch)
+}
+
+func createMatch(c *gin.Context) {
+	if !isCurrentUserAdmin(c) {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"detail":"Not admin user",
+		})
+		return
+	}
+
+	var match MatchWithoutGoals
+	if err := c.BindJSON(&match); err != nil {
+		log.Println(err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"detail":"Could not retrieve data from request",
+		})
+		return
+	}
+
+	if newMatch, err := insertMatchIntoDb(match); err != nil {
+		log.Println(err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"detail":"Could not create match",
+		})
+	} else {
+		c.JSON(http.StatusCreated, newMatch)
+	}
 }
 
 func getMatchesWithoutGoals(c *gin.Context) {
@@ -65,6 +90,27 @@ func getMatchesWithoutGoals(c *gin.Context) {
 /*
  * Services
  */
+
+func insertMatchIntoDb(match MatchWithoutGoals) (MatchWithId, error) {
+	var matchId int
+
+	if err := driver.InsertWithReturn(
+		"matches",
+		"match_date, home, away",
+		"$1, $2, $3",
+		"match_id",
+		match.MatchDate,
+		match.Home,
+		match.Away,
+	).Scan(&matchId); err != nil {
+		return MatchWithId{}, err
+	}
+
+	return MatchWithId{
+		matchId,
+		match,
+	}, nil
+}
 
 func getMatchesInDateRange(startDate *Date, endDate *Date) ([]MatchWithoutGoals, error) {
 	var matches []MatchWithoutGoals
