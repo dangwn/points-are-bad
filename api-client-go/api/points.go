@@ -22,12 +22,12 @@ type Score struct {
 
 type UserWithPoints struct {
 	Score
-	SessionUser
+	User SessionUser `json:"user"`
 }
 
 type LeaderBoardUser struct {
 	Score
-	Username string `json:"username"`
+	User Username `json:"user"`
 }
 
 /*
@@ -145,7 +145,7 @@ func getGlobalLeaderboard(limit int, offset int) ([]LeaderBoardUser, error) {
 			&leaderboardRow.CorrectScores,
 			&leaderboardRow.LargestError,
 			&leaderboardRow.Position,
-			&leaderboardRow.Username,
+			&leaderboardRow.User.Username,
 		); err != nil {
 			return leaderboard, err
 		}
@@ -170,8 +170,8 @@ func getPointsByUserId(userId string) (UserWithPoints, error) {
 		&userPoints.CorrectScores,
 		&userPoints.LargestError,
 		&userPoints.Position,
-		&userPoints.Username,
-		&userPoints.IsAdmin,
+		&userPoints.User.Username,
+		&userPoints.User.IsAdmin,
 	) 
 
 	return userPoints, err

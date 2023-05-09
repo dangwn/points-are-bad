@@ -11,6 +11,13 @@ import (
 /*
  * Structs
  */
+type Match struct {
+	MatchId string `json:"match_id"`
+	MatchWithoutGoals
+	HomeGoals *int `json:"home_goals"`
+	AwayGoals *int `json:"away_goals"`
+}
+
 type MatchWithoutGoals struct {
 	MatchDate *Date   `json:"match_date"`
 	Home 	  string  `json:"home"`
@@ -27,6 +34,10 @@ type DateRange struct {
 	EndDate *Date `json:"end_date" query:"end_date" form:"end_date"`
 }
 
+type MatchIdOnly struct {
+	MatchId int `json:"match_id"`
+}
+
 /*
  * Router Methods
  */
@@ -36,6 +47,9 @@ func (r Router) addMatchGroup(rg *gin.RouterGroup) {
 
 	matchGroup.GET("/", getMatchesWithoutGoals)
 	matchGroup.POST("/", createMatch)
+	matchGroup.PUT("/", updateMatch)
+	matchGroup.DELETE("/", deleteMatch)
+	matchGroup.GET("/full/", getFullMatches)
 }
 
 func createMatch(c *gin.Context) {
@@ -65,6 +79,60 @@ func createMatch(c *gin.Context) {
 	}
 }
 
+func deleteMatch(c *gin.Context) {
+	if !isCurrentUserAdmin(c) {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"detail":"Not admin user",
+		})
+		return
+	}
+
+	var matchIdOnly MatchIdOnly
+	if err := c.BindQuery(&matchIdOnly); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"detail":"Could not get match ID from request",
+		})
+		return
+	}
+
+	if deleted, _ := deleteMatchById(matchIdOnly.MatchId); !deleted {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"detail":"Could not delete match",
+		})
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+func getFullMatches(c *gin.Context) {
+	if !isCurrentUserAdmin(c) {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"detail":"Not admin user",
+		})
+		return
+	}
+
+	var dateRange DateRange
+	if err := c.BindQuery(&dateRange); err != nil {
+		log.Println(err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"detail":"Incorrect date formats",
+		})
+		return
+	}
+
+	matches, err := getFullMatchesInDateRange(dateRange.StartDate, dateRange.EndDate)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"detail":"Could not retrieve matches",
+		})
+		return
+	}
+
+	c.JSON(http.StatusAccepted, matches)
+}
+
 func getMatchesWithoutGoals(c *gin.Context) {
 	var dateRange DateRange
 	if err := c.BindQuery(&dateRange); err != nil {
@@ -76,7 +144,6 @@ func getMatchesWithoutGoals(c *gin.Context) {
 	}
 
 	matches, err := getMatchesInDateRange(dateRange.StartDate, dateRange.EndDate)
-	log.Println(matches)
 	if err != nil {
 		log.Println(err)
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -87,9 +154,125 @@ func getMatchesWithoutGoals(c *gin.Context) {
 	c.JSON(http.StatusAccepted, matches)
 }
 
+func updateMatch(c *gin.Context) {
+	if !isCurrentUserAdmin(c) {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"detail":"Not admin user",
+		})
+		return
+	}
+
+	var match Match
+	if err := c.BindJSON(&match); err != nil {
+		log.Println(err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"detail":"Could not get match ID from request",
+		})
+		return
+	}
+
+	if newMatch, err := updateMatchById(match); err != nil {
+		log.Println(err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"detail":"Could not update match",
+		})
+	} else if !newMatch {
+		log.Println("could not update match")
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"detail":"Could not find match to update",
+		})
+	} else {
+		c.JSON(http.StatusAccepted, match)
+	}
+}
+
 /*
  * Services
  */
+func createDateRangeQuery(baseQuery string, dateName string, startDate *Date, endDate *Date) (*sql.Rows, error) {
+	if startDate != nil {
+		if endDate != nil {
+			return driver.Query(
+				baseQuery + " WHERE " + dateName + " >= $1 AND " + dateName + " < $2 ORDER BY " + dateName,
+				startDate,
+				endDate,
+			)
+		} else {
+			return driver.Query(
+				baseQuery + " WHERE " + dateName + " >= $1 ORDER BY " + dateName,
+				startDate,
+			)
+		}
+	} else {
+		if endDate != nil {
+			return driver.Query(
+				baseQuery + " WHERE " + dateName + " < $1 ORDER BY " + dateName,
+				endDate,
+			)
+		} else {
+			return driver.Query(baseQuery +" ORDER BY " + dateName)
+		}
+	}
+} 
+
+func deleteMatchById(matchId int) (bool, error) {
+	return driver.Delete("matches", "match_id = $1", matchId)
+}
+
+func getFullMatchesInDateRange(startDate *Date, endDate *Date) ([]Match, error) {
+	var matches []Match
+	baseQuery := "SELECT match_id, match_date, home, away, home_goals, away_goals FROM matches"
+
+	rows, err := createDateRangeQuery(baseQuery, "match_date", startDate, endDate)
+
+	if err != nil {
+		return matches, err
+	}
+
+	for rows.Next() {
+		var match Match
+		if err := rows.Scan(
+			&match.MatchId,
+			&match.MatchDate,
+			&match.Home,
+			&match.Away,
+			&match.HomeGoals,
+			&match.AwayGoals,
+		); err != nil {
+			return matches, err
+		}
+
+		matches = append(matches, match)
+	}
+
+	return matches, nil
+}
+
+func getMatchesInDateRange(startDate *Date, endDate *Date) ([]MatchWithoutGoals, error) {
+	var matches []MatchWithoutGoals
+	baseQuery := "SELECT match_date, home, away FROM matches"
+
+	rows, err := createDateRangeQuery(baseQuery, "match_date", startDate, endDate)
+
+	if err != nil {
+		return matches, err
+	}
+
+	for rows.Next() {
+		var match MatchWithoutGoals
+		if err := rows.Scan(
+			&match.MatchDate,
+			&match.Home,
+			&match.Away,
+		); err != nil {
+			return matches, err
+		}
+
+		matches = append(matches, match)
+	}
+
+	return matches, nil
+}
 
 func insertMatchIntoDb(match MatchWithoutGoals) (MatchWithId, error) {
 	var matchId int
@@ -112,51 +295,30 @@ func insertMatchIntoDb(match MatchWithoutGoals) (MatchWithId, error) {
 	}, nil
 }
 
-func getMatchesInDateRange(startDate *Date, endDate *Date) ([]MatchWithoutGoals, error) {
-	var matches []MatchWithoutGoals
-	var rows *sql.Rows
-	var err error
-	baseQuery := "SELECT match_date, home, away FROM matches "
-
-	if startDate != nil {
-		if endDate != nil {
-			rows, err = driver.Query(
-				baseQuery + "WHERE match_date >= $1 AND match_date < $2",
-				startDate,
-				endDate,
-			)
-		} else {
-			rows, err = driver.Query(
-				baseQuery + "WHERE match_date >= $1",
-				startDate,
-			)
-		}
+func updateMatchById(match Match) (bool, error) {
+	if result, err := driver.Exec(
+		`UPDATE matches 
+		SET 
+			home = $1,
+			away = $2,
+			match_date = $3,
+			home_goals = $4,
+			away_goals = $5
+		WHERE match_id = $6`,
+		match.Home,
+		match.Away,
+		match.MatchDate,
+		match.HomeGoals,
+		match.AwayGoals,
+		match.MatchId,
+	); err != nil {
+		return false, err
 	} else {
-		if endDate != nil {
-			rows, err = driver.Query(
-				baseQuery + "WHERE match_date < $1",
-				endDate,
-			)
+		if affected, err := result.RowsAffected(); err != nil {
+			return false, err
 		} else {
-			rows, err = driver.Query(baseQuery)
+			if affected > 0 {return true, nil}
+			return false, nil
 		}
 	}
-	if err != nil {
-		return matches, err
-	}
-
-	for rows.Next() {
-		var match MatchWithoutGoals
-		if err := rows.Scan(
-			&match.MatchDate,
-			&match.Home,
-			&match.Away,
-		); err != nil {
-			return matches, err
-		}
-
-		matches = append(matches, match)
-	}
-
-	return matches, nil
 }

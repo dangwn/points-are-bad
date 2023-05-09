@@ -89,7 +89,7 @@ func login(c *gin.Context) {
 		"", // Default path
 		FRONTEND_DOMAIN, // Frontend domain
 		false, // Secure cookie
-		true, // HTTP only
+		false, // HTTP only
 	)
 	c.SetCookie(
 		CSRF_TOKEN_NAME,
@@ -98,7 +98,7 @@ func login(c *gin.Context) {
 		"", // Default path
 		FRONTEND_DOMAIN, // Frontend domain
 		false, // Secure cookie
-		true, // HTTP only
+		false, // HTTP only
 	)
 	c.JSON(http.StatusAccepted, gin.H{
 		"access_token": accessToken,
