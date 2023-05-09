@@ -55,7 +55,7 @@ export const sendVerificationEmail = async (email: string): Promise<void> => {
 export const getLeaderboard = async (pageIndex: number, pageSize: number): Promise<LeaderboardApiResponse> => {
   const offset: number = pageIndex * pageSize;
   const response: Response = await fetch(
-    `${API_HOST}/points/leaderboard?limit=${pageSize}&offset=${offset}`
+    `${API_HOST}/points/leaderboard/?limit=${pageSize}&offset=${offset}`
   )
   
   if (!response.ok) {
@@ -103,7 +103,7 @@ export const getUpcomingMatches = async (): Promise<MatchWithoutGoals[]> => {
   const today: Date = new Date();
   const todayDateString: string = today.toISOString().slice(0, 10);
 
-  const response: Response = await fetch(`${API_HOST}/match/?start_date=${todayDateString}`);
+  const response: Response = await fetch(`${API_HOST}/match/?start_date="${todayDateString}"`);
   if (!response.ok){
     throw new Error('Error fetching upcoming matches');
   };
