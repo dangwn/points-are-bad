@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"log"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -14,7 +15,7 @@ import (
  */
 
 type EmailAddress struct {
-	Email string `json:"email"`
+	Email string `json:"email" form:"email"`
 }
 
 type LoginUser struct {
@@ -107,24 +108,7 @@ func login(c *gin.Context) {
 }
 
 func logout(c *gin.Context) {
-	c.SetCookie(
-		REFRESH_TOKEN_NAME,
-		"",
-		-1, // Unlimited age
-		"", // Default path
-		FRONTEND_DOMAIN, // Frontend domain
-		true, // Secure cookie
-		true, // HTTP only
-	)
-	c.SetCookie(
-		CSRF_TOKEN_NAME,
-		"",
-		-1, // Unlimited age
-		"", // Default path
-		FRONTEND_DOMAIN, // Frontend domain
-		true, // Secure cookie
-		true, // HTTP only
-	)
+	clearAuthCookies(c)
 	c.Status(http.StatusNoContent)
 }
 
@@ -170,13 +154,15 @@ func refreshAccessToken(c *gin.Context) {
 
 func verifyNewUserEmail(c *gin.Context) {
 	var newUserEmail EmailAddress
-	if err := c.BindJSON(&newUserEmail); err != nil {
+	if err := c.BindQuery(&newUserEmail); err != nil {
+		log.Println(err)
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"detail":"Bad request",
 		})
 		return
 	}
 
+	log.Println(newUserEmail.Email)
 	if !VerifyEmailFormat(newUserEmail.Email) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"detail":"Email address not valid",
@@ -211,6 +197,27 @@ func createRandomString(length int) string {
 		b[i] = LETTERS[rand.Intn(len(LETTERS))]
 	}
 	return string(b)
+}
+
+func clearAuthCookies(c *gin.Context) {
+	c.SetCookie(
+		REFRESH_TOKEN_NAME,
+		"",
+		-1, // Unlimited age
+		"", // Default path
+		FRONTEND_DOMAIN, // Frontend domain
+		true, // Secure cookie
+		true, // HTTP only
+	)
+	c.SetCookie(
+		CSRF_TOKEN_NAME,
+		"",
+		-1, // Unlimited age
+		"", // Default path
+		FRONTEND_DOMAIN, // Frontend domain
+		true, // Secure cookie
+		true, // HTTP only
+	)
 }
 
 func getAuthorizationToken(c *gin.Context) (string, error) {

@@ -1,15 +1,7 @@
-from sqlalchemy import (
-    Boolean,
-    Column, 
-    Date, 
-    ForeignKey,
-    Integer,
-    String
-)
-from sqlalchemy.orm import relationship, RelationshipProperty
-
-from db import Base
 from config import USERNAME_MAX_LENGTH
+from db import Base
+from sqlalchemy import Boolean, Column, Date, ForeignKey, Integer, String
+from sqlalchemy.orm import RelationshipProperty, relationship
 
 __all__ = [
     'Match', 'Points', 'Prediction', 'User'

@@ -36,6 +36,7 @@ func NewRouter() Router {
 	r.addUserGroup(baseGroup)
 	r.addAuthGroup(baseGroup)
 	r.addPointsGroup(baseGroup)
+	r.addPredictionGroup(baseGroup)
 	r.addMatchGroup(baseGroup)
 
     r.router.GET("/", func(c *gin.Context) {

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { useMutation, useQueryClient} from 'react-query';
 import { useRouter } from 'next/router';
+import React, { useState } from 'react';
+import { useMutation, useQueryClient } from 'react-query';
 
-import { API_HOST } from '@/lib/constants';
-import styles from '@/styles/settings/DangerZone.module.css'
+import { deleteCurrentUser } from '@/lib/requests';
+import styles from '@/styles/settings/DangerZone.module.css';
 
 const DangerZone: React.FC = () =>{
   const queryClient = useQueryClient();
@@ -12,14 +12,7 @@ const DangerZone: React.FC = () =>{
   const [ deleteUserError, setDeleteUserError ] = useState<string>('')
 
   const handleDeleteUser = useMutation(async () => {
-    const accessToken = localStorage.getItem('access_token');
-    const response = await fetch(`${API_HOST}/user/`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`
-      },
-      credentials: 'include',
-    });
+    const response = await deleteCurrentUser();
     if (!response.ok) {
       if (response.status === 403) {
         setDeleteUserError('You are the only remaining admin user. Please make someone else admin before deleting your account.');

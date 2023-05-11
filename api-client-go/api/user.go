@@ -169,12 +169,13 @@ func deleteCurrentUser(c *gin.Context) {
 
     if err := deleteUserByUserId(currentUserId); err != nil {
         log.Println(err)
-        c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-            "detail":"Could not delete user",
+        c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+            "detail":err,
         })
         return
     }
 
+	clearAuthCookies(c)
     c.Status(http.StatusNoContent)
 }
 
@@ -312,19 +313,30 @@ func decodeVerificationToken(token string) (string, string, error) {
 }
 
 func deleteUserByUserId(userId string) error {
-	result, err := driver.Exec(
+	otherAdminExists := false
+	NewQuery(
+		"users", "is_admin",
+	).Filter(
+		"is_admin", "=", true,
+	).Filter(
+		"user_id", "!=", userId,
+	).First(&otherAdminExists)
+	
+	if !otherAdminExists {
+		return errors.New("no other admins exist")
+	}
+
+	if result, err := driver.Exec(
 		"DELETE FROM users WHERE user_id = $1",
 		userId,
-	)	
-	if err != nil {
-		log.Println(err)
+	); err != nil {
 		return err
-	} 
+	} else {
+		if _, err:= result.RowsAffected(); err != nil {
+			return err
+		} 
+	}
 
-	if _, err:= result.RowsAffected(); err != nil {
-		log.Println(err)
-		return err
-	} 
 	log.Println("User deleted")
 	return nil
 }

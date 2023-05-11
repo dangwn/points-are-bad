@@ -102,6 +102,7 @@ func (d *SqlDriver) ValueExists(table string, column string, value any) (bool, e
 		"SELECT EXISTS(SELECT 1 FROM " + table + " WHERE " + column + " = $1)",
 		value,
 	).Scan(&exists)
+	
 	if err != nil {
 		return false, err
 	}

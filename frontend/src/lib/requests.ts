@@ -31,6 +31,17 @@ export const createUser = async (token: string, username: string, password: stri
   return response.json();
 }
 
+export const deleteCurrentUser = async (): Promise<Response> => {
+  const accessToken: string = getAccessToken();
+  return await fetch(`${API_HOST}/user/`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    },
+    credentials: 'include',
+  })
+}
+
 export const sendVerificationEmail = async (email: string): Promise<void> => {
   const response = await fetch(
     `${API_HOST}/auth/verify/?email=${email}`,
@@ -195,7 +206,7 @@ export const updateUsername = async (newUsername: string): Promise<void> => {
         'Authorization': `Bearer ${accessToken}`,
         'accept': 'application/json'
       },
-      body: newUsername,
+      body: JSON.stringify({username: newUsername}),
       credentials: 'include'
    }
   );
