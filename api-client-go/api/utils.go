@@ -9,6 +9,22 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+func createDateRangeWhereClause(startDate *Date, endDate *Date) string {
+	var whereClause string
+
+	if startDate != nil {
+		whereClause += " WHERE match_date >= " + startDate.String()
+	}
+	if endDate != nil {
+		if whereClause != "" {
+			return whereClause + " AND match_date < " + endDate.String()
+		} else {
+			return " WHERE match_date < " + endDate.String()
+		}
+	}
+	return whereClause
+}
+
 func JwtEncode(
 	subject string,
 	secretKey []byte,

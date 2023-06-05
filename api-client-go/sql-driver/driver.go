@@ -20,7 +20,7 @@ func NewSqlDriver(
 ) (*SqlDriver) {
 	database, err := sql.Open(
 		"postgres",
-		fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable",user, password, db),
+		fmt.Sprint("user=", user, " password=", password," dbname=", db, " sslmode=disable"),
 	)
 	if err != nil{
 		log.Fatal(err)
@@ -80,8 +80,8 @@ func (d *SqlDriver) InsertWithReturn(
 	valuesString string,
 	returnString string,
 	args ...any,
-) *sql.Row {
-	return d.DB.QueryRow(
+) (*sql.Rows, error) {
+	return d.DB.Query(
 		"INSERT INTO " + table + "(" + columnsString + ") VALUES (" + valuesString + ") RETURNING " + returnString,
 		args...,
 	)

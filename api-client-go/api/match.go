@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 
@@ -35,7 +34,7 @@ type DateRange struct {
 }
 
 type MatchIdOnly struct {
-	MatchId int `json:"match_id"`
+	MatchId int `json:"match_id" form:"match_id"`
 }
 
 /*
@@ -189,31 +188,6 @@ func updateMatch(c *gin.Context) {
 /*
  * Services
  */
-func createDateRangeQuery(baseQuery string, dateName string, startDate *Date, endDate *Date) (*sql.Rows, error) {
-	if startDate != nil {
-		if endDate != nil {
-			return driver.Query(
-				baseQuery + " WHERE " + dateName + " >= $1 AND " + dateName + " < $2 ORDER BY " + dateName,
-				startDate,
-				endDate,
-			)
-		} else {
-			return driver.Query(
-				baseQuery + " WHERE " + dateName + " >= $1 ORDER BY " + dateName,
-				startDate,
-			)
-		}
-	} else {
-		if endDate != nil {
-			return driver.Query(
-				baseQuery + " WHERE " + dateName + " < $1 ORDER BY " + dateName,
-				endDate,
-			)
-		} else {
-			return driver.Query(baseQuery +" ORDER BY " + dateName)
-		}
-	}
-} 
 
 func deleteMatchById(matchId int) (bool, error) {
 	return driver.Delete("matches", "match_id = $1", matchId)
@@ -221,28 +195,26 @@ func deleteMatchById(matchId int) (bool, error) {
 
 func getFullMatchesInDateRange(startDate *Date, endDate *Date) ([]Match, error) {
 	var matches []Match
-	baseQuery := "SELECT match_id, match_date, home, away, home_goals, away_goals FROM matches"
 
-	rows, err := createDateRangeQuery(baseQuery, "match_date", startDate, endDate)
+	matchQuery := "SELECT * FROM matches" + createDateRangeWhereClause(startDate, endDate) + " ORDER BY match_date"
 
-	if err != nil {
+	if rows, err := driver.Query(matchQuery); err != nil {
 		return matches, err
-	}
-
-	for rows.Next() {
-		var match Match
-		if err := rows.Scan(
-			&match.MatchId,
-			&match.MatchDate,
-			&match.Home,
-			&match.Away,
-			&match.HomeGoals,
-			&match.AwayGoals,
-		); err != nil {
-			return matches, err
+	} else {
+		for rows.Next() {
+			var match Match
+			if err := rows.Scan(
+				&match.MatchId,
+				&match.MatchDate,
+				&match.Home,
+				&match.Away,
+				&match.HomeGoals,
+				&match.AwayGoals,
+			); err != nil {
+				return matches, err
+			}
+			matches = append(matches, match)
 		}
-
-		matches = append(matches, match)
 	}
 
 	return matches, nil
@@ -250,42 +222,48 @@ func getFullMatchesInDateRange(startDate *Date, endDate *Date) ([]Match, error) 
 
 func getMatchesInDateRange(startDate *Date, endDate *Date) ([]MatchWithoutGoals, error) {
 	var matches []MatchWithoutGoals
-	baseQuery := "SELECT match_date, home, away FROM matches"
 
-	rows, err := createDateRangeQuery(baseQuery, "match_date", startDate, endDate)
+	matchQuery := "SELECT match_date, home, away FROM matches" + createDateRangeWhereClause(startDate, endDate) + " ORDER BY match_date"
 
-	if err != nil {
+	if rows, err := driver.Query(matchQuery); err != nil {
 		return matches, err
-	}
-
-	for rows.Next() {
-		var match MatchWithoutGoals
-		if err := rows.Scan(
-			&match.MatchDate,
-			&match.Home,
-			&match.Away,
-		); err != nil {
-			return matches, err
+	} else {
+		for rows.Next() {
+			var match MatchWithoutGoals
+			if err := rows.Scan(
+				&match.MatchDate,
+				&match.Home,
+				&match.Away,
+			); err != nil {
+				return matches, err
+			}
+			matches = append(matches, match)
 		}
-
-		matches = append(matches, match)
 	}
 
-	return matches, nil
+	return matches, nil	
 }
 
 func insertMatchIntoDb(match MatchWithoutGoals) (MatchWithId, error) {
 	var matchId int
 
-	if err := driver.InsertWithReturn(
-		"matches",
-		"match_date, home, away",
-		"$1, $2, $3",
-		"match_id",
-		match.MatchDate,
-		match.Home,
-		match.Away,
-	).Scan(&matchId); err != nil {
+	insertQuery := `
+		INSERT INTO matches(match_date, home, away) 
+		VALUES ($1, $2, $3) 
+		RETURNING match_id
+	`
+	if rows, err := driver.Query(insertQuery, match.MatchDate, match.Home, match.Away); err != nil {
+		return MatchWithId{}, err
+	} else {
+		for rows.Next() {
+			if err := rows.Scan(matchId); err != nil {
+				return MatchWithId{}, err
+			}
+			rows.Close()
+		}
+	}
+
+	if err := populatePredictionsByMatchId(matchId); err != nil {
 		return MatchWithId{}, err
 	}
 

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -123,33 +124,31 @@ func calculatePoints(c *gin.Context) {
 func getGlobalLeaderboard(limit int, offset int) ([]LeaderBoardUser, error) {
 	var leaderboard []LeaderBoardUser
 
-	rows, err := driver.Query(
-		`SELECT points, correct_scores, largest_error, position, username
-		FROM points 
+	pointsQuery := `
+		SELECT points, correct_scores, largest_error, position, username
+		FROM points
 		LEFT JOIN users 
-		ON users.user_id = points.user_id
+			ON points.user_id = users.user_id
 		ORDER BY position
-		LIMIT $1
-		OFFSET $2`,
-		limit,
-		offset,
-	)
-	if err != nil {
+		LIMIT $1 
+		OFFSET $2
+	`
+	if rows, err := driver.Query(pointsQuery, limit, offset); err != nil {
 		return leaderboard, err
-	}
-
-	for rows.Next() {
-		var leaderboardRow LeaderBoardUser
-		if err := rows.Scan(
-			&leaderboardRow.Points,
-			&leaderboardRow.CorrectScores,
-			&leaderboardRow.LargestError,
-			&leaderboardRow.Position,
-			&leaderboardRow.User.Username,
-		); err != nil {
-			return leaderboard, err
+	} else {
+		for rows.Next() {
+			var leaderboardRow LeaderBoardUser
+			if err := rows.Scan(
+				&leaderboardRow.Points,
+				&leaderboardRow.CorrectScores,
+				&leaderboardRow.LargestError,
+				&leaderboardRow.Position,
+				&leaderboardRow.User.Username,
+			); err != nil {
+				return leaderboard, err
+			}
+			leaderboard = append(leaderboard, leaderboardRow)
 		}
-		leaderboard = append(leaderboard, leaderboardRow)
 	}
 
 	return leaderboard, nil
@@ -157,33 +156,37 @@ func getGlobalLeaderboard(limit int, offset int) ([]LeaderBoardUser, error) {
 
 func getPointsByUserId(userId string) (UserWithPoints, error) {
 	var userPoints UserWithPoints
-	
-	err := driver.QueryRow(
-		`SELECT points, correct_scores, largest_error, position, username, is_admin
-		FROM points 
-		LEFT JOIN users 
-		ON users.user_id = points.user_id
-		WHERE points.user_id = $1`,
-		userId,
-	).Scan(
+
+	pointsQuery := `
+		SELECT points, correct_scores, largest_error, position, username, is_admin
+		FROM points
+		INNER JOIN users
+			ON points.user_id = users.user_id
+		WHERE points.user_id = $1
+		LIMIT 1
+	`
+	err := driver.QueryRow(pointsQuery, userId).Scan(
 		&userPoints.Points,
 		&userPoints.CorrectScores,
 		&userPoints.LargestError,
 		&userPoints.Position,
 		&userPoints.User.Username,
 		&userPoints.User.IsAdmin,
-	) 
+	)
 
 	return userPoints, err
 }
 
 func insertPointsIntoDb(userId string) error {
-	_, err := driver.Insert(
-		"points",
-		"user_id, points, correct_scores, largest_error, position",
-		"$1, 0, 0, 0, NULL",
-		userId,
-	)
+	insertQuery := `INSERT INTO points VALUES($1, 0, 0, 0, NULL)`
+	result, err := driver.Exec(insertQuery, userId)
+
+	if n, resultErr := result.RowsAffected(); resultErr != nil {
+		return resultErr
+	} else if n != 1 {
+		return errors.New("no new points added to db")
+	}
+	
 	return err
 }
 

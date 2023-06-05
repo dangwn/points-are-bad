@@ -278,7 +278,12 @@ func addNewUserIntoDb(username string, email string, password string) (string, e
 		return "", err
 	}
 
-	if err = insertPointsIntoDb(userId); err != nil {
+	if err := insertPointsIntoDb(userId); err != nil {
+		log.Println(err)
+		return "", err
+	}
+
+	if err := populatePredictionsByUserId(userId); err != nil {
 		log.Println(err)
 		return "", err
 	}
@@ -313,16 +318,18 @@ func decodeVerificationToken(token string) (string, string, error) {
 }
 
 func deleteUserByUserId(userId string) error {
-	otherAdminExists := false
-	NewQuery(
-		"users", "is_admin",
-	).Filter(
-		"is_admin", "=", true,
-	).Filter(
-		"user_id", "!=", userId,
-	).First(&otherAdminExists)
-	
-	if !otherAdminExists {
+	var otherAdminExists bool
+	adminExistsQuery := `
+		SELECT EXISTS(
+			SELECT 1 FROM users
+			WHERE user_id != $1 AND
+				is_admin = true
+		)
+	`
+
+	if err := driver.QueryRow(adminExistsQuery, userId).Scan(&otherAdminExists); err != nil {
+		return err
+	} else if otherAdminExists {
 		return errors.New("no other admins exist")
 	}
 
@@ -343,65 +350,29 @@ func deleteUserByUserId(userId string) error {
 
 func getUserByUserId(userId string) (User, error) {
 	var user User
-	rows, err := driver.Query(
-		"SELECT * FROM users WHERE users.user_id = $1 LIMIT 1",
-		userId,
+	err := driver.QueryRow("SELECT * FROM users WHERE user_id = $1", userId).Scan(
+		&user.UserId,
+		&user.Username,
+		&user.Email,
+		&user.HashedPassword,
+		&user.IsAdmin,
 	)
-	if err != nil {
-		return user, err
-	}
-	
-	for rows.Next() {
-		if err := rows.Scan(
-			&user.UserId,
-			&user.Username,
-			&user.Email,
-			&user.HashedPassword,
-			&user.IsAdmin,
-		); err != nil {
-			return user, err
-		}
-		break
-	}
-	return user, nil
+	return user, err
 }
 
 func getUserPasswordHash(userId string) (string, error) {
 	var hash string
-	rows, err := driver.Query(
-		"SELECT hashed_password FROM users WHERE user_id = $1 LIMIT 1",
-		userId,
-	)
-	if err != nil {
-		return hash, err
-	}
-	
-	for rows.Next() {
-		if err := rows.Scan(
-			&hash,
-		); err != nil {
-			return hash, err
-		}
-		break
-	}
-	return hash, nil
+	err := driver.QueryRow("SELECT hashed_password FROM users WHERE user_id = $1", userId).Scan(&hash)
+	return hash, err
 }
 
-func insertUserIntoDb(
-	userId string,
-	username string,
-	email string, 
-	hashedPassword string, 
-	isAdmin bool,
-) error {
-	_, err := driver.Insert(
-		"users",
-		"user_id, username, email, hashed_password, is_admin",
-		"$1, $2, $3, $4, $5",
+func insertUserIntoDb(userId string, username string, email string, hashedPassword string, isAdmin bool) error {
+	_, err := driver.Exec(
+		"INSERT INTO users VALUES($1, $2, $3, $4, $5)",
 		userId,
-		username, 
-		email, 
-		hashedPassword, 
+		username,
+		email,
+		hashedPassword,
 		isAdmin,
 	)
 	return err
