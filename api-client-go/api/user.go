@@ -54,8 +54,9 @@ func (r Router) addUserGroup(rg *gin.RouterGroup) {
     user.PUT("/username/", editUsername)
     user.PUT("/password/", editPassword)
 
-    // Only for testing
-    user.POST("/testCreateUser/", testCreateUser)
+    if IS_DEV_BUILD {
+    	user.POST("/testCreateUser/", testCreateUser)
+	}
 }
 
 func createNewUser(c *gin.Context) {
@@ -278,11 +279,6 @@ func addNewUserIntoDb(username string, email string, password string) (string, e
 		return "", err
 	}
 
-	if err := insertPointsIntoDb(userId); err != nil {
-		log.Println(err)
-		return "", err
-	}
-
 	if err := populatePredictionsByUserId(userId); err != nil {
 		log.Println(err)
 		return "", err
@@ -350,7 +346,13 @@ func deleteUserByUserId(userId string) error {
 
 func getUserByUserId(userId string) (User, error) {
 	var user User
-	err := driver.QueryRow("SELECT * FROM users WHERE user_id = $1", userId).Scan(
+	userQuery := `
+		SELECT user_id, username, email, hashed_password, is_admin 
+		FROM users 
+		WHERE user_id = $1
+	`
+
+	err := driver.QueryRow(userQuery, userId).Scan(
 		&user.UserId,
 		&user.Username,
 		&user.Email,
@@ -368,7 +370,7 @@ func getUserPasswordHash(userId string) (string, error) {
 
 func insertUserIntoDb(userId string, username string, email string, hashedPassword string, isAdmin bool) error {
 	_, err := driver.Exec(
-		"INSERT INTO users VALUES($1, $2, $3, $4, $5)",
+		"INSERT INTO users VALUES($1, $2, $3, $4, $5, 0, 0, 0, NULL)",
 		userId,
 		username,
 		email,
@@ -473,7 +475,6 @@ func verifyEmailIsUnique(email string) (bool, error) {
 * Only for testing
 *----------------------------------------------------------
 */
-
 type TestNewUser struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -481,7 +482,7 @@ type TestNewUser struct {
 }
 
 func testCreateUser(c *gin.Context) {
-    var newUser TestNewUser
+	var newUser TestNewUser
 	if err := c.BindJSON(&newUser); err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"detail":"Bad request",
@@ -489,11 +490,11 @@ func testCreateUser(c *gin.Context) {
 		return
 	}
 
-    if _, err := addNewUserIntoDb(
-        newUser.Username,
-        newUser.Email,
-        newUser.Password,
-    ); err != nil {
+	if _, err := addNewUserIntoDb(
+		newUser.Username,
+		newUser.Email,
+		newUser.Password,
+	); err != nil {
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 			"detail": err,
 		})

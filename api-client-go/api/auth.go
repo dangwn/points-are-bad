@@ -291,26 +291,17 @@ func sendVerifyMessageToEmailClient(email string) {
 func validateLoginUser(email string, password string) (string, error) {
 	var userId string
 	var hashedPassword string
-	emailInDb := false
-	rows, err := driver.Query(
-		"SELECT user_id, hashed_password FROM users WHERE email = $1 LIMIT 1",
+
+	if err := driver.QueryRow(
+		"SELECT user_id, hashed_password FROM users WHERE email = $1",
 		email,
-	)
-	if err != nil{
+	).Scan(&userId, &hashedPassword); err != nil {
 		return "", err
 	}
-	
-	for rows.Next() {
-		if err := rows.Scan(
-			&userId,
-			&hashedPassword,
-		); err != nil {
-			return "", err
-		}
-		emailInDb = true
+
+	if !verifyPasswordHash(hashedPassword, password) {
+		return "", errors.New("incorrect username or password")
 	}
-	if verifyPasswordHash(hashedPassword, password) && emailInDb {
-		return userId, nil
-	}
-	return "", errors.New("incorrect username or password")
+
+	return userId, nil
 }

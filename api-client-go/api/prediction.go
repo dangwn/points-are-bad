@@ -1,11 +1,14 @@
 package api
 
 import (
+	"encoding/json"
+	"errors"
+	"io"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
 )
 
 /*
@@ -23,6 +26,43 @@ type PredictionWithMatch struct {
 	PredictionUser SessionUser `json:"user"`
 }
 
+type PredictionArray []Prediction
+
+func appendIntPointerToSqlBuffer(b []byte, i *int) []byte {
+	if i == nil {
+		return append(b, 'N', 'U', 'L', 'L')
+	}
+	return strconv.AppendInt(b, int64(*i), 10)
+}
+
+func appendPredictionToArrayBuffer(b []byte, pred Prediction) []byte {
+	b = append(b, '(')
+	b = strconv.AppendInt(b, int64(pred.PredictionId), 10)
+	b = append(b, ',')
+	b = appendIntPointerToSqlBuffer(b, pred.HomeGoals)
+	b = append(b, ',')
+	b = appendIntPointerToSqlBuffer(b, pred.AwayGoals)
+	return append(b, ')')
+}
+
+func (p PredictionArray) String() string {
+	if n := len(p); n == 0 {
+		return ""
+	} else if n > 0 {
+		// Value takes form "(id, h, a),(id, h, a),..."
+		b := make([]byte, 0, 8*n-2)
+		b = appendPredictionToArrayBuffer(b, p[0])
+		for i := 1; i < n; i++ {
+			b = append(b, ',')
+			b = appendPredictionToArrayBuffer(b, p[i])
+		}		
+
+		return string(b)
+	}
+
+	return ""
+}
+
 
 /*
  *  Router Methods
@@ -32,6 +72,7 @@ func (r Router) addPredictionGroup(rg *gin.RouterGroup) {
 	prediction := rg.Group("/prediction")
 
 	prediction.GET("/", getUserPredictions)
+	prediction.PUT("/", updateUserPredictions)
 }
 
 func getUserPredictions(c *gin.Context) {
@@ -52,6 +93,34 @@ func getUserPredictions(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, userPredictions)
 	}
+}
+
+func updateUserPredictions(c *gin.Context) {
+	currentUserId, err := getCurrentUser(c)
+    if err != nil {
+        log.Println(err)
+        c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+            "detail":"Could not retreieve current user",
+        })
+        return
+    }
+
+	body, _ := io.ReadAll(c.Request.Body)
+	predictions := new([]Prediction)
+	if err := json.Unmarshal(body, &predictions); err != nil {
+		log.Println(err)
+		return
+	}
+
+	if err := updatePredictionsByUserId(*predictions, currentUserId); err != nil {
+		log.Println(err)
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"detail":"Could not update user predictions",
+		})
+		return
+	}
+
+	c.Status(http.StatusAccepted)
 }
 
 /*
@@ -102,13 +171,13 @@ func getPredictionsByUserId(userId string, startDate *Date, endDate *Date) ([]Pr
 }
 
 func populatePredictionsByUserId(userId string) error {
-	var matchIds []int
+	var matchIds []int64
 
 	if rows, err := driver.Query("SELECT match_id FROM matches"); err != nil {
 		return err
 	} else {
 		for rows.Next() {
-			var matchId int
+			var matchId int64
 			if err := rows.Scan(&matchId); err != nil {
 				return err
 			}
@@ -122,9 +191,9 @@ func populatePredictionsByUserId(userId string) error {
 
 	insertQuery := `
 		INSERT INTO predictions(home_goals, away_goals, user_id, match_id)
-		VALUES (NULL, NULL, $1, $2)
-	`
-	_, err := driver.Exec(insertQuery, userId, pq.Array(matchIds))
+		SELECT NULL, NULL, $1, `+ UnnestArray(matchIds).String()
+		                         
+	_, err := driver.Exec(insertQuery, userId)
 	return err
 }
 
@@ -148,9 +217,60 @@ func populatePredictionsByMatchId(matchId int) error {
 	}
 
 	insertQuery := `
-		INSERT INTO predictions(home_goals, away_goals, user_id, match_id)
-		VALUES (NULL, NULL, $1, $2)
-	`
-	_, err := driver.Exec(insertQuery, pq.Array(userIds), matchId)
+		INSERT INTO predictions(home_goals, away_goals, match_id, user_id)
+		SELECT NULL, NULL, $1, ` + UnnestArray(userIds).String()
+
+	_, err := driver.Exec(insertQuery, matchId)
 	return err
+}
+
+func updatePredictionsByUserId(predictions []Prediction, userId string) error {
+	// Start constructing query string in goroutine
+	queryStringChannel := make(chan string)
+	go func() {
+		queryStringChannel <- `
+		UPDATE predictions AS p SET
+			prediction_id = c.prediction_id,
+			home_goals = c.home_goals,
+			away_goals = c.away_goals
+		FROM (
+			VALUES ` + PredictionArray(predictions).String() + `
+		) AS c(prediction_id, home_goals, away_goals)
+		WHERE 
+			p.prediction_id = c.prediction_id
+		`
+	}()
+	
+	// Check that all predictions in "predictions" belong to the user
+	userPredictionIds := make(map[int]struct{})
+	if rows, err := driver.Query("SELECT prediction_id FROM predictions WHERE user_id = $1", userId); err != nil {
+		return err
+	} else {
+		for rows.Next() {
+			var predId int
+			if err := rows.Scan(&predId); err != nil {
+				return err
+			}
+			userPredictionIds[predId] = struct{}{}
+		}
+	}
+	for _, v := range predictions {
+		if _, found := userPredictionIds[v.PredictionId]; !found {
+			return errors.New("prediction being changed that does not belong to user")
+		}
+	}
+
+	queryString := <- queryStringChannel
+
+	if result, err := driver.Exec(queryString); err != nil {
+		return err
+	} else {
+		if affected, err := result.RowsAffected(); err != nil {
+			return err
+		} else if affected != int64(len(predictions)) {
+			return errors.New("different number of rows affected than expected")
+		}
+	}
+
+	return nil
 }

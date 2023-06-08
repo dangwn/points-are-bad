@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -126,9 +125,7 @@ func getGlobalLeaderboard(limit int, offset int) ([]LeaderBoardUser, error) {
 
 	pointsQuery := `
 		SELECT points, correct_scores, largest_error, position, username
-		FROM points
-		LEFT JOIN users 
-			ON points.user_id = users.user_id
+		FROM users
 		ORDER BY position
 		LIMIT $1 
 		OFFSET $2
@@ -159,10 +156,8 @@ func getPointsByUserId(userId string) (UserWithPoints, error) {
 
 	pointsQuery := `
 		SELECT points, correct_scores, largest_error, position, username, is_admin
-		FROM points
-		INNER JOIN users
-			ON points.user_id = users.user_id
-		WHERE points.user_id = $1
+		FROM users
+		WHERE users.user_id = $1
 		LIMIT 1
 	`
 	err := driver.QueryRow(pointsQuery, userId).Scan(
@@ -177,23 +172,10 @@ func getPointsByUserId(userId string) (UserWithPoints, error) {
 	return userPoints, err
 }
 
-func insertPointsIntoDb(userId string) error {
-	insertQuery := `INSERT INTO points VALUES($1, 0, 0, 0, NULL)`
-	result, err := driver.Exec(insertQuery, userId)
-
-	if n, resultErr := result.RowsAffected(); resultErr != nil {
-		return resultErr
-	} else if n != 1 {
-		return errors.New("no new points added to db")
-	}
-	
-	return err
-}
-
 func updatePoints() error {
 	todayDate := time.Now().Format("2001-01-01")
 
-	updatePointsQuery := `UPDATE points
+	updatePointsQuery := `UPDATE users
 		SET points = new_points.points, correct_scores = new_points.correct_scores, largest_error = new_points.largest_error, position = new_points.position
 		FROM (
 				SELECT *, RANK() OVER (ORDER BY points ASC, correct_scores DESC, largest_error ASC) as position
@@ -204,7 +186,7 @@ func updatePoints() error {
 						FROM (
 							SELECT user_id, pred_hg, pred_ag, home_goals as hg, away_goals as ag
 							FROM (  
-								SELECT "user_id", "home_goals" as "pred_hg", "away_goals" as "pred_ag", match_id
+								SELECT user_id, home_goals as pred_hg, away_goals as pred_ag, match_id
 								FROM predictions
 							) as t1
 							JOIN matches on t1.match_id = matches.match_id
@@ -217,7 +199,7 @@ func updatePoints() error {
 					GROUP BY user_id
 				) as t4
 		) as new_points
-		WHERE points.user_id = new_points.user_id`
+		WHERE users.user_id = new_points.user_id`
 
 	result, err := driver.Exec(updatePointsQuery, NULL_PREDICTIONS_PENALTY, todayDate)
 	if err != nil {

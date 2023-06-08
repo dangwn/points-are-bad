@@ -2,7 +2,9 @@ package api
 
 import (
 	"errors"
+	"log"
 	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -13,16 +15,35 @@ func createDateRangeWhereClause(startDate *Date, endDate *Date) string {
 	var whereClause string
 
 	if startDate != nil {
-		whereClause += " WHERE match_date >= " + startDate.String()
+		whereClause += " WHERE match_date >= '" + startDate.String() + "'"
 	}
 	if endDate != nil {
+		log.Println("Here")
 		if whereClause != "" {
-			return whereClause + " AND match_date < " + endDate.String()
+			return whereClause + " AND match_date < '" + endDate.String() + "'"
 		} else {
-			return " WHERE match_date < " + endDate.String()
+			return " WHERE match_date < '" + endDate.String() + "'"
 		}
 	}
+	log.Println(whereClause)
 	return whereClause
+}
+
+func createSqlValuePlaceholderSequence(n int, start ...int) string {
+	startIndex := 1
+	if len(start) > 0 {
+		startIndex = start[0]
+	}
+	
+	b := make([]byte, 1, 4*n-2)
+	b[0] = '$'
+	b = strconv.AppendInt(b, int64(startIndex), 10)
+	for i := startIndex + 1; i < startIndex + n; i++ {
+		b = append(b, ',', ' ', '$')
+		b = strconv.AppendInt(b, int64(i), 10)
+	}
+
+	return string(b)
 }
 
 func JwtEncode(

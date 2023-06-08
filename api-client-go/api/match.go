@@ -190,7 +190,16 @@ func updateMatch(c *gin.Context) {
  */
 
 func deleteMatchById(matchId int) (bool, error) {
-	return driver.Delete("matches", "match_id = $1", matchId)
+	deleteQuery := "DELETE FROM matches WHERE match_id = $1"
+	if result, err := driver.Exec(deleteQuery, matchId); err != nil {
+		return false, err
+	} else {
+		if n, err := result.RowsAffected(); n == 1 {
+			return true, err 
+		} else {
+			return false, err
+		}
+	}
 }
 
 func getFullMatchesInDateRange(startDate *Date, endDate *Date) ([]Match, error) {
@@ -252,15 +261,13 @@ func insertMatchIntoDb(match MatchWithoutGoals) (MatchWithId, error) {
 		VALUES ($1, $2, $3) 
 		RETURNING match_id
 	`
-	if rows, err := driver.Query(insertQuery, match.MatchDate, match.Home, match.Away); err != nil {
+	if err := driver.QueryRow(
+		insertQuery, 
+		match.MatchDate, 
+		match.Home, 
+		match.Away,
+	).Scan(&matchId); err != nil {
 		return MatchWithId{}, err
-	} else {
-		for rows.Next() {
-			if err := rows.Scan(matchId); err != nil {
-				return MatchWithId{}, err
-			}
-			rows.Close()
-		}
 	}
 
 	if err := populatePredictionsByMatchId(matchId); err != nil {

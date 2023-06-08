@@ -2,6 +2,7 @@ package api
 
 import (
 	"os"
+	"strings"
 	"time"
 )
 
@@ -11,6 +12,11 @@ func getEnv(varName string, defaultValue string) string {
 		return defaultValue
 	}	
 	return envVar
+}
+
+func isProductionBuild() bool {
+	envName := os.Getenv("PAB_ENVIRONMENT")
+	return strings.ToLower(envName) == "production"
 }
 
 var (
@@ -33,6 +39,8 @@ var (
 	CSRF_TOKEN_NAME string = "X-CSRF-Token"
 
 	EMAIL_VERIFICATION_QUEUE string = "email-verification"
+
+	IS_DEV_BUILD bool = !isProductionBuild()
 
 	LETTERS []rune = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
