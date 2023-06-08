@@ -28,23 +28,6 @@ type PredictionWithMatch struct {
 
 type PredictionArray []Prediction
 
-func appendIntPointerToSqlBuffer(b []byte, i *int) []byte {
-	if i == nil {
-		return append(b, 'N', 'U', 'L', 'L')
-	}
-	return strconv.AppendInt(b, int64(*i), 10)
-}
-
-func appendPredictionToArrayBuffer(b []byte, pred Prediction) []byte {
-	b = append(b, '(')
-	b = strconv.AppendInt(b, int64(pred.PredictionId), 10)
-	b = append(b, ',')
-	b = appendIntPointerToSqlBuffer(b, pred.HomeGoals)
-	b = append(b, ',')
-	b = appendIntPointerToSqlBuffer(b, pred.AwayGoals)
-	return append(b, ')')
-}
-
 func (p PredictionArray) String() string {
 	if n := len(p); n == 0 {
 		return ""
@@ -126,6 +109,23 @@ func updateUserPredictions(c *gin.Context) {
 /*
  *  Services
  */
+func appendIntPointerToSqlBuffer(b []byte, i *int) []byte {
+	if i == nil {
+		return append(b, 'N', 'U', 'L', 'L')
+	}
+	return strconv.AppendInt(b, int64(*i), 10)
+}
+
+func appendPredictionToArrayBuffer(b []byte, pred Prediction) []byte {
+	b = append(b, '(')
+	b = strconv.AppendInt(b, int64(pred.PredictionId), 10)
+	b = append(b, ',')
+	b = appendIntPointerToSqlBuffer(b, pred.HomeGoals)
+	b = append(b, ',')
+	b = appendIntPointerToSqlBuffer(b, pred.AwayGoals)
+	return append(b, ')')
+}
+
 func getPredictionsByUserId(userId string, startDate *Date, endDate *Date) ([]PredictionWithMatch, error) {
 	var predictions []PredictionWithMatch
 
