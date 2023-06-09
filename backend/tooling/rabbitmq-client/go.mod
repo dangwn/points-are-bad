@@ -1,4 +1,4 @@
-module github.com/points-are-bad/backend/tooling/rabbitmq-client
+module github.com/dangwn/points-are-bad/backend/tooling/rabbitmq-client
 
 go 1.20
 
