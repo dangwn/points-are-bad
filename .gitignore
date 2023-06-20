@@ -51,3 +51,7 @@ populate_db.py
 backend-clients/rabbitmq-client/*.egg-info
 backend-clients/rabbitmq-client/build
 backend-clients/rabbitmq-client/dist
+
+creds.txt
+
+docker-deploy-test.yml

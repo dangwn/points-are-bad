@@ -29,6 +29,22 @@ services:
       - "5673:5673"
       - "15672:15672"
 
+  email-server:
+    image: dangawne/points-are-bad/email-server:latest
+    environment: 
+      AWS_ACCESS_KEY_ID: ""
+      AWS_SECRET_ACCESS_KEY: ""
+      AWS_REGION: "us-east-1"
+      SENDER_EMAIL: ""
+      RABBITMQ_USER: "guest"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PASSWORD: "guest"
+      RABBITMQ_PORT: "5672"
+      WEB_HOST_NAME: "http://localhost:3000"
+    depends_on:
+      - rabbitmq
+
+
   # api-client:
   #   image: gin-app:latest
   #   ports: 

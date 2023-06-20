@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/aws/aws-sdk-go v1.44.283
-	github.com/dangwn/points-are-bad-tooling v0.1.6
+	github.com/dangwn/points-are-bad-tooling v0.1.7
 )
 
 require (
