@@ -49,10 +49,19 @@ func login(c *gin.Context) {
 		})
 		return
 	}
+	
 	userId, err := validateLoginUser(
 		loginUser.Email,
 		loginUser.Password,
 	)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"detail":"Bad request",
+		})
+		return
+	}
+
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"detail":"Incorrect email or password",
@@ -60,47 +69,16 @@ func login(c *gin.Context) {
 		return
 	}
 
-	accessToken, err := JwtEncode(
-		userId,
-		ACCESS_TOKEN_SECRET_KEY,
-		ACCESS_TOKEN_EXPIRE_TIME,
-	)
+	accessToken, err := createAccessToken(userId)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"detail":err,
-		})
-		return
-	}
-	refreshToken, err := JwtEncode(
-		userId,
-		REFRESH_TOKEN_SECRET_KEY,
-		REFRESH_TOKEN_EXPIRE_TIME,
-	)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"detail":err,
-		})
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not create access token", err)
 		return
 	}
 
-	c.SetCookie(
-		REFRESH_TOKEN_NAME,
-		refreshToken,
-		0, // Unlimited age
-		"", // Default path
-		FRONTEND_DOMAIN, // Frontend domain
-		false, // Secure cookie
-		false, // HTTP only
-	)
-	c.SetCookie(
-		CSRF_TOKEN_NAME,
-		refreshToken,
-		0, // Unlimited age
-		"", // Default path
-		FRONTEND_DOMAIN, // Frontend domain
-		false, // Secure cookie
-		false, // HTTP only
-	)
+	if err1, err2 := setRefreshTokenCookie(c, userId), setCSRFTokenCookie(c, userId); err1 != nil  || err2 != nil{
+		return
+	}
+	
 	c.JSON(http.StatusAccepted, gin.H{
 		"access_token": accessToken,
 		"token_type": "Bearer",
@@ -115,13 +93,14 @@ func logout(c *gin.Context) {
 func refreshAccessToken(c *gin.Context) {
 	cookie, err := c.Request.Cookie(REFRESH_TOKEN_NAME)
 	if err != nil {
+		log.Println("Could not get refresh token")
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"detail": "Could not get refresh token",
 		})
 		return
 	}
 
-	userId, err := JwtDecode(
+	userId, err := jwtDecode(
 		cookie.Value,
 		REFRESH_TOKEN_SECRET_KEY,
 	)
@@ -133,7 +112,7 @@ func refreshAccessToken(c *gin.Context) {
 		return
 	}
 
-	accessToken, err := JwtEncode(
+	accessToken, err := jwtEncode(
 		userId,
 		ACCESS_TOKEN_SECRET_KEY,
 		ACCESS_TOKEN_EXPIRE_TIME,
@@ -162,8 +141,7 @@ func verifyNewUserEmail(c *gin.Context) {
 		return
 	}
 
-	log.Println(newUserEmail.Email)
-	if !VerifyEmailFormat(newUserEmail.Email) {
+	if !verifyEmailFormat(newUserEmail.Email) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"detail":"Email address not valid",
 		})
@@ -197,6 +175,10 @@ func createRandomString(length int) string {
 		b[i] = LETTERS[rand.Intn(len(LETTERS))]
 	}
 	return string(b)
+}
+
+func createVerificationToken() string {
+	return createRandomString(14)
 }
 
 func clearAuthCookies(c *gin.Context) {
@@ -241,7 +223,7 @@ func getCurrentUser(c *gin.Context) (string, error) {
 		return "", err
 	}
 
-	userId, err := JwtDecode(
+	userId, err := jwtDecode(
 		token,
 		ACCESS_TOKEN_SECRET_KEY,
 	)
@@ -278,9 +260,25 @@ func isEmailInDb(email string) (bool, error) {
 }
 
 func sendVerifyMessageToEmailClient(email string) {
-	code := createRandomString(16)
-	msg := "{\"verify--" + email + "\":\"" + code + "\"}"
+	var token string
+	// Check to see if token is unique, if it isn't create a new one
+	for {
+		token = createVerificationToken()
+		exists, err := redisKeyExists(token)
+		if err != nil {
+			log.Println("Error checking if redis token already exists: " + err.Error())
+			return
+		}
+		if !exists {
+			break
+		}
+	}
 
+	// Store the email in redis to be verified by create user function
+	status, err := redis.Set(redisContext, token, email, REDIS_DURATION).Result()
+
+	// Send email and token to RabbitMQ for email server
+	msg := `{"email":"` + email + `","token":"` + token + `"}`
 	rabbit.SendMessage(
 		msg,
 		EMAIL_VERIFICATION_QUEUE,

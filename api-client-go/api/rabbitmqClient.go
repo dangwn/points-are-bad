@@ -13,7 +13,7 @@ var rabbit rmq.AsyncRabbitMQClient = func() rmq.AsyncRabbitMQClient {
 			RABBITMQ_PORT,
 		),
 		"emailExchange",
-		[]string{EMAIL_VERIFICATION_QUEUE},
+		EMAIL_VERIFICATION_QUEUE,
 	)
 	if err != nil {
 		panic("could not start rabbitmq client due to following error: " + err.Error())

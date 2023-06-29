@@ -1,8 +1,6 @@
 package api
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -62,72 +60,34 @@ func (r Router) addUserGroup(rg *gin.RouterGroup) {
 func createNewUser(c *gin.Context) {
     var newUser NewUser
     if err := c.BindJSON(&newUser); err != nil {
-        log.Println(err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"detail":"Bad request",
-		})
+		abortRouterMethod(c, http.StatusBadRequest, "Could not bind json", err)
         return
     }
 
     email, err := validateVerificationToken(newUser.Token)
     if err != nil {
-        c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"detail":"Could not decode token",
-		})
+        abortRouterMethod(c, http.StatusBadRequest, "Could not decode token", err)
         return
     }
 
     userId, err := addNewUserIntoDb(
-        email, newUser.Username, newUser.Password,
+        newUser.Username, email, newUser.Password,
     )
     if err != nil {
-        c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"detail":"Could not create new user",
-		})
+        abortRouterMethod(c, http.StatusBadRequest, "Could not add user into db", err)
         return
     }
 
-    accessToken, err := JwtEncode(
-		userId,
-		ACCESS_TOKEN_SECRET_KEY,
-		ACCESS_TOKEN_EXPIRE_TIME,
-	)
+	accessToken, err := createAccessToken(userId)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"detail":err,
-		})
-		return
-	}
-	refreshToken, err := JwtEncode(
-		userId,
-		REFRESH_TOKEN_SECRET_KEY,
-		REFRESH_TOKEN_EXPIRE_TIME,
-	)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"detail":err,
-		})
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not create access token", err)
 		return
 	}
 
-	c.SetCookie(
-		"X-REFRESH-TOKEN",
-		refreshToken,
-		0, // Unlimited age
-		"", // Default path
-		FRONTEND_DOMAIN, // Frontend domain
-		false, // Secure cookie
-		true, // HTTP only
-	)
-	c.SetCookie(
-		"X-CSRF-TOKEN",
-		refreshToken,
-		0, // Unlimited age
-		"", // Default path
-		FRONTEND_DOMAIN, // Frontend domain
-		false, // Secure cookie
-		true, // HTTP only
-	)
+	if err1, err2 := setRefreshTokenCookie(c, userId), setCSRFTokenCookie(c, userId); err1 != nil  || err2 != nil{
+		return
+	}
+	
 	c.JSON(http.StatusCreated, gin.H{
 		"access_token": accessToken,
 		"token_type": "Bearer",
@@ -292,27 +252,6 @@ func createUserId() string {
 	return uuid.New().String()
 }
 
-func decodeVerificationToken(token string) (string, string, error) {
-	// Returns email, token, error
-	decodedToken, err := base64.StdEncoding.DecodeString(token)
-	if err != nil {
-		log.Println("Could not decode token")
-		return "", "", nil
-	}
-
-	var data map[string]string
-	err = json.Unmarshal(decodedToken, &data)
-	if err != nil {
-		log.Println("Could not unmarshal JSON")
-		return "", "", nil
-	}
-
-	for key := range data {
-		return key, data[key], nil
-	}
-	return "", "", errors.New("data was empty")
-}
-
 func deleteUserByUserId(userId string) error {
 	var otherAdminExists bool
 	adminExistsQuery := `
@@ -439,23 +378,12 @@ func updatePasswordByUserId(userId string, oldPassword string,	newPassword strin
 }
 
 func validateVerificationToken(token string) (string, error) {
-	// Email comes back from decode function in the form verify--<email>
-	// Only return the email for creating new user
-	email, decodedToken, err := decodeVerificationToken(token)
-	if err != nil {
+	// Retrieves email from redis using the token
+	if email, err := redis.Get(redisContext, token).Result(); err != nil {
 		return "", err
+	} else {
+		return email, nil
 	}
-
-	tokenInRedis, err := redis.Get(redisContext, email).Result()
-	if err != nil {
-		return "", err
-	}
-
-	if decodedToken != tokenInRedis {
-		return "", errors.New("token in redis did not match verified token")
-	}
-
-	return email[len("verify--"):], nil
 }
 
 func verifyEmailIsUnique(email string) (bool, error) {

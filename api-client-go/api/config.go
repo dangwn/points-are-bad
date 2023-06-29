@@ -59,6 +59,7 @@ var (
 	REDIS_PORT string = getEnv("REDIS_PORT", "6379")
 	REDIS_PASSWORD string = getEnv("REDIS_PASSWORD", "")
 	REDIS_DB int = 0
+	REDIS_DURATION time.Duration = time.Minute * 30
 
 	REFRESH_TOKEN_NAME string = "X-Refresh-Token"
 	REFRESH_TOKEN_SECRET_KEY []byte = []byte(getEnv(

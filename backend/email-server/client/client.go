@@ -80,6 +80,8 @@ func (server *EmailServer) HandleIncomingVerificationRequests(inChannel chan str
 		data := VerificationMessage{}
 		json.Unmarshal([]byte(msg), &data)
 
+		Logger.Info(data)
+
 		if (data.Email == "" || data.VerificationToken == "") {
 			Logger.Warning("Could not unpack message from RabbitMQ")
 			continue
