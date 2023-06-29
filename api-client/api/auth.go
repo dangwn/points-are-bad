@@ -177,10 +177,10 @@ func verifyNewUserEmail(c *gin.Context) {
 // Creates a random string of letters of a given length
 func createRandomString(length int) string {
 	b := make([]rune, length)
-	numChars := len(LETTERS)
+	numChars := len(CHARS)
 	
 	for i := range b {
-		b[i] = LETTERS[rand.Intn(numChars)]
+		b[i] = CHARS[rand.Intn(numChars)]
 	}
 	return string(b)
 }

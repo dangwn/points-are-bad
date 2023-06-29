@@ -42,7 +42,7 @@ var (
 
 	IS_DEV_BUILD bool = !isProductionBuild()
 
-	LETTERS []rune = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	CHARS []rune = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
 	NULL_PREDICTIONS_PENALTY int = 10
 
@@ -66,6 +66,6 @@ var (
 		"REFRESH_TOKEN_SECRET_KEY", 
 		"OOOOO-REFRESH-SECRET",
 	))
-	REFRESH_TOKEN_MAX_AGE_DAYS = 30
+	REFRESH_TOKEN_MAX_AGE_DAYS int = 30
 	REFRESH_TOKEN_EXPIRE_TIME time.Duration = time.Hour * 24 * time.Duration(REFRESH_TOKEN_MAX_AGE_DAYS)
 )
