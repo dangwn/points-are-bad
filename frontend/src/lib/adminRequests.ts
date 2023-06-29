@@ -1,6 +1,6 @@
+import type { MatchWithId, MatchWithoutGoals } from '../types/match';
 import { getAccessToken } from './accessToken';
 import { API_HOST } from './constants';
-import type { MatchWithId, MatchWithoutGoals } from '../types/match';
 
 export const getFullMatches = async (startDate?: string, endDate?: string): Promise<MatchWithId[]> => {
   const accessToken: string = getAccessToken();
@@ -76,7 +76,7 @@ export const updatePoints = async (): Promise<void> => {
   const accessToken: string = getAccessToken();
 
   const response: Response = await fetch(
-    `${API_HOST}/points/calculate`,
+    `${API_HOST}/points/calculate/`,
     {
       method: 'POST',
       headers: {
@@ -96,7 +96,7 @@ export const deleteMatch = async (matchId: number): Promise<void> => {
   const accessToken: string = getAccessToken();
 
   const response: Response = await fetch(
-    `${API_HOST}/match/${matchId}`,
+    `${API_HOST}/match/?match_id=${matchId}`,
     {
       method: 'DELETE',
       headers: {

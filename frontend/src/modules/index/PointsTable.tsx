@@ -1,35 +1,53 @@
 import React from 'react';
 
-import styles from '../../styles/index/IndexTables.module.css';
+import Cell from './Cell';
+import { createPositionString } from '@/lib/change';
+
+import styles from '@/styles/HomePage.module.css';
 
 interface PointsTableProps {
   username: string,
   points: number,
   correctScores: number,
-  largestError: number
+  largestError: number,
+  position: number|null
 }
 
-const PointsTable: React.FC<PointsTableProps> = ({username, points, correctScores, largestError}) => {
+const PointsTable: React.FC<PointsTableProps> = ({username, points, correctScores, largestError, position}) => {
    return (
-    <div className={styles.container}>
-      <div className={styles.tableTitle}>{username}</div>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th className={styles.th}>Points</th>
-            <th className={styles.th}>Correct Scores</th>
-            <th className={styles.th}>Largest Error</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr className={styles.tr}>
-            <td className={styles.td}>{points}</td>
-            <td className={styles.td}>{correctScores}</td>
-            <td className={styles.td}>{largestError}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <div className={styles.pointsTableContainer}>
+    <div className={styles.pointsTable}>
+      <Cell 
+        className={styles.topCell}
+        topText={username} 
+        bottomText={createPositionString(position)} 
+        topSize='3em' 
+        bottomSize='1.5em'
+        />
+      <div className={styles.pointsContainer}>
+        <Cell 
+          className={styles.cell}
+          topText={correctScores} 
+          bottomText='Correct Scores' 
+          topSize='2em' 
+          bottomSize='1em'
+        />
+        <Cell 
+          className={styles.cell}
+          topText={points} 
+          bottomText='Points' 
+          topSize='2.6em' 
+          bottomSize='1.3em'
+        />
+        <Cell 
+          className={styles.cell}
+          topText={largestError} 
+          bottomText='Largest Error' 
+          topSize='2em' 
+          bottomSize='1em'
+        />
+      </div>
+    </div></div>
   );
 };
 

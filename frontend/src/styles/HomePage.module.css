@@ -1,0 +1,86 @@
+@import url(https://fonts.googleapis.com/css?family=Inter);
+
+.pointsTableContainer{
+    display: flex;
+    justify-content: center;
+    font-family: 'inter';
+}
+
+.upcomingMatchesContainer {
+    border-radius: 10px;
+    padding: 20px;
+    margin: 0 auto;
+    max-width: 33.33%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+.pointsTable {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    width: 50%;
+    align-items: center;
+}
+
+.pointsContainer {
+    display: flex;
+    justify-content: center;
+    font-family: 'inter';
+    align-items: center;
+}
+.cellContainer {
+    flex-direction: row;
+}
+
+.cell {
+    align-self: flex-start;
+    text-align: center;
+    margin: 10px;
+    width: 30%
+}
+
+.topCell {
+    text-align: center;
+    margin: 10px;
+    width: 25%
+}
+
+.upcomingMatchesTableTitle {
+    font-size: 2em;
+    color: white;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: bold;
+  }
+  
+  .upcomingMatchesTable {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+  }
+  
+  .upcomingMatchesTh {
+    color: #f8f8f8;
+    font-weight: bold;
+    padding: 10px;
+    text-align: center;
+    width: calc(100% / 3);
+    font-size: 1.4em;
+  }
+  
+  .upcomingMatchesTd {
+    padding: 10px;
+    text-align: center;
+    font-size: 1.2em;
+    width: calc(100% / 3);
+  }
+
+  .upcomingMatchesTableElement {
+    padding: 10px;
+    text-align: center;
+    font-size: 1.2em;
+    width: calc(100% / 3);
+    font-size:1.1em;
+  }

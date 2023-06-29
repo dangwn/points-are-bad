@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7.0.10
+    ports:
+      - "6379:6379"
+
+  db:
+    image: postgres:10.17
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db
+    ports:
+      - "5432:5432"
+
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "5673:5673"
+      - "15672:15672"
+
+  email-server:
+    image: dangawne/points-are-bad/email-server:latest
+    environment: 
+      AWS_ACCESS_KEY_ID: ""
+      AWS_SECRET_ACCESS_KEY: ""
+      AWS_REGION: "us-east-1"
+      SENDER_EMAIL: ""
+      RABBITMQ_USER: "guest"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PASSWORD: "guest"
+      RABBITMQ_PORT: "5672"
+      WEB_HOST_NAME: "http://localhost:3000"
+    depends_on:
+      - rabbitmq
+
+
+  # api-client:
+  #   image: gin-app:latest
+  #   ports: 
+  #     - "8010:8010"
+  #   depends_on:
+  #     - rabbitmq
+  #   environment:
+  #     - RABBITMQ_HOST=rabbitmq

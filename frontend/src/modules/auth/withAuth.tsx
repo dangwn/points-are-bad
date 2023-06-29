@@ -1,9 +1,9 @@
+import Cookies from 'js-cookie';
 import { useRouter } from 'next/router';
 import React, { useEffect } from 'react';
-import Cookies from 'js-cookie';
 
-import { refreshAccessToken } from '../../lib/requests';
 import { setAccessToken } from '../../lib/accessToken';
+import { refreshAccessToken } from '../../lib/requests';
 import type { Token } from '../../types/token';
 
 interface WithAuthProps {}

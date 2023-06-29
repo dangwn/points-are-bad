@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 
 import { updateUserPredictions } from '@/lib/requests';
 import { preventNegativeInputs } from '@/lib/change';
-import styles from '@/styles/predictions/PredictionsTable.module.css';
+import styles from '@/styles/PredictionsPage.module.css';
 import type { UserPrediction, NewPrediction } from '@/types/predictions';
 
 interface PredictionTableProps {
@@ -69,11 +69,11 @@ const PredictionsTable: React.FC<PredictionTableProps> = ({predictions}) => {
       <table className={styles.table}>
         <thead>
           <tr>
-            <th className={styles.tableElement}>Home</th>
-            <th className={styles.tableElement}>Home Goals</th>
-            <th className={styles.tableElement}>Match Date</th>
-            <th className={styles.tableElement}>Away Goals</th>
-            <th className={styles.tableElement}>Away</th>
+            <th className={styles.th}>Home</th>
+            <th className={styles.th}>Home Goals</th>
+            <th className={styles.th}>Match Date</th>
+            <th className={styles.th}>Away Goals</th>
+            <th className={styles.th}>Away</th>
           </tr>
         </thead>
         <tbody>

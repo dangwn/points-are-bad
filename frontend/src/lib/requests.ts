@@ -1,12 +1,12 @@
-import { getAccessToken, setAccessToken } from './accessToken';
+import { getAccessToken } from './accessToken';
 import { API_HOST } from './constants';
 
-import type { SessionUser } from '../types/user';
-import type { SessionUserPoints, LeaderboardPoints } from '../types/points';
-import type { MatchWithoutGoals, Match } from '../types/match';
 import type { LeaderboardApiResponse, LeaderboardUser } from '../types/leaderboard';
+import type { Match, MatchWithoutGoals } from '../types/match';
+import type { LeaderboardPoints } from '../types/points';
+import type { NewPrediction, UserPrediction } from '../types/predictions';
 import type { Token } from '../types/token';
-import type { UserPrediction, NewPrediction } from '../types/predictions';
+import type { SessionUser } from '../types/user';
 
 export const createUser = async (token: string, username: string, password: string): Promise<Token> => {
   const response = await fetch(
@@ -31,7 +31,18 @@ export const createUser = async (token: string, username: string, password: stri
   return response.json();
 }
 
-export const getVerificationToken = async (email: string): Promise<Token> => {
+export const deleteCurrentUser = async (): Promise<Response> => {
+  const accessToken: string = getAccessToken();
+  return await fetch(`${API_HOST}/user/`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    },
+    credentials: 'include',
+  })
+}
+
+export const sendVerificationEmail = async (email: string): Promise<void> => {
   const response = await fetch(
     `${API_HOST}/auth/verify/?email=${email}`,
     {
@@ -42,16 +53,20 @@ export const getVerificationToken = async (email: string): Promise<Token> => {
     }
   );
   if (!response.ok){
+    if (response.status === 403){
+      throw new Error('Email already in use!');
+    } else if (response.status === 400) {
+      throw new Error('Email address not valid');
+    }
     throw new Error('Error creating verification token.');
   };
 
-  return response.json();
 }
 
 export const getLeaderboard = async (pageIndex: number, pageSize: number): Promise<LeaderboardApiResponse> => {
   const offset: number = pageIndex * pageSize;
   const response: Response = await fetch(
-    `${API_HOST}/points/leaderboard?limit=${pageSize}&offset=${offset}`
+    `${API_HOST}/points/leaderboard/?limit=${pageSize}&offset=${offset}`
   )
   
   if (!response.ok) {
@@ -99,20 +114,18 @@ export const getUpcomingMatches = async (): Promise<MatchWithoutGoals[]> => {
   const today: Date = new Date();
   const todayDateString: string = today.toISOString().slice(0, 10);
 
-  const response: Response = await fetch(`${API_HOST}/match/?start_date=${todayDateString}`);
+  const response: Response = await fetch(`${API_HOST}/match/?start_date="${todayDateString}"`);
   if (!response.ok){
     throw new Error('Error fetching upcoming matches');
   };
   return response.json();
 };
 
-export const getUpcomingUserPredictions = async(): Promise<UserPrediction[]> => {
+export const getUserPredictions = async(): Promise<UserPrediction[]> => {
   const accessToken: string = getAccessToken();
-  const today = new Date();
-  const todayDateString = today.toISOString().slice(0, 10);
 
   const response = await fetch(
-    `${API_HOST}/prediction/?start_date=${todayDateString}`,
+    `${API_HOST}/prediction/`,
     {
         headers: {
         'Authorization': `Bearer ${accessToken}`
@@ -183,6 +196,50 @@ export const refreshAccessToken = async (): Promise<Token> => {
   };
   return response.json();
 };
+
+export const updateUsername = async (newUsername: string): Promise<void> => {
+  const accessToken: string = getAccessToken();
+  const response: Response = await fetch(`${API_HOST}/user/username/`,
+   {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'accept': 'application/json'
+      },
+      body: JSON.stringify({username: newUsername}),
+      credentials: 'include'
+   }
+  );
+  if (!response.ok){
+    throw new Error('Could not update username');
+  };
+}
+
+export const updatePassword = async (oldPassword: string, newPassword: string): Promise<void> => {
+  const accessToken: string = getAccessToken();
+
+  const response: Response = await fetch(`${API_HOST}/user/password/`,
+   {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'accept': 'application/json'
+      },
+      body: JSON.stringify({
+        current_password: oldPassword,
+        new_password: newPassword
+      }),
+      credentials: 'include'
+   }
+  );
+  if (!response.ok){
+    if (response.status === 401) {
+      throw new Error('Incorrect password');
+    }
+    throw new Error('Unable to change password');
+  };
+}
 
 export const updateUserPredictions = async (newUserPredictions: NewPrediction[]): Promise<void> => {
   const accessToken: string = getAccessToken();

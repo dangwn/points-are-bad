@@ -32,6 +32,7 @@ const MatchAdmin: React.FC<MatchAdminProps> = ({}) => {
   return (
     <div className={styles.container}>
       <MatchEditingTable inputMatchData={Matches} />
+      <hr className={styles.hr}></hr>
       <CreateMatchPanel />
     </div>
   );
