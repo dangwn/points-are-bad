@@ -77,7 +77,7 @@ func login(c *gin.Context) {
 		"access_token": accessToken,
 		"token_type": "Bearer",
 	})
-	Logger.INFO("User "+ userId + " successfully logged in")
+	Logger.Info("User "+ userId + " successfully logged in")
 }
 
 /*
@@ -94,7 +94,7 @@ func logout(c *gin.Context) {
 	
 	deleteCookies(c)
 	c.Status(http.StatusNoContent)
-	Logger.INFO("User " + userId + " successfully logged out")
+	Logger.Info("User " + userId + " successfully logged out")
 }
 
 /*
@@ -127,7 +127,7 @@ func refreshAccessToken(c *gin.Context) {
 		"access_token": accessToken,
 		"token_type": "Bearer",
 	})
-	Logger.INFO("User " + userId + " refreshed tokens")
+	Logger.Info("User " + userId + " refreshed tokens")
 }
 
 /*
