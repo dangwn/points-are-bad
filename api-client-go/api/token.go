@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -24,6 +25,21 @@ func createRefreshToken(userId string) (string, error) {
 func deleteCookies(c *gin.Context) {
 	c.SetCookie(CSRF_TOKEN_NAME, "", -1, "", FRONTEND_DOMAIN, false, false)
 	c.SetCookie(REFRESH_TOKEN_NAME, "", -1, "", FRONTEND_DOMAIN, false, false)
+}
+
+func getAuthorizationToken(c *gin.Context) (string, error) {
+	authHeader := c.GetHeader("Authorization")
+
+	if authHeader == "" {
+		return "", errors.New("authorization header not in header")
+	}
+
+	authParts := strings.Split(authHeader, " ")
+	if len(authParts) != 2 || authParts[0] != "Bearer" {
+		return "", errors.New("incorrect header format")
+	}
+
+	return authParts[1], nil
 }
 
 func setCSRFTokenCookie(c *gin.Context, userId string) error {

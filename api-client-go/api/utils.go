@@ -1,12 +1,19 @@
 package api
 
 import (
-	"log"
 	"regexp"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
+
+func abortRouterMethod(c *gin.Context, statusCode int, msg interface{}, logs ...any) {
+	for _, l := range logs {
+		Logger.Error(l)
+	}
+	c.AbortWithStatusJSON(statusCode, gin.H{"detail": msg})
+}
+
 
 func createDateRangeWhereClause(startDate *Date, endDate *Date) string {
 	var whereClause string
@@ -24,14 +31,6 @@ func createDateRangeWhereClause(startDate *Date, endDate *Date) string {
 	
 	return whereClause
 }
-
-func abortRouterMethod(c *gin.Context, statusCode int, msg interface{}, logs ...any) {
-	for _, l := range logs {
-		log.Println(l)
-	}
-	c.AbortWithStatusJSON(statusCode, gin.H{"detail": msg})
-}
-
 
 func redisKeyExists(key string) (bool, error) {
 	exists, err := redis.Exists(redisContext, key).Result()

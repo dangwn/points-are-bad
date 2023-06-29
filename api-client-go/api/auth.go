@@ -2,10 +2,8 @@ package api
 
 import (
 	"errors"
-	"log"
 	"math/rand"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,7 +30,7 @@ type Token struct {
  * Router modules
  */
 
- 
+// Authentication router group
 func (r Router) addAuthGroup(rg *gin.RouterGroup) {
 	auth := rg.Group("/auth")
 	auth.POST("/login/", login)
@@ -41,12 +39,16 @@ func (r Router) addAuthGroup(rg *gin.RouterGroup) {
 	auth.POST("/verify/", verifyNewUserEmail)
 }
 
+/*
+ * Login Endpoint
+ * Schema: {email: string, password: string}
+ * Verifies user email and password, and returns access tokens + token cookies
+ */
 func login(c *gin.Context) {
 	var loginUser LoginUser
 	if err := c.BindJSON(&loginUser); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"detail":"Bad request",
-		})
+		logMessage := "Error binding user json to variable in login: " + err.Error()
+		abortRouterMethod(c, http.StatusBadRequest, "Bad request", logMessage)
 		return
 	}
 	
@@ -55,23 +57,15 @@ func login(c *gin.Context) {
 		loginUser.Password,
 	)
 	if err != nil {
-		log.Println(err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"detail":"Bad request",
-		})
-		return
-	}
-
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"detail":"Incorrect email or password",
-		})
+		logMessage := "Error validating login user in login: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Incorrect email or password", logMessage)
 		return
 	}
 
 	accessToken, err := createAccessToken(userId)
 	if err != nil {
-		abortRouterMethod(c, http.StatusUnauthorized, "Could not create access token", err)
+		logMessage := "Error creating access token in login: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not create access token", logMessage)
 		return
 	}
 
@@ -83,45 +77,49 @@ func login(c *gin.Context) {
 		"access_token": accessToken,
 		"token_type": "Bearer",
 	})
+	Logger.INFO("User "+ userId + " successfully logged in")
 }
 
+/*
+ * Logout Endpoint
+ * Verifies current user, then deletes token cookies
+ */
 func logout(c *gin.Context) {
-	clearAuthCookies(c)
+	userId, err := getCurrentUser(c)
+	if err != nil {
+		logMessage := "Could not retrieve userId in logout: " + err.Error()
+		abortRouterMethod(c, http.StatusBadRequest, "Could not log user out", logMessage)
+		return
+	}
+	
+	deleteCookies(c)
 	c.Status(http.StatusNoContent)
+	Logger.INFO("User " + userId + " successfully logged out")
 }
 
+/*
+ * Token Refresh Endpoint
+ * Retrieves refresh and CSRF tokens and extracts userId from token and returns new tokens and cookies 
+ */
 func refreshAccessToken(c *gin.Context) {
 	cookie, err := c.Request.Cookie(REFRESH_TOKEN_NAME)
 	if err != nil {
-		log.Println("Could not get refresh token")
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"detail": "Could not get refresh token",
-		})
+		logMessage := "Could not get refresh token cookie in refreshAccessToken: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not get refresh token", logMessage)
 		return
 	}
 
-	userId, err := jwtDecode(
-		cookie.Value,
-		REFRESH_TOKEN_SECRET_KEY,
-	)
-
+	userId, err := jwtDecode(cookie.Value, REFRESH_TOKEN_SECRET_KEY)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"detail": "Could not decode refresh token",
-		})
+		logMessage := "Could not get userId from refresh token in refreshAccessToken: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not decode refresh token", logMessage)
 		return
 	}
 
-	accessToken, err := jwtEncode(
-		userId,
-		ACCESS_TOKEN_SECRET_KEY,
-		ACCESS_TOKEN_EXPIRE_TIME,
-	)
-
+	accessToken, err := jwtEncode(userId, ACCESS_TOKEN_SECRET_KEY, ACCESS_TOKEN_EXPIRE_TIME)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"detail": "Could not create new access token",
-		})
+		logMessage := "Could not create access token in refreshAccessToken: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not create new access token", logMessage)
 		return
 	}
 
@@ -129,38 +127,45 @@ func refreshAccessToken(c *gin.Context) {
 		"access_token": accessToken,
 		"token_type": "Bearer",
 	})
+	Logger.INFO("User " + userId + " refreshed tokens")
 }
 
+/*
+ * Email Verification Endpoint
+ * Schema: {email: string}
+ * Verifies email format, and that the email doesn't already exist in database
+ * Sends message to email server via RabbitMQ to email new user with verification link
+ */
 func verifyNewUserEmail(c *gin.Context) {
 	var newUserEmail EmailAddress
 	if err := c.BindQuery(&newUserEmail); err != nil {
-		log.Println(err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"detail":"Bad request",
-		})
+		logMessage := "Could not bind query in verifyNewUserEmail: " + err.Error()
+		abortRouterMethod(c, http.StatusBadRequest, "Bad request", logMessage)
 		return
 	}
 
 	if !verifyEmailFormat(newUserEmail.Email) {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"detail":"Email address not valid",
-		})
+		logMessage := "Email address format not valid in verifyNewUserEmail"
+		abortRouterMethod(c, http.StatusBadRequest, "Email address not valid", logMessage)
 		return
 	}
 
-	emailInDb, _ := isEmailInDb(
-		newUserEmail.Email,
-	)
-
-	if emailInDb {
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-			"detail":"Email already taken",
-		})
+	if emailInDb, err := isEmailInDb(newUserEmail.Email); err != nil {
+		logMessage := "Could not verify if email is in db in verifyNewUserEmail: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not get refresh token", logMessage)
+		return
+	} else if emailInDb {
+		abortRouterMethod(c, http.StatusUnauthorized, "Email address already taken")
+		return
 	}
 
-	sendVerifyMessageToEmailClient(
-		newUserEmail.Email,
-	)
+	if err := sendVerifyMessageToEmailClient(newUserEmail.Email); err != nil {
+		Logger.Warning("Could not send email verification link in verifyUserEmail" + err.Error())
+	} else {
+		Logger.Info("Verification link sent")
+	}
+
+	// Failures in sending tokens to rabbitmq will not be shown to the user
 	c.Status(http.StatusAccepted)
 }
 
@@ -169,75 +174,43 @@ func verifyNewUserEmail(c *gin.Context) {
  * Services
  */
 
+// Creates a random string of letters of a given length
 func createRandomString(length int) string {
 	b := make([]rune, length)
+	numChars := len(LETTERS)
+	
 	for i := range b {
-		b[i] = LETTERS[rand.Intn(len(LETTERS))]
+		b[i] = LETTERS[rand.Intn(numChars)]
 	}
 	return string(b)
 }
 
+// Creates a verification token (20 random letters)
 func createVerificationToken() string {
-	return createRandomString(14)
+	return createRandomString(20)
 }
 
-func clearAuthCookies(c *gin.Context) {
-	c.SetCookie(
-		REFRESH_TOKEN_NAME,
-		"",
-		-1, // Unlimited age
-		"", // Default path
-		FRONTEND_DOMAIN, // Frontend domain
-		true, // Secure cookie
-		true, // HTTP only
-	)
-	c.SetCookie(
-		CSRF_TOKEN_NAME,
-		"",
-		-1, // Unlimited age
-		"", // Default path
-		FRONTEND_DOMAIN, // Frontend domain
-		true, // Secure cookie
-		true, // HTTP only
-	)
-}
-
-func getAuthorizationToken(c *gin.Context) (string, error) {
-	authHeader := c.GetHeader("Authorization")
-
-	if authHeader == "" {
-		return "", errors.New("authorization header not in header")
-	}
-
-	authParts := strings.Split(authHeader, " ")
-	if len(authParts) != 2 || authParts[0] != "Bearer" {
-		return "", errors.New("incorrect header format")
-	}
-
-	return authParts[1], nil
-}
-
+/*
+ * Retrieves the current user using the incoming context
+ * Decodes the access token and returns the userId of the current user
+ */
 func getCurrentUser(c *gin.Context) (string, error) {
 	token, err := getAuthorizationToken(c)
 	if err != nil {
 		return "", err
 	}
 
-	userId, err := jwtDecode(
-		token,
-		ACCESS_TOKEN_SECRET_KEY,
-	)
-	if err != nil {
+	if userId, err := jwtDecode(token, ACCESS_TOKEN_SECRET_KEY); err != nil {
 		return "", err
+	} else {
+		return userId, nil
 	}
-
-	if err != nil {
-		return "", err
-	}
-
-	return userId, nil
 }
 
+/*
+ * Returns whether the current user is an admin
+ * If no current user can be found, it returns false
+ */
 func isCurrentUserAdmin(c *gin.Context) bool {
 	userId, err := getCurrentUser(c)
 	if err != nil {
@@ -251,23 +224,24 @@ func isCurrentUserAdmin(c *gin.Context) bool {
 	return user.IsAdmin
 }
 
+// Returns whether a given email is in the db
 func isEmailInDb(email string) (bool, error) {
-	return driver.ValueExists(
-		"users",
-		"email",
-		email,
-	)
+	return driver.ValueExists("users", "email",	email)
 }
 
-func sendVerifyMessageToEmailClient(email string) {
+/*
+ *	Sends a message to the email server via RabbitMQ of the form:
+ *		{"email":"<email address>","token":"<verification token>"}
+ * 	for the email server to send a verification link to a new user
+ */
+func sendVerifyMessageToEmailClient(email string) error {
 	var token string
 	// Check to see if token is unique, if it isn't create a new one
 	for {
 		token = createVerificationToken()
 		exists, err := redisKeyExists(token)
 		if err != nil {
-			log.Println("Error checking if redis token already exists: " + err.Error())
-			return
+			return err
 		}
 		if !exists {
 			break
@@ -275,17 +249,22 @@ func sendVerifyMessageToEmailClient(email string) {
 	}
 
 	// Store the email in redis to be verified by create user function
-	status, err := redis.Set(redisContext, token, email, REDIS_DURATION).Result()
+	if status, err := redis.Set(redisContext, token, email, REDIS_DURATION).Result(); err != nil {
+		return err
+	} else if status != "OK" {
+		return errors.New("redis returned non-OK status code")
+	}
 
 	// Send email and token to RabbitMQ for email server
 	msg := `{"email":"` + email + `","token":"` + token + `"}`
-	rabbit.SendMessage(
-		msg,
-		EMAIL_VERIFICATION_QUEUE,
-		10,
-	)
+	rabbit.SendMessage(msg,	EMAIL_VERIFICATION_QUEUE, 10)
+	return nil
 }
 
+/*
+ * Validates a user's login credentials against the db
+ * Returns the user's userId string
+ */
 func validateLoginUser(email string, password string) (string, error) {
 	var userId string
 	var hashedPassword string
