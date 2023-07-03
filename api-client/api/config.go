@@ -62,10 +62,7 @@ var (
 	REDIS_DURATION time.Duration = time.Minute * 30
 
 	REFRESH_TOKEN_NAME string = "X-Refresh-Token"
-	REFRESH_TOKEN_SECRET_KEY []byte = []byte(getEnv(
-		"REFRESH_TOKEN_SECRET_KEY", 
-		"OOOOO-REFRESH-SECRET",
-	))
+	REFRESH_TOKEN_SECRET_KEY []byte = []byte(getEnv("REFRESH_TOKEN_SECRET_KEY", "OOOOO-REFRESH-SECRET"))
 	REFRESH_TOKEN_MAX_AGE_DAYS int = 30
 	REFRESH_TOKEN_EXPIRE_TIME time.Duration = time.Hour * 24 * time.Duration(REFRESH_TOKEN_MAX_AGE_DAYS)
 )

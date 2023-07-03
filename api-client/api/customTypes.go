@@ -3,18 +3,19 @@ package api
 import (
 	"bytes"
 	dbDriver "database/sql/driver"
-	"encoding/json"
 	"strconv"
 	"time"
 )
 
 /*
  * Custom Date Object
+ * The dates coming in to the API have the form YYYY-MM-DD, and are stored likewise in the DB
+ * There is scope for adding times to the object
  */
 
 type Date time.Time
 
-var _ json.Unmarshaler = &Date{}
+// var _ json.Unmarshaler = &Date{}
 
 const dateFormat = "2006-01-02"
 
@@ -64,13 +65,13 @@ func (d Date) String() string {
 /*
  * Arrays for unnesting into insert queries
  * General structure taken from pq.Arrays
- * Arrays take form UNNEST(ARRAY[val1, val2, ...])
+ * Arrays take form UNNEST(ARRAY[val1, val2, ...]) or NULL if their length is 0
  */
 type UnnestStringArray []string
 type UnnestInt32Array []int32
 type UnnestInt64Array []int64
+type UnnestDateArray []Date
 
-const defaultUnnestArray string = "UNNEST(ARRAY[])"
 const NULL string = "NULL"
 
 func UnnestArray(a interface{}) interface {
@@ -83,6 +84,8 @@ func UnnestArray(a interface{}) interface {
 		return (*UnnestInt32Array)(&a)
 	case []int64:
 		return (*UnnestInt64Array)(&a)
+	case []Date:
+		return (*UnnestDateArray)(&a)
 	}
 	return nil
 }
@@ -105,10 +108,6 @@ func appendArrayQuotedBytes(b, v []byte) []byte {
 }
 
 func (a UnnestStringArray) String() string {
-	if a == nil {
-		return NULL
-	}
-
 	if n := len(a); n > 0 {
 		b := make([]byte, 0, 14+3*n)
 		b = append(b, []byte("UNNEST(ARRAY[")...)
@@ -121,14 +120,10 @@ func (a UnnestStringArray) String() string {
 		return string(append(b, ']', ')'))
 	}
 
-	return defaultUnnestArray
+	return NULL
 }
 
 func (a UnnestInt32Array) String() string {
-	if len(a) == 0 {
-		return NULL
-	}
-
 	if n := len(a); n > 0 {
 		b := []byte("UNNEST(ARRAY[")
 
@@ -141,14 +136,10 @@ func (a UnnestInt32Array) String() string {
 		return string(append(b, ']', ')'))
 	}
 
-	return defaultUnnestArray
+	return NULL
 }
 
 func (a UnnestInt64Array) String() string {
-	if len(a) == 0 {
-		return NULL
-	}
-
 	if n := len(a); n > 0 {
 		b := []byte("UNNEST(ARRAY[")
 
@@ -161,5 +152,21 @@ func (a UnnestInt64Array) String() string {
 		return string(append(b, ']', ')'))
 	}
 
-	return defaultUnnestArray
+	return NULL
+}
+
+func (a UnnestDateArray) String() string {
+	if n := len(a); n > 0 {
+		b := make([]byte, 0, 14+3*n)
+		b = append(b, []byte("UNNEST(ARRAY[")...)
+		b = appendArrayQuotedBytes(b, []byte(a[0].String()))
+		for i := 1; i < n; i++ {
+			b = append(b, ',')
+			b = appendArrayQuotedBytes(b, []byte(a[i].String()))
+		}
+
+		return string(append(b, ']', ')'))
+	}
+
+	return NULL
 }

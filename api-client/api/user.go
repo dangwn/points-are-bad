@@ -136,7 +136,7 @@ func deleteCurrentUser(c *gin.Context) {
         return
     }
 
-	clearAuthCookies(c)
+	deleteCookies(c)
     c.Status(http.StatusNoContent)
 }
 
