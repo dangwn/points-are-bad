@@ -209,7 +209,7 @@ func updateMatch(c *gin.Context) {
  * Only returns true when the number of rows affected is equal to 1
  * Otherwise it will return false even if the error is nil
  */
- func deleteMatchById(matchId int) (bool, error) {
+func deleteMatchById(matchId int) (bool, error) {
 	deleteQuery := "DELETE FROM matches WHERE match_id = $1"
 	if result, err := driver.Exec(deleteQuery, matchId); err != nil {
 		return false, err
@@ -279,7 +279,7 @@ func getMatchesInDateRange(startDate *Date, endDate *Date) ([]MatchWithoutGoals,
  * Inserts a match into the DB
  * If any errors are caught, an empty MatchWithId is returned
  */
- func insertMatchIntoDb(match MatchWithoutGoals) (MatchWithId, error) {
+func insertMatchIntoDb(match MatchWithoutGoals) (MatchWithId, error) {
 	var matchId int
 
 	insertQuery := `
@@ -334,7 +334,7 @@ func updateMatchById(match Match) (bool, error) {
 		if n, err := result.RowsAffected(); n == 1 {
 			return true, err
 		} else {
-			return false, nil
+			return false, err
 		}
 	}
 }
