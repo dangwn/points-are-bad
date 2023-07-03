@@ -1,9 +1,7 @@
 package api
 
 import (
-	"log"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -25,15 +23,21 @@ type UserWithPoints struct {
 	User SessionUser `json:"user"`
 }
 
-type LeaderBoardUser struct {
+type LeaderboardUser struct {
 	Score
 	User Username `json:"user"`
+}
+
+type LimitOffset struct {
+	Limit int `json:"limit" query:"limit" form:"limit"`
+	Offset int `json:"offset" query:"offset" form:"offset"`
 }
 
 /*
  * Router Methods
  */
 
+// Points router group
 func (r Router) addPointsGroup(rg *gin.RouterGroup) {
     points := rg.Group("/points")
 
@@ -42,86 +46,86 @@ func (r Router) addPointsGroup(rg *gin.RouterGroup) {
 	points.POST("/calculate/", calculatePoints)
 }
 
+/*
+ * Points Endpoint
+ * Returns: UserWithPoints
+ * Retrieves the user's points
+ */
 func getUserPoints(c *gin.Context) {
 	currentUserId, err := getCurrentUser(c)
     if err != nil {
-        log.Println(err)
-        c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-            "detail":"Could not retreieve current user",
-        })
-        return
+		logMessage := "Could not retrieve current user in getUserPoints: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not retrieve current user", logMessage)
+		return
     }
 
 	userPoints, err := getPointsByUserId(currentUserId)
 	if err != nil {
-        log.Println(err)
-        c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-            "detail":"Could not retreieve current user's points",
-        })
-        return
+		logMessage := "Could not get user's points in getUserPoints: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not retrieve user's points", logMessage)
+		return
     }
 
 	c.JSON(http.StatusOK, userPoints)
+	Logger.Info("User " + currentUserId + " successfully requested points")
 } 
 
+/*
+ * Leaderboard Endpoint
+ * Query Params: limit=int&offset=int
+ * Returns: []LeaderboardUser
+ * Retrieves the leaderboard with a given number of entries and offset
+ */
 func getLeaderboard(c *gin.Context) {
-	offsetString, limitString := c.Query("offset"), c.Query("limit")
-	if offsetString == "" {
-		offsetString = "0"
-	}
-	if limitString == "" {
-		limitString = "10"
-	}
-
-	limit, err := strconv.Atoi(limitString)
-	if err != nil {
-		log.Println(err)
-        c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-            "detail":"Limit was not provided as an integer",
-        })
-	}
-	offset, err := strconv.Atoi(offsetString)
-	if err != nil {
-		log.Println(err)
-        c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-            "detail":"Offset was not provided as an integer",
-        })
+	var lo LimitOffset
+	if err := c.BindQuery(&lo); err != nil {
+		logMessage := "Could not bind query in getLeaderBoard: " + err.Error()
+		abortRouterMethod(c, http.StatusBadRequest, "Could not retrieve leaderboard", logMessage)
+		return
 	}
 
-	leaderboard, err := getGlobalLeaderboard(limit, offset)
+	leaderboard, err := getGlobalLeaderboard(lo.Limit, lo.Offset)
 	if err != nil {
-		log.Println(err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-            "detail":"Could not retrieve leaderboard",
-        })
+		logMessage := "Could not retrieve leaderboard in getLeaderBoard: " + err.Error()
+		abortRouterMethod(c, http.StatusBadRequest, "Could not retrieve leaderboard", logMessage)
+		return
 	}
 
 	c.JSON(http.StatusOK, leaderboard)
+	Logger.Info("Leaderboard successfully retrieved")
 }
 
+/*
+ * Points Calculation Endpoint (Admin Only)
+ * Calculates all player's points and updates DB with new points/correct scores/largest error/position
+ */
 func calculatePoints(c *gin.Context) {
-	if isAdmin := isCurrentUserAdmin(c); !isAdmin {
-		log.Println("user is not admin")
-		c.AbortWithStatus(http.StatusUnauthorized)
+	if !isCurrentUserAdmin(c) {
+		abortRouterMethod(c, http.StatusUnauthorized, "Not admin user", "User cannot calculate match as they are not an admin user")
 		return
 	}
 
 	if err := updatePoints(); err != nil {
-		log.Println(err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"detail":"Could not update points",
-		})
+		logMessage := "Could not update points in calculatePoints: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not update points", logMessage)
 		return
 	}
 
 	c.Status(http.StatusNoContent)
+	if userId, err := getCurrentUser(c); err == nil {
+		Logger.Info("User " + userId + " updated global points")
+	} else {
+		Logger.Info("Unkown user updated global points")
+	}
 }
 
 /*
  * Services
  */
-func getGlobalLeaderboard(limit int, offset int) ([]LeaderBoardUser, error) {
-	var leaderboard []LeaderBoardUser
+
+// Runs SQL query to get leaderboard from "offset" with "limit" entries
+func getGlobalLeaderboard(limit int, offset int) ([]LeaderboardUser, error) {
+	var leaderboard []LeaderboardUser
 
 	pointsQuery := `
 		SELECT points, correct_scores, largest_error, position, username
@@ -134,7 +138,7 @@ func getGlobalLeaderboard(limit int, offset int) ([]LeaderBoardUser, error) {
 		return leaderboard, err
 	} else {
 		for rows.Next() {
-			var leaderboardRow LeaderBoardUser
+			var leaderboardRow LeaderboardUser
 			if err := rows.Scan(
 				&leaderboardRow.Points,
 				&leaderboardRow.CorrectScores,
@@ -151,6 +155,7 @@ func getGlobalLeaderboard(limit int, offset int) ([]LeaderBoardUser, error) {
 	return leaderboard, nil
 }
 
+// Retrieves a user's points using given user Id
 func getPointsByUserId(userId string) (UserWithPoints, error) {
 	var userPoints UserWithPoints
 
@@ -172,6 +177,14 @@ func getPointsByUserId(userId string) (UserWithPoints, error) {
 	return userPoints, err
 }
 
+/*
+ * Runs query to update all users' points, correct scores, largest error and position
+ * Applies a given penalty, NULL_PREDICTIONS_PENALTY (see config.go), when users have not predicted a score
+ * Runs the query up to today's date
+ * Will not calculate points when a match has NULL home_goals or away_goals
+ * NOTE: The update can still be thrown even if the query has successfully completed, when
+ * 		the result.RowsAffected() produces an error
+ */
 func updatePoints() error {
 	todayDate := time.Now().Format("2001-01-01")
 
