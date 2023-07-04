@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,31 +24,12 @@ type PredictionWithMatch struct {
 	PredictionUser SessionUser `json:"user"`
 }
 
-type PredictionArray []Prediction
-
-func (p PredictionArray) String() string {
-	if n := len(p); n == 0 {
-		return ""
-	} else if n > 0 {
-		// Value takes form "(id, h, a),(id, h, a),..."
-		b := make([]byte, 0, 8*n-2)
-		b = appendPredictionToArrayBuffer(b, p[0])
-		for i := 1; i < n; i++ {
-			b = append(b, ',')
-			b = appendPredictionToArrayBuffer(b, p[i])
-		}		
-
-		return string(b)
-	}
-
-	return ""
-}
-
 
 /*
  *  Router Methods
  */
 
+// Prediction router group
 func (r Router) addPredictionGroup(rg *gin.RouterGroup) {
 	prediction := rg.Group("/prediction")
 
@@ -58,74 +37,74 @@ func (r Router) addPredictionGroup(rg *gin.RouterGroup) {
 	prediction.PUT("/", updateUserPredictions)
 }
 
+/*
+ * User Predictions Predictions
+ * Returns: []Prediction
+ * Retrieves all of a user's predictions
+ */
 func getUserPredictions(c *gin.Context) {
 	currentUserId, err := getCurrentUser(c)
     if err != nil {
-        log.Println(err)
-        c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-            "detail":"Could not retreieve current user",
-        })
-        return
+        logMessage := "Could not retrieve current user in getUserPredictions: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not get user predictions", logMessage)
+		return
     }
 
-	if userPredictions, err := getPredictionsByUserId(currentUserId, nil, nil); err != nil {
-		log.Println(err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-            "detail":"Could not retreieve predictions",
-        })
-	} else {
-		c.JSON(http.StatusOK, userPredictions)
-	}
-}
-
-func updateUserPredictions(c *gin.Context) {
-	currentUserId, err := getCurrentUser(c)
-    if err != nil {
-        log.Println(err)
-        c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-            "detail":"Could not retreieve current user",
-        })
-        return
-    }
-
-	body, _ := io.ReadAll(c.Request.Body)
-	predictions := new([]Prediction)
-	if err := json.Unmarshal(body, &predictions); err != nil {
-		log.Println(err)
+	userPredictions, err := getPredictionsByUserId(currentUserId, nil, nil)
+	if err != nil {
+		logMessage := "Could not retrieve user predictions in getUserPredicitons: " + err.Error()
+		abortRouterMethod(c, http.StatusBadRequest, "Could not get user predictions", logMessage)
 		return
 	}
 
+	c.JSON(http.StatusOK, userPredictions)
+	Logger.Info("User " + currentUserId + " successfully requested predictions")
+}
+
+/*
+ * Update Predictions Endpoint
+ * Schema: [{prediction_id: int, home_goals: int, away_goals: int}, ...]
+ * Updates a user's predictions with new supplied predictions
+ */
+func updateUserPredictions(c *gin.Context) {
+	currentUserId, err := getCurrentUser(c)
+    if err != nil {
+        logMessage := "Could not retrieve current user in updateUserPredictions: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not get user predictions", logMessage)
+		return
+    }
+
+	predictions := new([]Prediction)
+	if body, err := io.ReadAll(c.Request.Body); err != nil {
+		logMessage := "Could not read request body in updateUserPredictions: " + err.Error()
+		abortRouterMethod(c, http.StatusBadRequest, "Could not get user predictions", logMessage)
+		return
+	} else {
+		if err := json.Unmarshal(body, &predictions); err != nil {
+			logMessage := "Could not unmarshal request body in updateUserPredictions: " + err.Error()
+			abortRouterMethod(c, http.StatusBadRequest, "Could not get user predictions", logMessage)
+			return
+		}
+	}
+
 	if err := updatePredictionsByUserId(*predictions, currentUserId); err != nil {
-		log.Println(err)
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-			"detail":"Could not update user predictions",
-		})
+		logMessage := "Could not update predictions in updateUserPredictions: " + err.Error()
+		abortRouterMethod(c, http.StatusBadRequest, "Could not get user predictions", logMessage)
 		return
 	}
 
 	c.Status(http.StatusAccepted)
+	Logger.Info("User " + currentUserId + " updated their predictions")
 }
 
 /*
  *  Services
  */
-func appendIntPointerToSqlBuffer(b []byte, i *int) []byte {
-	if i == nil {
-		return append(b, 'N', 'U', 'L', 'L')
-	}
-	return strconv.AppendInt(b, int64(*i), 10)
-}
 
-func appendPredictionToArrayBuffer(b []byte, pred Prediction) []byte {
-	b = append(b, '(')
-	b = strconv.AppendInt(b, int64(pred.PredictionId), 10)
-	b = append(b, ',')
-	b = appendIntPointerToSqlBuffer(b, pred.HomeGoals)
-	b = append(b, ',')
-	b = appendIntPointerToSqlBuffer(b, pred.AwayGoals)
-	return append(b, ')')
-}
-
+/*
+ * Retrieves user predictions from DB in a given date range
+ * If no dates are supplied, all predictions are returned
+ */
 func getPredictionsByUserId(userId string, startDate *Date, endDate *Date) ([]PredictionWithMatch, error) {
 	var predictions []PredictionWithMatch
 
@@ -170,9 +149,15 @@ func getPredictionsByUserId(userId string, startDate *Date, endDate *Date) ([]Pr
 	return predictions, nil
 }
 
+/*
+ * Populates predictions table in DB with entries for a given user Id
+ * This is used when a new user is created, and they will have prediction entries
+ * 		created for every match currently in the DB
+ */
 func populatePredictionsByUserId(userId string) error {
 	var matchIds []int64
 
+	// Get match Ids for matches currently in DB
 	if rows, err := driver.Query("SELECT match_id FROM matches"); err != nil {
 		return err
 	} else {
@@ -181,7 +166,6 @@ func populatePredictionsByUserId(userId string) error {
 			if err := rows.Scan(&matchId); err != nil {
 				return err
 			}
-
 			matchIds = append(matchIds, matchId)
 		}
 	}	
@@ -189,17 +173,24 @@ func populatePredictionsByUserId(userId string) error {
 		return nil
 	}
 
+	// Unnests match Ids into query string (see customTypes.go)
 	insertQuery := `
 		INSERT INTO predictions(home_goals, away_goals, user_id, match_id)
-		SELECT NULL, NULL, $1, `+ UnnestArray(matchIds).String()
+		SELECT NULL, NULL, $1, ` + UnnestArray(matchIds).String()
 		                         
 	_, err := driver.Exec(insertQuery, userId)
 	return err
 }
 
+/*
+ * Populates predictions table in DB with entries for a given match Id
+ * This is used when a new match is created, and all users will have a new prediction
+ * 		entry created for the new match
+ */
 func populatePredictionsByMatchId(matchId int) error {
 	var userIds []string
 
+	// Get user Ids for matches currently in DB
 	if rows, err := driver.Query("SELECT user_id FROM users"); err != nil {
 		return err
 	} else {
@@ -216,6 +207,7 @@ func populatePredictionsByMatchId(matchId int) error {
 		return nil
 	}
 
+	// Unnests user Ids into query string (see customTypes.go)
 	insertQuery := `
 		INSERT INTO predictions(home_goals, away_goals, match_id, user_id)
 		SELECT NULL, NULL, $1, ` + UnnestArray(userIds).String()
@@ -224,6 +216,13 @@ func populatePredictionsByMatchId(matchId int) error {
 	return err
 }
 
+/*
+ * Updates a user's predictions with an array of new predictions
+ * Verifies that all supplied predictions have that user's user Id
+ * 		If the verification fails, an error is thrown
+ * NOTE: Because a check is done to see whether all predictions have been changed,
+ *			some predictions may be changed and an error is still thrown
+ */
 func updatePredictionsByUserId(predictions []Prediction, userId string) error {
 	// Start constructing query string in goroutine
 	queryStringChannel := make(chan string)
@@ -242,6 +241,7 @@ func updatePredictionsByUserId(predictions []Prediction, userId string) error {
 	}()
 	
 	// Check that all predictions in "predictions" belong to the user
+	// The predicitons Ids are stored in the keys of a map, with an empty struct as their value
 	userPredictionIds := make(map[int]struct{})
 	if rows, err := driver.Query("SELECT prediction_id FROM predictions WHERE user_id = $1", userId); err != nil {
 		return err
@@ -254,14 +254,18 @@ func updatePredictionsByUserId(predictions []Prediction, userId string) error {
 			userPredictionIds[predId] = struct{}{}
 		}
 	}
+	// Iterate through predictions and verify a key with that Id exists in the map
+	// If even one mismatch is found, throw an error
 	for _, v := range predictions {
 		if _, found := userPredictionIds[v.PredictionId]; !found {
-			return errors.New("prediction being changed that does not belong to user")
+			return errors.New("prediction being changed that does not belong to user " + userId)
 		}
 	}
 
+	// Retrieve query string from channel
 	queryString := <- queryStringChannel
 
+	// Execute query and check that all predictions have been changed
 	if result, err := driver.Exec(queryString); err != nil {
 		return err
 	} else {

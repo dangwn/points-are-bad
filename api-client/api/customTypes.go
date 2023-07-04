@@ -15,8 +15,6 @@ import (
 
 type Date time.Time
 
-// var _ json.Unmarshaler = &Date{}
-
 const dateFormat = "2006-01-02"
 
 func (d *Date) UnmarshalJSON(bs []byte) error {
@@ -60,6 +58,55 @@ func (d *Date) Scan(v interface{}) error {
 
 func (d Date) String() string {
     return time.Time(d).Format(dateFormat)
+}
+
+/*
+ * Custom Prediction Array
+ * Used for combining multiple predictions to a user in one query
+ * See prediction.go -> updateUserPredictionsByUserId
+ * See prediction.go for "Prediction" struct
+ */
+type PredictionArray []Prediction
+
+/*
+ * Appends an int pointer to the prediction array buffer
+ * Nil pointers are equivalent to NULL values in the DB
+ */
+func appendIntPointerToSqlBuffer(b []byte, i *int) []byte {
+	if i == nil {
+		return append(b, 'N', 'U', 'L', 'L')
+	}
+	return strconv.AppendInt(b, int64(*i), 10)
+}
+
+// Appends a Prediction object to the array buffer
+func appendPredictionToArrayBuffer(b []byte, pred Prediction) []byte {
+	b = append(b, '(')
+	b = strconv.AppendInt(b, int64(pred.PredictionId), 10)
+	b = append(b, ',')
+	b = appendIntPointerToSqlBuffer(b, pred.HomeGoals)
+	b = append(b, ',')
+	b = appendIntPointerToSqlBuffer(b, pred.AwayGoals)
+	return append(b, ')')
+}
+
+/* 
+ * Creates a string of the prediction array
+ * String value takes form "(id, h, a),(id, h, a),..."
+ * If there are no predictions in the array, the string is empty
+ */
+func (p PredictionArray) String() string {
+	if n := len(p); n > 0 {
+		b := make([]byte, 0, 8*n-2)
+		b = appendPredictionToArrayBuffer(b, p[0])
+		for i := 1; i < n; i++ {
+			b = append(b, ',')
+			b = appendPredictionToArrayBuffer(b, p[i])
+		}		
+
+		return string(b)
+	}
+	return ""
 }
 
 /*

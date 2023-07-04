@@ -230,9 +230,9 @@ func isEmailInDb(email string) (bool, error) {
 }
 
 /*
- *	Sends a message to the email server via RabbitMQ of the form:
+ * Sends a message to the email server via RabbitMQ of the form:
  *		{"email":"<email address>","token":"<verification token>"}
- * 	for the email server to send a verification link to a new user
+ * for the email server to send a verification link to a new user
  */
 func sendVerifyMessageToEmailClient(email string) error {
 	var token string
