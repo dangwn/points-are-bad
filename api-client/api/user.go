@@ -84,7 +84,7 @@ func createNewUser(c *gin.Context) {
 		return
 	}
 
-	if err1, err2 := setRefreshTokenCookie(c, userId), setCSRFTokenCookie(c, userId); err1 != nil  || err2 != nil{
+	if err := setRefreshTokenCookie(c, userId); err != nil{
 		return
 	}
 	

@@ -69,7 +69,9 @@ func login(c *gin.Context) {
 		return
 	}
 
-	if err1, err2 := setRefreshTokenCookie(c, userId), setCSRFTokenCookie(c, userId); err1 != nil  || err2 != nil{
+	if err := setRefreshTokenCookie(c, userId); err != nil{
+		logMessage := "Error setting refresh token in login: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not set refresh token", logMessage) 
 		return
 	}
 	

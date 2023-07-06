@@ -44,7 +44,7 @@ func setRefreshTokenCookie(c *gin.Context, userId string) error {
 		deleteCookies(c)
 		return err
 	}
-	c.SetCookie(REFRESH_TOKEN_NAME, refreshToken, REFRESH_TOKEN_EXPIRE_TIME, "", FRONTEND_DOMAIN, false, false)
+	c.SetCookie(REFRESH_TOKEN_NAME, refreshToken, REFRESH_TOKEN_EXPIRE_TIME_SECONDS, "", FRONTEND_DOMAIN, false, false)
 	return nil
 }
 
