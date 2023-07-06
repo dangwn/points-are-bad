@@ -52,7 +52,7 @@ func login(c *gin.Context) {
 		return
 	}
 	
-	userId, err := validateLoginUser(
+	userId, username, isAdmin, err := validateLoginUser(
 		loginUser.Email,
 		loginUser.Password,
 	)
@@ -62,7 +62,7 @@ func login(c *gin.Context) {
 		return
 	}
 
-	accessToken, err := createAccessToken(userId)
+	accessToken, err := createAccessToken(userId, username, isAdmin)
 	if err != nil {
 		logMessage := "Error creating access token in login: " + err.Error()
 		abortRouterMethod(c, http.StatusUnauthorized, "Could not create access token", logMessage)
@@ -101,9 +101,10 @@ func logout(c *gin.Context) {
 
 /*
  * Token Refresh Endpoint
- * Retrieves refresh and CSRF tokens and extracts userId from token and returns new tokens and cookies 
+ * Retrieves refresh and extracts userId from token and returns new tokens and cookies 
  */
 func refreshAccessToken(c *gin.Context) {
+	// Get refresh token from cookie
 	cookie, err := c.Request.Cookie(REFRESH_TOKEN_NAME)
 	if err != nil {
 		logMessage := "Could not get refresh token cookie in refreshAccessToken: " + err.Error()
@@ -111,6 +112,7 @@ func refreshAccessToken(c *gin.Context) {
 		return
 	}
 
+	// Get user Id from refresh token
 	userId, err := jwtDecode(cookie.Value, REFRESH_TOKEN_SECRET_KEY)
 	if err != nil {
 		logMessage := "Could not get userId from refresh token in refreshAccessToken: " + err.Error()
@@ -118,13 +120,30 @@ func refreshAccessToken(c *gin.Context) {
 		return
 	}
 
-	accessToken, err := jwtEncode(userId, ACCESS_TOKEN_SECRET_KEY, ACCESS_TOKEN_EXPIRE_TIME)
+	// Get user's username and admin status
+	user, err := getUserByUserId(userId)
+	if err != nil {
+		logMessage := "Could not retrieve user information in refreshAccessToken: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not retrieve user information", logMessage)
+		return
+	}
+
+	// Create access token
+	accessToken, err := createAccessToken(userId, user.Username, user.IsAdmin)
 	if err != nil {
 		logMessage := "Could not create access token in refreshAccessToken: " + err.Error()
 		abortRouterMethod(c, http.StatusUnauthorized, "Could not create new access token", logMessage)
 		return
 	}
 
+	// Set refresh token
+	if err := setRefreshTokenCookie(c, userId); err != nil {
+		logMessage := "Could not set refresh token cookie in refreshAccessToken: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not set refresh token", logMessage)
+		return
+	}
+
+	// Return access token
 	c.JSON(http.StatusAccepted, gin.H{
 		"access_token": accessToken,
 		"token_type": "Bearer",
@@ -267,20 +286,20 @@ func sendVerifyMessageToEmailClient(email string) error {
  * Validates a user's login credentials against the db
  * Returns the user's userId string
  */
-func validateLoginUser(email string, password string) (string, error) {
-	var userId string
-	var hashedPassword string
+func validateLoginUser(email string, password string) (string, string, bool, error) {
+	var userId, username, hashedPassword string
+	var isAdmin bool
 
 	if err := driver.QueryRow(
-		"SELECT user_id, hashed_password FROM users WHERE email = $1",
+		"SELECT user_id, username, hashed_password, is_admin FROM users WHERE email = $1",
 		email,
-	).Scan(&userId, &hashedPassword); err != nil {
-		return "", err
+	).Scan(&userId, &username, &hashedPassword, &isAdmin); err != nil {
+		return "", "", false, err
 	}
 
 	if !verifyPasswordHash(hashedPassword, password) {
-		return "", errors.New("incorrect username or password")
+		return "", "", false, errors.New("incorrect username or password")
 	}
 
-	return userId, nil
+	return userId, username, isAdmin, nil
 }

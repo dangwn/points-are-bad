@@ -10,12 +10,24 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-func createAccessToken(userId string) (string, error) {
-	return jwtEncode(userId, ACCESS_TOKEN_SECRET_KEY, ACCESS_TOKEN_EXPIRE_TIME)
+func createAccessToken(userId string, username string, isAdmin bool) (string, error) {
+	claims := jwt.MapClaims{
+		"sub": userId,
+		"username": username,
+		"is_admin": isAdmin,
+		"iat": time.Now().Unix(),
+		"exp" : time.Now().Add(ACCESS_TOKEN_EXPIRE_TIME).Unix(),
+	}
+	return jwtEncode(claims, ACCESS_TOKEN_SECRET_KEY)
 }
 
 func createRefreshToken(userId string) (string, error) {
-	return jwtEncode(userId, REFRESH_TOKEN_SECRET_KEY, REFRESH_TOKEN_EXPIRE_TIME)
+	claims := jwt.MapClaims{
+		"sub": userId,
+		"iat": time.Now().Unix(),
+		"exp" : time.Now().Add(REFRESH_TOKEN_EXPIRE_TIME).Unix(),
+	}
+	return jwtEncode(claims, REFRESH_TOKEN_SECRET_KEY)
 }
 
 func deleteCookies(c *gin.Context) {
@@ -48,18 +60,8 @@ func setRefreshTokenCookie(c *gin.Context, userId string) error {
 	return nil
 }
 
-func jwtEncode(subject string, secretKey []byte, expireDuration time.Duration) (string, error) {
-	claims := jwt.MapClaims{
-		"sub": subject,
-		"iat": time.Now().Unix(),
-		"exp" : time.Now().Add(expireDuration).Unix(),
-	}
-
-	token := jwt.NewWithClaims(
-		jwt.SigningMethodHS256,
-		claims,
-	)
-
+func jwtEncode(claims jwt.MapClaims, secretKey []byte) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(secretKey)
 }
 
