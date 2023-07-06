@@ -14,16 +14,11 @@ func createAccessToken(userId string) (string, error) {
 	return jwtEncode(userId, ACCESS_TOKEN_SECRET_KEY, ACCESS_TOKEN_EXPIRE_TIME)
 }
 
-func createCSRFToken(userId string) (string, error) {
-	return jwtEncode(userId, REFRESH_TOKEN_SECRET_KEY, REFRESH_TOKEN_EXPIRE_TIME)
-}
-
 func createRefreshToken(userId string) (string, error) {
 	return jwtEncode(userId, REFRESH_TOKEN_SECRET_KEY, REFRESH_TOKEN_EXPIRE_TIME)
 }
 
 func deleteCookies(c *gin.Context) {
-	c.SetCookie(CSRF_TOKEN_NAME, "", -1, "", FRONTEND_DOMAIN, false, false)
 	c.SetCookie(REFRESH_TOKEN_NAME, "", -1, "", FRONTEND_DOMAIN, false, false)
 }
 
@@ -42,17 +37,6 @@ func getAuthorizationToken(c *gin.Context) (string, error) {
 	return authParts[1], nil
 }
 
-func setCSRFTokenCookie(c *gin.Context, userId string) error {
-	refreshToken, err := createCSRFToken(userId)
-	if err != nil {
-		abortRouterMethod(c, http.StatusUnauthorized, err, err)
-		deleteCookies(c)
-		return err
-	}
-	c.SetCookie(CSRF_TOKEN_NAME, refreshToken, 0, "", FRONTEND_DOMAIN, false, false)
-	return nil
-}
-
 func setRefreshTokenCookie(c *gin.Context, userId string) error {
 	refreshToken, err := createRefreshToken(userId)
 	if err != nil {
@@ -60,7 +44,7 @@ func setRefreshTokenCookie(c *gin.Context, userId string) error {
 		deleteCookies(c)
 		return err
 	}
-	c.SetCookie(REFRESH_TOKEN_NAME, refreshToken, 0, "", FRONTEND_DOMAIN, false, false)
+	c.SetCookie(REFRESH_TOKEN_NAME, refreshToken, REFRESH_TOKEN_EXPIRE_TIME, "", FRONTEND_DOMAIN, false, false)
 	return nil
 }
 
