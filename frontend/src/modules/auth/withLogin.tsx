@@ -1,16 +1,19 @@
+import Cookies from 'js-cookie';
 import { useRouter } from 'next/router';
 import React, { useEffect } from 'react';
-import Cookies from 'js-cookie';
 
+/*
+ * Component wrapper to verify whether a user is logged in or not
+ * If the refresh token is present, push them to the home page 
+ */
 const withLogin = (WrappedComponent: React.FC) => {
   const LoginWrapper: React.FC = (props) => {
     const router = useRouter();
 
     useEffect(() => {
-      const csrfToken = Cookies.get('X-CSRF-Token');
       const refreshToken = Cookies.get('X-Refresh-Token');
 
-      if (csrfToken !== undefined && refreshToken !== undefined) {
+      if (refreshToken !== undefined) {
         router.push('/');
       };
 
