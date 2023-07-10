@@ -2,7 +2,7 @@
 
 BUILD_TAG="latest"
 BUILD_CONFIG="docker-deploy-local.yml"
-RUN_MIGRATIONS_SCRIPT="db-migrations/run_migrations.py"
+RUN_MIGRATIONS_SCRIPT="backend/db-migrations/run_migrations.py"
 
 help() {
     echo "Build dockerfiles and deploy them using docker swarm"
