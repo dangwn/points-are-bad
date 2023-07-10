@@ -44,6 +44,7 @@ type NewUser struct {
  * Router Methods
  */
 
+// User router group
 func (r Router) addUserGroup(rg *gin.RouterGroup) {
     user := rg.Group("/user")
     user.GET("/", displayCurrentUser)
@@ -57,35 +58,46 @@ func (r Router) addUserGroup(rg *gin.RouterGroup) {
 	}
 }
 
+/*
+ * User Creation Endpoint
+ * Schema: {token: string, username: string, password: string}
+ * Returns: {access_token: string, token_type: string}
+ * Creates a new user in the db and returns the new user's access token
+ * 	and refresh token cookie
+ * The token is taken from the verification link sent to the user
+ */
 func createNewUser(c *gin.Context) {
     var newUser NewUser
     if err := c.BindJSON(&newUser); err != nil {
-		abortRouterMethod(c, http.StatusBadRequest, "Could not bind json", err)
+		logMessage := "Could not bind json in createNewUser: " + err.Error()
+		abortRouterMethod(c, http.StatusBadRequest, "Could not bind json", logMessage)
         return
     }
 
     email, err := validateVerificationToken(newUser.Token)
     if err != nil {
-        abortRouterMethod(c, http.StatusBadRequest, "Could not decode token", err)
+		logMessage := "Could not validate verification token in createNewUser: " + err.Error()
+        abortRouterMethod(c, http.StatusBadRequest, "Could not decode token", logMessage)
         return
     }
 
-    userId, isAdmin, err := addNewUserIntoDb(
-        newUser.Username, email, newUser.Password,
-    )
+    userId, isAdmin, err := addNewUserIntoDb(newUser.Username, email, newUser.Password)
     if err != nil {
-        abortRouterMethod(c, http.StatusBadRequest, "Could not add user into db", err)
+		logMessage := "Error adding user to db in createNewUser: " + err.Error()
+        abortRouterMethod(c, http.StatusBadRequest, "Could not create user", logMessage)
         return
     }
 
 	accessToken, err := createAccessToken(userId, newUser.Username, isAdmin)
 	if err != nil {
-		abortRouterMethod(c, http.StatusUnauthorized, "Could not create access token", err)
+		logMessage := "Error creating access token in createNewUser: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not create access token", logMessage)
 		return
 	}
 
 	if err := setRefreshTokenCookie(c, userId); err != nil {
-		abortRouterMethod(c, http.StatusUnauthorized, "Could not set refresh token", err)
+		logMessage := "Error setting refresh token in createNewUser: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not set refresh token", logMessage)
 		return
 	}
 	
@@ -93,8 +105,15 @@ func createNewUser(c *gin.Context) {
 		"access_token": accessToken,
 		"token_type": "Bearer",
 	})
+	Logger.Info("User " + userId + " created")
 }
 
+/*
+ * [DEPRECEATED] Current User Endpoint
+ * Returns: {username: string, is_admin: bool}
+ * Do not use this endpoint, user's username and admin status are
+ *	now sent via the access token
+ */
 func displayCurrentUser(c *gin.Context) {
     currentUserId, err := getCurrentUser(c)
     if err != nil {
@@ -119,140 +138,144 @@ func displayCurrentUser(c *gin.Context) {
     })
 }
 
+/*
+ * Delete User Endpoint
+ * Deletes the current user
+ * Will not delete user if they are the only admin user
+ */
 func deleteCurrentUser(c *gin.Context) {
     currentUserId, err := getCurrentUser(c)
     if err != nil {
-        log.Println(err)
-        c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-            "detail":"Could not retreieve current user",
-        })
+		logMessage := "Could not get current user in deleteCurrentUser: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not retrieve current user", logMessage)
         return
     }
 
     if err := deleteUserByUserId(currentUserId); err != nil {
-        log.Println(err)
-        c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-            "detail":err,
-        })
+		logMessage := "Could not delete user user in deleteCurrentUser: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, err, logMessage)
         return
     }
 
 	deleteCookies(c)
     c.Status(http.StatusNoContent)
+	Logger.Info("User " + currentUserId + " deleted")
 }
 
+/*
+ * Edit Username Endpoint
+ * Schema: {username: string}
+ * Edits the current user's username
+ */
 func editUsername(c *gin.Context) {
     var username Username
-    if err := c.BindJSON(&username); err != nil {
-        log.Println(err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"detail":"Bad request",
-		})
-        return
-    }
 
     currentUserId, err := getCurrentUser(c)
     if err != nil {
-        log.Println(err)
-        c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-            "detail":"Could not retreieve current user",
-        })
+		logMessage := "Could not get current user in editUsername: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not retrieve current user", logMessage)
         return
     }
 
-    if err := updateUsernameByUserId(
-        currentUserId,
-        username.Username,
-    ); err != nil {
-        log.Println(err)
-        c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-            "detail":"Could not update username",
-        })
+    if err = c.BindJSON(&username); err != nil {
+		logMessage := "Could not bind JSON in editUsername: " + err.Error()
+		abortRouterMethod(c, http.StatusBadRequest, "Could not retrieve new username", logMessage)
+        return
+    }
+
+
+    if err = updateUsernameByUserId(currentUserId, username.Username); err != nil {
+		logMessage := "Could not update username in editUsername: " + err.Error()
+		abortRouterMethod(c, http.StatusBadRequest, "Could not update username", logMessage)
         return
     }
 
     c.Status(http.StatusAccepted)
+	Logger.Info("User " + currentUserId + " updated their username to " + username.Username)
 }
 
+/*
+ * Edit Password Endpoint
+ * Schema: {current_password: string, new_password: string}
+ * Validates the current user's current password, and changes it to a provided new one
+ */ 
 func editPassword(c *gin.Context) {
     var newPassword NewPassword
-    if err := c.BindJSON(&newPassword); err != nil {
-        log.Println(err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"detail":"Bad request",
-		})
-        return
-    }
 
     currentUserId, err := getCurrentUser(c)
     if err != nil {
-        log.Println(err)
-        c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-            "detail":"Could not retreieve current user",
-        })
+		logMessage := "Could not get current user in editPassword: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not retrieve current user", logMessage)
         return
     }
 
-    if err = updatePasswordByUserId(
-        currentUserId,
-        newPassword.CurrentPassword,
-        newPassword.NewPassword,
-    ); err != nil {
-        log.Println(err)
-        c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-            "detail":"Could not update password",
-        })
+    if err = c.BindJSON(&newPassword); err != nil {
+		logMessage := "Could not bind JSON in editPassword: " + err.Error()
+		abortRouterMethod(c, http.StatusBadRequest, "Could not retrieve passwords", logMessage)
+        return
+    }
+
+    if err = updatePasswordByUserId(currentUserId, newPassword.CurrentPassword, newPassword.NewPassword); err != nil {
+		logMessage := "Could not update password in editPassword: " + err.Error()
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not update password", logMessage)
         return
     }
 
     c.Status(http.StatusAccepted)
+	Logger.Info("User " + currentUserId + " updated their password")
 }
 
 /*
  * Services
  */
 
+/*
+ * Adds a new user into the db
+ * Every user's email is unique
+ * By default no new users are admins, except the very first user
+ */
 func addNewUserIntoDb(username string, email string, password string) (string, bool, error) {
 	// If the new user is the first in the db, they are an admin
 	adminInDB, err := driver.ValueExists("users", "is_admin", true)
 	if err != nil {
-		log.Println(err)
 		return "", false, err
 	}
 	isAdmin := !adminInDB
 
-	if _, err = verifyEmailIsUnique(email); err != nil {
-		log.Println(err)
+	// Verify email is unique
+	if emailExists, err := verifyEmailIsUnique(email); err != nil {
 		return "", false, err
+	} else if emailExists {
+		return "", false, errors.New("email already in use")
 	}
 
+	// Create user Id and password hash
 	hashedPassword, err := hashPassword(password)
 	if err != nil {
-		log.Println(err)
 		return "", false, err
 	}
 	userId := createUserId()
 
-	if insertUserIntoDb(
-		userId, username, email, hashedPassword, isAdmin,
-	); err != nil {
-		log.Println(err)
+	// Insert user into db and populate the predictions table with their predictions
+	if err := insertUserIntoDb(userId, username, email, hashedPassword, isAdmin); err != nil {
 		return "", false, err
 	}
-
 	if err := populatePredictionsByUserId(userId); err != nil {
-		log.Println(err)
 		return "", false, err
 	}
 
-	log.Println("New user created")
 	return userId, isAdmin, nil
 }
 
+// Creates a unique user Id
 func createUserId() string {
 	return uuid.New().String()
 }
 
+/*
+ * Deletes a user by their user Id
+ * Will not delete user if they are the only admin user
+ */
 func deleteUserByUserId(userId string) error {
 	var otherAdminExists bool
 	adminExistsQuery := `
@@ -275,15 +298,17 @@ func deleteUserByUserId(userId string) error {
 	); err != nil {
 		return err
 	} else {
-		if _, err:= result.RowsAffected(); err != nil {
+		if n, err:= result.RowsAffected(); err != nil {
 			return err
-		} 
+		} else if n != 1 {
+			return errors.New("incorrect number of rows affected when deleting user")
+		}
 	}
 
-	log.Println("User deleted")
 	return nil
 }
 
+// Retrieves a user's information by their user Id
 func getUserByUserId(userId string) (User, error) {
 	var user User
 	userQuery := `
@@ -302,12 +327,14 @@ func getUserByUserId(userId string) (User, error) {
 	return user, err
 }
 
+// Retrieves a user's password hash
 func getUserPasswordHash(userId string) (string, error) {
 	var hash string
 	err := driver.QueryRow("SELECT hashed_password FROM users WHERE user_id = $1", userId).Scan(&hash)
 	return hash, err
 }
 
+// Inserts a new user into the db
 func insertUserIntoDb(userId string, username string, email string, hashedPassword string, isAdmin bool) error {
 	_, err := driver.Exec(
 		"INSERT INTO users VALUES($1, $2, $3, $4, $5, 0, 0, 0, NULL)",
@@ -320,6 +347,7 @@ func insertUserIntoDb(userId string, username string, email string, hashedPasswo
 	return err
 }
 
+// Updates a user's username
 func updateUsernameByUserId(userId string, username string) error {
 	result, err := driver.Exec(
 		"UPDATE users SET username = $1 WHERE user_id = $2",
@@ -327,35 +355,35 @@ func updateUsernameByUserId(userId string, username string) error {
 		userId,
 	)
 	if err != nil {
-		log.Println(err)
 		return err
 	} 
 
-	if _, err:= result.RowsAffected(); err != nil {
-		log.Println(err)
+	if n, err := result.RowsAffected(); err != nil {
 		return err
-	} 
+	} else if n != 1 {
+		return errors.New("incorrect number of rows affected when updating username")
+	}
 
-	log.Println("Username updated")
 	return nil
 }
 
+/*
+ * Updates a user's hashed password in db
+ * User's previous must be supplied and verified against password currently in db
+ */
 func updatePasswordByUserId(userId string, oldPassword string,	newPassword string) error {
 	oldPasswordHash, err := getUserPasswordHash(userId)
-	if err != nil{		
-		log.Println(err)
+	if err != nil{
 		return err
 	}
 
 	if !verifyPasswordHash(oldPasswordHash, oldPassword) {
-		err := errors.New("old password was not correct")
-		log.Println(err)
+		err := errors.New("previous password was not verfied against password in db")
 		return err
 	}
 
 	hashedPassword, err := hashPassword(newPassword)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 
@@ -365,21 +393,23 @@ func updatePasswordByUserId(userId string, oldPassword string,	newPassword strin
 		userId,
 	)
 	if err != nil {
-		log.Println(err)
 		return err
 	} 
 
-	if _, err:= result.RowsAffected(); err != nil {
-		log.Println(err)
+	if n, err:= result.RowsAffected(); err != nil {
 		return err
-	} 
+	} else if n != 1 {
+		return errors.New("incorrect number of rows affected when upoda")
+	}
 
-	log.Println("Password changed")
 	return nil
 }
 
+/*
+ * Validates verification token by searching for a corresponding value
+ *	to the token as a key in redis
+ */
 func validateVerificationToken(token string) (string, error) {
-	// Retrieves email from redis using the token
 	if email, err := redis.Get(redisContext, token).Result(); err != nil {
 		return "", err
 	} else {
@@ -387,14 +417,12 @@ func validateVerificationToken(token string) (string, error) {
 	}
 }
 
+// Verifies if a given email is unique by checking against the db
 func verifyEmailIsUnique(email string) (bool, error) {
-	emailExists, err := driver.ValueExists("users", "email", email)
-	if err != nil {
+	if emailExists, err := driver.ValueExists("users", "email", email); err != nil {
 		return false, err
-	}
-	if emailExists {
-		err = errors.New("email already exists in db")
-		return false, err
+	} else if emailExists {
+		return false, nil
 	}
 	return true, nil
 }

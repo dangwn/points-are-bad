@@ -7,6 +7,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+/*
+ * Used by router handler functions to abort with a given status code and message
+ * Optional error log messages can be sent to the console
+ */
 func abortRouterMethod(c *gin.Context, statusCode int, msg interface{}, logs ...any) {
 	for _, l := range logs {
 		Logger.Error(l)
@@ -14,7 +18,10 @@ func abortRouterMethod(c *gin.Context, statusCode int, msg interface{}, logs ...
 	c.AbortWithStatusJSON(statusCode, gin.H{"detail": msg})
 }
 
-
+/*
+ * Creates a where clause for sql queries between zero, one or two dates
+ * Start date inclusive, end date exclusive
+ */
 func createDateRangeWhereClause(startDate *Date, endDate *Date) string {
 	var whereClause string
 
@@ -32,6 +39,7 @@ func createDateRangeWhereClause(startDate *Date, endDate *Date) string {
 	return whereClause
 }
 
+// Creates a hash for a given password
 func hashPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword(
 		[]byte(password),
@@ -43,6 +51,7 @@ func hashPassword(password string) (string, error) {
 	return string(hashedPassword), nil
 }
 
+// Verifies a given password a password hash
 func verifyPasswordHash(hashedPassword string, password string) bool {
 	if err := bcrypt.CompareHashAndPassword(
 		[]byte(hashedPassword),
@@ -53,6 +62,7 @@ func verifyPasswordHash(hashedPassword string, password string) bool {
 	return true
 }
 
+// Verifies a string is of email format
 func verifyEmailFormat(email string) bool {
 	emailReg := regexp.MustCompile(`[^@]+@[^@]+\.[^@]+`)
 	return emailReg.MatchString(email)
