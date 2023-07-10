@@ -70,7 +70,7 @@ func createNewUser(c *gin.Context) {
         return
     }
 
-    userId, err := addNewUserIntoDb(
+    userId, isAdmin, err := addNewUserIntoDb(
         newUser.Username, email, newUser.Password,
     )
     if err != nil {
@@ -78,13 +78,14 @@ func createNewUser(c *gin.Context) {
         return
     }
 
-	accessToken, err := createAccessToken(userId)
+	accessToken, err := createAccessToken(userId, newUser.Username, isAdmin)
 	if err != nil {
 		abortRouterMethod(c, http.StatusUnauthorized, "Could not create access token", err)
 		return
 	}
 
-	if err1, err2 := setRefreshTokenCookie(c, userId), setCSRFTokenCookie(c, userId); err1 != nil  || err2 != nil{
+	if err := setRefreshTokenCookie(c, userId); err != nil {
+		abortRouterMethod(c, http.StatusUnauthorized, "Could not set refresh token", err)
 		return
 	}
 	
@@ -136,7 +137,7 @@ func deleteCurrentUser(c *gin.Context) {
         return
     }
 
-	clearAuthCookies(c)
+	deleteCookies(c)
     c.Status(http.StatusNoContent)
 }
 
@@ -211,24 +212,24 @@ func editPassword(c *gin.Context) {
  * Services
  */
 
-func addNewUserIntoDb(username string, email string, password string) (string, error) {
+func addNewUserIntoDb(username string, email string, password string) (string, bool, error) {
 	// If the new user is the first in the db, they are an admin
 	adminInDB, err := driver.ValueExists("users", "is_admin", true)
 	if err != nil {
 		log.Println(err)
-		return "", err
+		return "", false, err
 	}
 	isAdmin := !adminInDB
 
 	if _, err = verifyEmailIsUnique(email); err != nil {
 		log.Println(err)
-		return "", err
+		return "", false, err
 	}
 
 	hashedPassword, err := hashPassword(password)
 	if err != nil {
 		log.Println(err)
-		return "", err
+		return "", false, err
 	}
 	userId := createUserId()
 
@@ -236,16 +237,16 @@ func addNewUserIntoDb(username string, email string, password string) (string, e
 		userId, username, email, hashedPassword, isAdmin,
 	); err != nil {
 		log.Println(err)
-		return "", err
+		return "", false, err
 	}
 
 	if err := populatePredictionsByUserId(userId); err != nil {
 		log.Println(err)
-		return "", err
+		return "", false, err
 	}
 
 	log.Println("New user created")
-	return userId, nil
+	return userId, isAdmin, nil
 }
 
 func createUserId() string {
@@ -418,7 +419,7 @@ func testCreateUser(c *gin.Context) {
 		return
 	}
 
-	if _, err := addNewUserIntoDb(
+	if _, _, err := addNewUserIntoDb(
 		newUser.Username,
 		newUser.Email,
 		newUser.Password,

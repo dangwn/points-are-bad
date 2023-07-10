@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { useMutation, useQueryClient } from 'react-query';
+import { logUserOut } from '@/lib/requests';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import React, { useState } from 'react';
+import { useMutation, useQueryClient } from 'react-query';
 
-import { API_HOST, CLIENT_HOST } from '@/lib/constants';
 import { deleteAccessToken } from '@/lib/accessToken';
+import { CLIENT_HOST } from '@/lib/constants';
 import styles from '@/styles/Header.module.css';
 
 interface DropdownButtonProps {
@@ -25,10 +26,7 @@ const Header: React.FC<HeaderProps> = ({ isAdmin }) => {
   const router = useRouter();
 
   const handleLogout = useMutation(async () => {
-    await fetch(`${API_HOST}/auth/login/`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
+    await logUserOut();
 
     queryClient.removeQueries();
     deleteAccessToken();

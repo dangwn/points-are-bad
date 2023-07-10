@@ -1,47 +1,33 @@
-import React, { useState } from 'react'
-import { useRouter } from 'next/router';
-import { useQuery } from 'react-query';
-import Cookies from 'js-cookie';
+import jwt_decode from 'jwt-decode';
+import React from 'react';
 
-import Loading from '../shared/Loading';
-import { QUERY_OPTIONS } from '../../lib/constants';
-import { getSessionUser } from '../../lib/requests';
-import type { SessionUser } from '../../types/user';
+import { getAccessToken } from '@/lib/accessToken';
 
 interface WithUserProps {
   username: string;
   isAdmin: boolean
 }
 
+type DecodedAccessToken = {
+  iat: number,
+  exp: number,
+  is_admin: boolean,
+  username: string,
+  sub: string
+}
+
+/*
+ * Component wrapper to inject user's username and admin status into component
+ * Decode the access token to get the username and admin status
+ */
 const withUser = (WrappedComponent: React.FC<WithUserProps>) => {
   const UserWrapper: React.FC = (props) => {
-    const router = useRouter();
-    const { data, isLoading, isError } = useQuery<SessionUser>(
-      'user',
-      getSessionUser,
-      QUERY_OPTIONS
-    );
-
-    const deleteSession = (): void => {
-      try {
-        Cookies.remove('X-CSRF-Token');
-        Cookies.remove('X-Refresh-Token');
-      } catch {};
-      router.push('/login');
-    };
-
-    const username: string = data?.username || ''
-    const isAdmin: boolean = data?.is_admin || false;
-
-    if (isLoading) {
-      return <Loading />;
-    };
-  
-    if (isError) {
-      deleteSession();
-    };
-
-    return <WrappedComponent username={username} isAdmin={isAdmin} {...props} />
+      if (typeof window !== 'undefined') {
+        const accessToken: string = getAccessToken();
+        const decodedToken: DecodedAccessToken = jwt_decode(accessToken);
+        return <WrappedComponent username={decodedToken['username']} isAdmin={decodedToken['is_admin']} {...props} />
+      }
+      return <WrappedComponent username={''} isAdmin={false} {...props} />
   };
 
   return UserWrapper;

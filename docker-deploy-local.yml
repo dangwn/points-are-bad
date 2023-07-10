@@ -6,7 +6,7 @@ services:
     ports:
       - "6379:6379"
 
-  db:
+  postgres:
     image: postgres:10.17
     environment:
       POSTGRES_USER: test
@@ -20,7 +20,7 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - db
+      - postgres
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -45,11 +45,26 @@ services:
       - rabbitmq
 
 
-  # api-client:
-  #   image: gin-app:latest
-  #   ports: 
-  #     - "8010:8010"
-  #   depends_on:
-  #     - rabbitmq
-  #   environment:
-  #     - RABBITMQ_HOST=rabbitmq
+  api-client:
+    image: dangawne/points-are-bad/api-client:latest
+    ports: 
+      - "8020:8020"
+    depends_on:
+      - rabbitmq
+      - postgres
+    environment:
+      - ACCESS_TOKEN_SECRET_KEY: ""
+      - API_PORT: 8020
+      - FRONTEND_DOMAIN: "http://localhost:3000"
+      - PAB_ENVIRONMENT: "dev"
+      - POSTGRES_USER: "test"
+      - POSTGRES_PASSWORD: "password"
+      - POSTGRES_DB: "db"
+      - RABBITMQ_USER: "guest"
+      - RABBITMQ_PASSWORD: "guest"
+      - RABBITMQ_HOST: "rabbitmq"
+      - RABBITMQ_PORT: "5672"
+      - REDIS_HOST: "redis"
+      - REDIS_PORT: "6379"
+      - REDIS_PASSWORD: ""
+      - REFRESH_TOKEN_SECRET_KEY: ""

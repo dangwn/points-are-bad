@@ -20,23 +20,12 @@ func isProductionBuild() bool {
 }
 
 var (
-	ACCESS_TOKEN_SECRET_KEY []byte = []byte(getEnv(
-		"ACCESS_TOKEN_SECRET_KEY", 
-		"OOOOO-ACCESS-SECRET",
-	))
+	ACCESS_TOKEN_SECRET_KEY []byte = []byte(getEnv("ACCESS_TOKEN_SECRET_KEY", "OOOOO-ACCESS-SECRET"))
 	ACCESS_TOKEN_EXPIRE_TIME time.Duration = time.Minute * 15
 	
 	API_PORT string = getEnv("API_PORT", "8020")
 
-	BCRYPT_SECRET_KEY []byte = []byte(getEnv(
-		"BCRYPT_SECRET_KEY",
-		"OOOOO-BCRYPT-SECRET",
-	))
-
 	FRONTEND_DOMAIN string = getEnv("FRONTEND_DOMAIN", "http://localhost:3000")
-
-	CSRF_SECRET_KEY []byte = []byte(getEnv("CSRF_SECRET_KEY", "CSRF-Key"))
-	CSRF_TOKEN_NAME string = "X-CSRF-Token"
 
 	EMAIL_VERIFICATION_QUEUE string = "email-verification"
 
@@ -62,10 +51,8 @@ var (
 	REDIS_DURATION time.Duration = time.Minute * 30
 
 	REFRESH_TOKEN_NAME string = "X-Refresh-Token"
-	REFRESH_TOKEN_SECRET_KEY []byte = []byte(getEnv(
-		"REFRESH_TOKEN_SECRET_KEY", 
-		"OOOOO-REFRESH-SECRET",
-	))
+	REFRESH_TOKEN_SECRET_KEY []byte = []byte(getEnv("REFRESH_TOKEN_SECRET_KEY", "OOOOO-REFRESH-SECRET"))
 	REFRESH_TOKEN_MAX_AGE_DAYS int = 30
 	REFRESH_TOKEN_EXPIRE_TIME time.Duration = time.Hour * 24 * time.Duration(REFRESH_TOKEN_MAX_AGE_DAYS)
+	REFRESH_TOKEN_EXPIRE_TIME_SECONDS int = (3600 * 24) * REFRESH_TOKEN_MAX_AGE_DAYS
 )

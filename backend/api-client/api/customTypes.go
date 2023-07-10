@@ -3,18 +3,17 @@ package api
 import (
 	"bytes"
 	dbDriver "database/sql/driver"
-	"encoding/json"
 	"strconv"
 	"time"
 )
 
 /*
  * Custom Date Object
+ * The dates coming in to the API have the form YYYY-MM-DD, and are stored likewise in the DB
+ * There is scope for adding times to the object
  */
 
 type Date time.Time
-
-var _ json.Unmarshaler = &Date{}
 
 const dateFormat = "2006-01-02"
 
@@ -62,15 +61,64 @@ func (d Date) String() string {
 }
 
 /*
+ * Custom Prediction Array
+ * Used for combining multiple predictions to a user in one query
+ * See prediction.go -> updateUserPredictionsByUserId
+ * See prediction.go for "Prediction" struct
+ */
+type PredictionArray []Prediction
+
+/*
+ * Appends an int pointer to the prediction array buffer
+ * Nil pointers are equivalent to NULL values in the DB
+ */
+func appendIntPointerToSqlBuffer(b []byte, i *int) []byte {
+	if i == nil {
+		return append(b, 'N', 'U', 'L', 'L')
+	}
+	return strconv.AppendInt(b, int64(*i), 10)
+}
+
+// Appends a Prediction object to the array buffer
+func appendPredictionToArrayBuffer(b []byte, pred Prediction) []byte {
+	b = append(b, '(')
+	b = strconv.AppendInt(b, int64(pred.PredictionId), 10)
+	b = append(b, ',')
+	b = appendIntPointerToSqlBuffer(b, pred.HomeGoals)
+	b = append(b, ',')
+	b = appendIntPointerToSqlBuffer(b, pred.AwayGoals)
+	return append(b, ')')
+}
+
+/* 
+ * Creates a string of the prediction array
+ * String value takes form "(id, h, a),(id, h, a),..."
+ * If there are no predictions in the array, the string is empty
+ */
+func (p PredictionArray) String() string {
+	if n := len(p); n > 0 {
+		b := make([]byte, 0, 8*n-2)
+		b = appendPredictionToArrayBuffer(b, p[0])
+		for i := 1; i < n; i++ {
+			b = append(b, ',')
+			b = appendPredictionToArrayBuffer(b, p[i])
+		}		
+
+		return string(b)
+	}
+	return ""
+}
+
+/*
  * Arrays for unnesting into insert queries
  * General structure taken from pq.Arrays
- * Arrays take form UNNEST(ARRAY[val1, val2, ...])
+ * Arrays take form UNNEST(ARRAY[val1, val2, ...]) or NULL if their length is 0
  */
 type UnnestStringArray []string
 type UnnestInt32Array []int32
 type UnnestInt64Array []int64
+type UnnestDateArray []Date
 
-const defaultUnnestArray string = "UNNEST(ARRAY[])"
 const NULL string = "NULL"
 
 func UnnestArray(a interface{}) interface {
@@ -83,6 +131,8 @@ func UnnestArray(a interface{}) interface {
 		return (*UnnestInt32Array)(&a)
 	case []int64:
 		return (*UnnestInt64Array)(&a)
+	case []Date:
+		return (*UnnestDateArray)(&a)
 	}
 	return nil
 }
@@ -105,10 +155,6 @@ func appendArrayQuotedBytes(b, v []byte) []byte {
 }
 
 func (a UnnestStringArray) String() string {
-	if a == nil {
-		return NULL
-	}
-
 	if n := len(a); n > 0 {
 		b := make([]byte, 0, 14+3*n)
 		b = append(b, []byte("UNNEST(ARRAY[")...)
@@ -121,14 +167,10 @@ func (a UnnestStringArray) String() string {
 		return string(append(b, ']', ')'))
 	}
 
-	return defaultUnnestArray
+	return NULL
 }
 
 func (a UnnestInt32Array) String() string {
-	if len(a) == 0 {
-		return NULL
-	}
-
 	if n := len(a); n > 0 {
 		b := []byte("UNNEST(ARRAY[")
 
@@ -141,14 +183,10 @@ func (a UnnestInt32Array) String() string {
 		return string(append(b, ']', ')'))
 	}
 
-	return defaultUnnestArray
+	return NULL
 }
 
 func (a UnnestInt64Array) String() string {
-	if len(a) == 0 {
-		return NULL
-	}
-
 	if n := len(a); n > 0 {
 		b := []byte("UNNEST(ARRAY[")
 
@@ -161,5 +199,21 @@ func (a UnnestInt64Array) String() string {
 		return string(append(b, ']', ')'))
 	}
 
-	return defaultUnnestArray
+	return NULL
+}
+
+func (a UnnestDateArray) String() string {
+	if n := len(a); n > 0 {
+		b := make([]byte, 0, 14+3*n)
+		b = append(b, []byte("UNNEST(ARRAY[")...)
+		b = appendArrayQuotedBytes(b, []byte(a[0].String()))
+		for i := 1; i < n; i++ {
+			b = append(b, ',')
+			b = appendArrayQuotedBytes(b, []byte(a[i].String()))
+		}
+
+		return string(append(b, ']', ')'))
+	}
+
+	return NULL
 }

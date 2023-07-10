@@ -157,7 +157,7 @@ export const getMatchesWithGoals = async (startDate?: string, endDate?: string):
 };
 
 export const logUserIn = async (email: string, password: string): Promise<Token> => {
-  const response = await fetch(
+  const response: Response = await fetch(
     `${API_HOST}/auth/login/`,
     {
       method: 'POST',
@@ -178,6 +178,20 @@ export const logUserIn = async (email: string, password: string): Promise<Token>
   };
 
   return response.json();
+}
+
+export const logUserOut = async (): Promise<void> => {
+  const accessToken: string = getAccessToken()
+  const response: Response = await fetch(`${API_HOST}/auth/login/`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    },
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    throw new Error('Could not log user out')
+  }
 }
 
 export const refreshAccessToken = async (): Promise<Token> => {

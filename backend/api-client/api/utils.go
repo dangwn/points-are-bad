@@ -32,17 +32,6 @@ func createDateRangeWhereClause(startDate *Date, endDate *Date) string {
 	return whereClause
 }
 
-func redisKeyExists(key string) (bool, error) {
-	exists, err := redis.Exists(redisContext, key).Result()
-	if err != nil {
-		return false, err
-	}
-	if exists == 1 {
-		return true, nil
-	}
-	return false, nil
-}
-
 func hashPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword(
 		[]byte(password),
