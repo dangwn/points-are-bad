@@ -1,3 +1,4 @@
 **/node_modules
 **/alembic/versions/*
 **/__pycache__
+**/Dockerfile

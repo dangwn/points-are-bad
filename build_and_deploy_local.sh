@@ -28,7 +28,7 @@ done
 echo "Building points are bad images with tag '${BUILD_TAG}'..."
 echo ""
 echo "Building api client image..."
-docker build -f api-client/Dockerfile -t dangawne/points-are-bad/api-client:$BUILD_TAG --build-arg API_PORT=8020 api-client
+docker build -f backend/api-client/Dockerfile -t dangawne/points-are-bad/api-client:$BUILD_TAG --build-arg API_PORT=8020 backend/api-client
 echo ""
 echo "Building email server image..."
 docker build -f backend/email-server/Dockerfile -t dangawne/points-are-bad/email-server:$BUILD_TAG backend/email-server
