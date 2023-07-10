@@ -25,11 +25,6 @@ var (
 	
 	API_PORT string = getEnv("API_PORT", "8020")
 
-	BCRYPT_SECRET_KEY []byte = []byte(getEnv(
-		"BCRYPT_SECRET_KEY",
-		"OOOOO-BCRYPT-SECRET",
-	))
-
 	FRONTEND_DOMAIN string = getEnv("FRONTEND_DOMAIN", "http://localhost:3000")
 
 	EMAIL_VERIFICATION_QUEUE string = "email-verification"

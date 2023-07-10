@@ -3,7 +3,7 @@ module points-are-bad/api-client
 go 1.20
 
 require (
-	github.com/dangwn/points-are-bad-tooling v0.1.8
+	github.com/dangwn/points-are-bad-tooling v0.1.9
 	github.com/gin-gonic/gin v1.9.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.0

@@ -3,11 +3,19 @@
 This is the repository containing the source code for [Points are Bad](https://pointsarebad.com).
 ---
 
-This website runs a NextJS (in typescript) framework, with FastAPI backend, hosted inside an EKS cluster, with redis and postgres.
+## Contents
+ - <b>backend:</b> Source code for containers running in the k8s cluster, the backend of Points are Bad
+    - <b>api-client:</b> The REST API which handles the request from the frontend
+    - <b>email-server:</b> Server which handles all outgoing emails to users, either account verification or password resets
+ - <b>CI:</b> Script for building and pushing docker images using [Travis CI](https://travis-ci.com)
+ - <b>db-migrations:</b> Python scripts defining SQL models and for running database migrations
+ - <b>deploy:</b> Deployment code and helm charts for deploying k8s resources onto the cluster
+ - <b>frontend:</b> Source code for the frontend web application
 
-## Contents:
-- <b>Backend</b>: A FastAPI-based REST API, which interacts with a postgresql database using sqlalchemy and alembic for the database migrations. User authentication happens using (unique and verified) emails and passwords, with access, refresh and csrf tokens (fastapi_csrf_protect) to authenticate users, with python-jose for password cryptography and validation.
-- <b>CI</b>: Assets for CI of the project. Currently only holds shell script for travis to build the docker images.
-- <b>Deploy</b>: Assets for deploying the backend onto the EKS cluster. Contains helm charts for K8s resources. A shell script deploys a pod onto the K8s cluster, which installs the required helm charts with the given configuration.
-- <b>Docker</b>: Dockerfiles for the fleetcommand agent and the backend API.
-- <b>Frontend</b>: A NextJS frontend, written in typescript, which interacts with the FastAPI backend. The frontend uses react query for fetching data from the backend. The frontend will request that the user will accept the necessary cookies required for user authentication
+## Deploy locally
+### Requirements:
+ - [Docker](https://docs.docker.com/) >= 1.13 (must have [docker swarm](https://docs.docker.com/engine/swarm/) available)
+ - A python environment with [Alembic](https://alembic.sqlalchemy.org/en/latest/) (to run the db migrations)
+ - An AWS SES user deployed, with at least one email address verified to send emails from ([SES docs](https://docs.aws.amazon.com/ses/latest/dg/send-email.html))
+
+Run the `build_and_deploy_local.sh` script (add `-h` for help) from the root directory of the project.

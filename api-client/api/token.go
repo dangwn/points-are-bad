@@ -65,29 +65,6 @@ func getAuthorizationToken(c *gin.Context) (string, error) {
 	return authParts[1], nil
 }
 
-// Returns whether the access token from a request is
-// func hasAccessTokenExpired(c *gin.Context) bool {
-// 	authToken, err := getAuthorizationToken(c)
-// 	if err != nil {
-// 		return true
-// 	}
-// 	print("Access token: ", authToken)
-// 	claims, err := jwtDecodeClaims(authToken, ACCESS_TOKEN_SECRET_KEY)
-// 	if err != nil || claims["exp"] == nil {
-// 		return true
-// 	}
-
-// 	expireTime, ok := claims["exp"].(int64)
-// 	if !ok {
-// 		return true
-// 	}
-
-// 	if expireTime > time.Now().Unix() {
-// 		return true
-// 	}
-// 	return false
-// }
-
 /*
  * Creates a refresh token and sets it as a cookie
  * The router method aborts if an error is thrown
