@@ -74,11 +74,12 @@ func login(c *gin.Context) {
 		abortRouterMethod(c, http.StatusUnauthorized, "Could not set refresh token", logMessage) 
 		return
 	}
-	
-	c.JSON(http.StatusAccepted, gin.H{
-		"access_token": accessToken,
-		"token_type": "Bearer",
-	})
+
+	c.JSON(http.StatusAccepted, Token{AccessToken: accessToken, TokenType: "Bearer"})
+	// c.JSON(http.StatusAccepted, gin.H{
+	// 	"access_token": accessToken,
+	// 	"token_type": "Bearer",
+	// })
 	Logger.Info("User "+ userId + " successfully logged in")
 }
 
@@ -132,22 +133,23 @@ func refreshAccessToken(c *gin.Context) {
 	accessToken, err := createAccessToken(userId, user.Username, user.IsAdmin)
 	if err != nil {
 		logMessage := "Could not create access token in refreshAccessToken: " + err.Error()
-		abortRouterMethod(c, http.StatusUnauthorized, "Could not create new access token", logMessage)
+		abortRouterMethod(c, http.StatusBadRequest, "Could not create new access token", logMessage)
 		return
 	}
 
 	// Set refresh token
 	if err := setRefreshTokenCookie(c, userId); err != nil {
 		logMessage := "Could not set refresh token cookie in refreshAccessToken: " + err.Error()
-		abortRouterMethod(c, http.StatusUnauthorized, "Could not set refresh token", logMessage)
+		abortRouterMethod(c, http.StatusBadRequest, "Could not set refresh token", logMessage)
 		return
 	}
 
 	// Return access token
-	c.JSON(http.StatusAccepted, gin.H{
-		"access_token": accessToken,
-		"token_type": "Bearer",
-	})
+	c.JSON(http.StatusAccepted, Token{AccessToken: accessToken, TokenType: "Bearer"})
+	// c.JSON(http.StatusAccepted, gin.H{
+	// 	"access_token": accessToken,
+	// 	"token_type": "Bearer",
+	// })
 	Logger.Info("User " + userId + " refreshed tokens")
 }
 
@@ -189,7 +191,6 @@ func verifyNewUserEmail(c *gin.Context) {
 	// Failures in sending tokens to rabbitmq will not be shown to the user
 	c.Status(http.StatusAccepted)
 }
-
 
 /*
  * Services

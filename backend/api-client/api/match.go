@@ -84,7 +84,7 @@ func createMatch(c *gin.Context) {
 
 /*
  * Match Deletion Endpoint (Admin Only)
- * Query Params: match_id=int
+ * Schema: {match_id: int}
  * Deletes a match from the DB using a given match Id
  */
 func deleteMatch(c *gin.Context) {
@@ -94,7 +94,7 @@ func deleteMatch(c *gin.Context) {
 	}
 
 	var matchIdOnly MatchIdOnly
-	if err := c.BindQuery(&matchIdOnly); err != nil {
+	if err := c.BindJSON(&matchIdOnly); err != nil {
 		logMessage := "Could not get match Id from query in deleteMatch: " + err.Error()
 		abortRouterMethod(c, http.StatusBadRequest, "Could not delete match", logMessage)
 		return
@@ -136,7 +136,7 @@ func getFullMatches(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, matches)
+	c.JSON(http.StatusOK, matches)
 	if userId, err := getCurrentUser(c); err == nil {
 		Logger.Info("Full matches successfully fetched for user " + userId)
 	} else {
@@ -165,7 +165,7 @@ func getMatchesWithoutGoals(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, matches)
+	c.JSON(http.StatusOK, matches)
 	Logger.Info("Matches (without goals) successfully retrieved")
 }
 
