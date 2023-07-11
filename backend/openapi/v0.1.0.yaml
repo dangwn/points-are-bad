@@ -1,0 +1,637 @@
+openapi: 3.0.3
+info:
+  title: Points are Bad REST API
+  description: |-
+    This is the OpenAPI configuration for the Points are Bad REST API. For the source, code please see the [GitHub](https://github.com/dangwn/points-are-bad).
+#   termsOfService: 
+#   contact:
+#     email: 
+  license:
+    name: Points are Bad License
+    url: https://github.com/dangwn/points-are-bad/LICENSE
+  version: 0.1.0
+externalDocs:
+  description: GitHub
+  url: https://github.com/dangwn/points-are-bad
+servers:
+  - url: https://api.pointsarebad.com
+tags:
+  - name: auth
+    description: Operations for authentication
+  - name: match
+    description: Operations for matches
+  - name: points
+    description: Operations for user points and scores
+  - name: prediction
+    description: Operations for user predictions
+  - name: user
+    description: Operations for user actions
+paths:
+  /auth/login/:
+    post:
+      tags:
+        - auth
+      summary: Log in user
+      description: Authenticate existing user and return access key and refresh token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginUser'
+      responses:
+        '202':
+          description: User sucessfully logged in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '401':
+          description: Unable to log user in
+    delete:
+      tags: 
+        - auth
+      summary: Log user out
+      description: Deletes user cookies to log them out
+      responses:
+        '204':
+          description: User successfully logged out
+        '401':
+          description: Current user could not be found to log out
+      security:
+        - api_key: []
+  /auth/refresh/:
+    post:
+      tags:
+        - auth
+      summary: Refresh access token
+      description: Provides the user with new access token and refresh token
+      responses:
+        '202':
+          description: User's access token successfully refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '400':
+          description: User's access/refresh tokens were accepted but new ones could not be created
+        '401':
+          description: User's access/refresh tokens were not accepted
+      security:
+        - api_key: []
+  /auth/verify/:
+    post:
+      tags: 
+        - auth
+      summary: Verify new user's email
+      description: Accepts a new users' email and verifies it is not in the db, then sends email to email server to have verification link sent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Email'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Email'
+      responses:
+        '202':
+          description: New email accepted and sent to email server
+        '400':
+          description: Request or email format not valid
+        '401':
+          description: Email already exists in db/ error checking email in db
+  /match/:
+    get:
+      tags: 
+        - match
+      summary: Get matches without goals
+      description: Return a list of matches in a date range without their goals
+      parameters:
+        - name: start_date
+          in: query
+          description: Begining of date range for matches (inclusive)
+          required: false
+          schema:
+            type: string
+            example: '2010-01-01'
+        - name: end_date
+          in: query
+          description: End of date range for matches (exclusive)
+          required: false
+          schema:
+            type: string
+            example: '2010-01-01'
+      responses:
+        '200':
+          description: List of matches without goals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MatchWithoutGoals'
+        '400':
+          description: Could not get matches
+    post:
+      tags:
+        - match
+      summary: Create new match
+      description: Add new match into db
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchWithoutGoals'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MatchWithoutGoals'
+      responses:
+        '202':
+          description: Match successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Match'
+        '400':
+          description: Could not create match
+        '401':
+          description: Not an admin user
+      security:
+        - api_key: []
+    put:
+      tags: 
+        - match
+      summary: Update match
+      description: Update a match in db using match Id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Match'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Match'
+      responses:
+        '202':
+          description: Match successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Match'
+        '400':
+          description: Could not update match
+        '401':
+          description: Not an admin user
+      security:
+        - api_key: []
+    delete:
+      tags: 
+        - match
+      summary: Delete match
+      description: Delete match by match Id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchId'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MatchId'
+      responses:
+        '204':
+          description: Match successfully deleted
+        '400':
+          description: Could not delete match
+        '401':
+          description: Not an admin user
+      security:
+        - api_key: []
+  /match/full/:
+    get:
+      tags: 
+        - match
+      summary: Get matches
+      description: Return a list of matches in a date range
+      parameters:
+        - name: start_date
+          in: query
+          description: Begining of date range for matches (inclusive)
+          required: false
+          schema:
+            type: string
+            example: '2010-01-01'
+        - name: end_date
+          in: query
+          description: End of date range for matches (exclusive)
+          required: false
+          schema:
+            type: string
+            example: '2010-01-01'
+      responses:
+        '200':
+          description: List of matches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Match'
+        '400':
+          description: Could not get matches
+        '401':
+          description: Not an admin user
+      security:
+        - api_key: []
+  /points/:
+    get:
+      tags: 
+        - points
+      summary: Get user points
+      description: Retrieve user's points, correct scores, largest error and position
+      responses:
+        '200':
+          description: User points
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserWithPoints'
+        '401':
+          description: Could not get logged in user
+      security:
+        - api_key: []
+  /points/leaderboard/:
+    get:
+      tags:
+        - points
+      summary: Get global leaderboard
+      description: Get global leaderboard with `limit` entries from `offset`
+      parameters:
+        - name: limit
+          in: query
+          description: Number of entries to return
+          required: false
+          schema:
+            type: integer
+            format: int64
+            example: 10
+        - name: offset
+          in: query
+          description: Offset from which to start getting entries
+          required: false
+          schema:
+            type: integer
+            format: int64
+            example: 0
+      responses:
+        '200':
+          description: List of leaderboard users'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LeaderboardUser'
+  /points/calculate/:
+    post:
+      tags:
+        - points
+      summary: Update global points
+      description: Updates all users' scores
+      responses:
+        '204':
+          description: Points updated
+        '401':
+          description: Not an admin user
+      security:
+        - api_key: []
+  /prediction/:
+    get:
+      tags:
+        - prediction
+      summary: Get user's prediction
+      description: Get user's predictions
+      responses:
+        '200':
+          description: User predictions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PredictionWithMatch'
+        '400':
+          description: Could not get user's points
+        '401':
+          description: Could not authenticate user
+      security:
+        - api_key: []
+    put:
+      tags:
+        - prediction
+      summary: Update users predictions
+      description: Update a selection of a user's predictions in the db
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/PredictionWithMatch'
+          application/x-www-form-urlencoded:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/PredictionWithMatch'
+      responses:
+        '202':
+          description: Predictions updated
+        '400':
+          description: Predictions could not be updated
+        '401':
+          description: Could not authenticate user
+      security:
+        - api_key: []
+  /user/:
+    get:
+      tags:
+        - user
+      summary: Get current user
+      description: Gets the current user's information
+      deprecated: true
+      responses:
+        '202':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionUser'
+        '401':
+          description: Could not authenticate user
+      security:
+        - api_key: []
+    post:
+      tags:
+        - user
+      summary: Create new user
+      description: Creates a new user with validation token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/NewUser'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '400':
+          description: Could not create new user
+        '401':
+          description: Could not create and assign tokens
+    delete:
+      tags:
+        - user
+      summary: Delete user
+      description: Delete the current user
+      responses:
+        '204':
+          description: User deleted
+        '401':
+          description: Could not authenticate user
+      security:
+        - api_key: []
+  /user/username/:
+    put:
+      tags:
+        - user
+      summary: Edit username
+      description: Edit the current user's username
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                username:
+                  type: string
+                  example: string
+          application/x-www-form-urlencoded:
+            schema:
+              properties:
+                username:
+                  type: string
+                  example: string
+      responses:
+        '202':
+          description: Username updated
+        '400':
+          description: Could not update username
+        '401':
+          description: Could not authenticate user
+      security:
+        - api_key: []
+  /user/password/:
+    put:
+      tags:
+        - user
+      summary: Edit password
+      description: Edit the current user's password
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewPassword'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/NewPassword'
+      responses:
+        '202':
+          description: Password updated
+        '400':
+          description: Could not update password
+        '401':
+          description: Could not authenticate user
+      security:
+        - api_key: []
+components:
+  schemas:
+    Email:
+      type: object
+      properties:
+        email: 
+          type: string
+          example: example@example.com
+    LeaderboardUser:
+      type: object
+      properties:
+        username: 
+          type: string
+          example: string
+        points:
+          type: integer
+          format: int64
+          example: 0
+        correct_scores:
+          type: integer
+          format: int64
+          example: 0
+        largest_error:
+          type: integer
+          format: int64
+          example: 0
+        position:
+          type: integer
+          format: int64
+          example: null
+          nullable: true
+    LoginUser:
+      type: object
+      properties:
+        email: 
+          type: string
+          example: example@example.com
+        password:
+          type: string
+          example: string
+    Match:
+      type: object
+      properties:
+        match_id: 
+          type: integer
+          format: int64
+          example: 0
+        match_date: 
+          type: string
+          example: '2010-01-01'
+        home:
+          type: string
+          example: string
+        away:
+          type: string
+          example: string
+        home_goals:
+          type: integer
+          nullable: true
+          format: int64
+          example: null
+        away_goals:
+          type: integer
+          nullable: true
+          format: int64
+          example: null
+    MatchId:
+      type: object
+      properties:
+        match_id: 
+          type: integer
+          format: int64
+          example: 0
+    MatchWithoutGoals:
+      type: object
+      properties:
+        match_date: 
+          type: string
+          example: '2010-01-01'
+        home:
+          type: string
+          example: string
+        away:
+          type: string
+          example: string
+    NewPassword:
+      type: object
+      properties:
+        old_password:
+          type: string
+          example: string
+        new_password:
+          type: string
+          example: string
+    NewUser:
+      type: object
+      properties:
+        token: 
+          type: string
+          example: string
+        username:
+          type: string
+          example: string
+        password:
+          type: string
+          example: string
+    SessionUser:
+      type: object
+      properties:
+        username:
+          type: string
+          example: string
+        is_admin:
+          type: boolean
+          example: false
+    Token:
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: string
+        token_type: 
+          type: string
+          example: string       
+    PredictionWithMatch:
+      type: object
+      properties:
+        prediction_id:
+          type: integer
+          format: int64
+          example: 0
+        home_goals:
+          type: integer
+          format: int64
+          nullable: true
+          example: null
+        away_goals:
+          type: integer
+          format: int64
+          nullable: true
+          example: null
+        match:
+          $ref: '#/components/schemas/Match'
+        user:
+          $ref: '#/components/schemas/SessionUser'
+    UserWithPoints:
+      type: object
+      properties:
+        username: 
+          type: string
+          example: string
+        is_admin:
+          type: boolean
+          example: false
+        points:
+          type: integer
+          format: int64
+          example: 0
+        correct_scores:
+          type: integer
+          format: int64
+          example: 0
+        largest_error:
+          type: integer
+          format: int64
+          example: 0
+        position:
+          type: integer
+          format: int64
+          example: null
+          nullable: true
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header

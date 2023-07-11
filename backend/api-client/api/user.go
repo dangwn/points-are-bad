@@ -101,10 +101,11 @@ func createNewUser(c *gin.Context) {
 		return
 	}
 	
-	c.JSON(http.StatusCreated, gin.H{
-		"access_token": accessToken,
-		"token_type": "Bearer",
-	})
+	c.JSON(http.StatusCreated, Token{AccessToken: accessToken, TokenType: "Bearer"})
+	// c.JSON(http.StatusAccepted, gin.H{
+	// 	"access_token": accessToken,
+	// 	"token_type": "Bearer",
+	// })
 	Logger.Info("User " + userId + " created")
 }
 
