@@ -1,9 +1,9 @@
-openapi: 3.0.3
+openapi: 3.0.0
 info:
   title: Points are Bad REST API
   description: |-
     This is the OpenAPI configuration for the Points are Bad REST API. For the source, code please see the [GitHub](https://github.com/dangwn/points-are-bad).
-#   termsOfService: 
+  termsOfService: Local deployments only
 #   contact:
 #     email: 
   license:
@@ -14,7 +14,9 @@ externalDocs:
   description: GitHub
   url: https://github.com/dangwn/points-are-bad
 servers:
-  - url: https://api.pointsarebad.com
+  - url: http://api-client:8020
+  - url: https://api-client:8020
+  - url: http://localhost:8020
 tags:
   - name: auth
     description: Operations for authentication
@@ -633,5 +635,7 @@ components:
   securitySchemes:
     api_key:
       type: apiKey
-      name: api_key
+      name: Authorization
       in: header
+      description: >-
+        Enter the token with the prefix `Bearer: ` e.g. "Bearer token123"

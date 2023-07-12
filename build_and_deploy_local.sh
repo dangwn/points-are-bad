@@ -13,7 +13,7 @@ help() {
     echo "  -h | Help"
 }
 
-while getopts "t:f:h" flag; do
+while getopts "f:m:t:h" flag; do
     case "${flag}" in
         f) BUILD_CONFIG="${OPTARG}" ;;
         m) RUN_MIGRATIONS_SCRIPT="${OPTARG}" ;;
@@ -32,6 +32,9 @@ docker build -f backend/api-client/Dockerfile -t dangawne/points-are-bad/api-cli
 echo ""
 echo "Building email server image..."
 docker build -f backend/email-server/Dockerfile -t dangawne/points-are-bad/email-server:$BUILD_TAG backend/email-server
+echo ""
+echo "Building OpenAPI docs"
+docker build -f backend/openapi/Dockerfile -t dangawne/points-are-bad/swagger-ui:$BUILD_TAG .
 
 echo ""
 echo "Pulling external images..."
@@ -44,7 +47,6 @@ echo ""
 echo "Deploying in docker swarm..."
 docker swarm init
 docker stack deploy -c ${BUILD_CONFIG} pab
-
 
 echo ""
 echo "Running db migrations"

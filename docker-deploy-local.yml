@@ -44,7 +44,6 @@ services:
     depends_on:
       - rabbitmq
 
-
   api-client:
     image: dangawne/points-are-bad/api-client:latest
     ports: 
@@ -53,18 +52,24 @@ services:
       - rabbitmq
       - postgres
     environment:
-      - ACCESS_TOKEN_SECRET_KEY: ""
-      - API_PORT: 8020
-      - FRONTEND_DOMAIN: "http://localhost:3000"
-      - PAB_ENVIRONMENT: "dev"
-      - POSTGRES_USER: "test"
-      - POSTGRES_PASSWORD: "password"
-      - POSTGRES_DB: "db"
-      - RABBITMQ_USER: "guest"
-      - RABBITMQ_PASSWORD: "guest"
-      - RABBITMQ_HOST: "rabbitmq"
-      - RABBITMQ_PORT: "5672"
-      - REDIS_HOST: "redis"
-      - REDIS_PORT: "6379"
-      - REDIS_PASSWORD: ""
-      - REFRESH_TOKEN_SECRET_KEY: ""
+      ACCESS_TOKEN_SECRET_KEY: ""
+      API_PORT: 8020
+      FRONTEND_DOMAIN: "http://localhost:3000"
+      PAB_ENVIRONMENT: "dev"
+      POSTGRES_HOST: "postgres"
+      POSTGRES_USER: "test"
+      POSTGRES_PASSWORD: "password"
+      POSTGRES_DB: "db"
+      RABBITMQ_USER: "guest"
+      RABBITMQ_PASSWORD: "guest"
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PORT: "5672"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ""
+      REFRESH_TOKEN_SECRET_KEY: ""
+
+  openapi:
+    image: dangawne/points-are-bad/swagger-ui:latest
+    ports:
+      - "5000:8080"

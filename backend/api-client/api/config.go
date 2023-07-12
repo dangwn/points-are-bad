@@ -35,6 +35,7 @@ var (
 
 	NULL_PREDICTIONS_PENALTY int = 10
 
+	POSTGRES_HOST string = getEnv("POSTGRES_HOST", "localhost")
 	POSTGRES_USER string = getEnv("POSTGRES_USER", "test")
 	POSTGRES_PASSWORD string = getEnv("POSTGRES_PASSWORD", "password")
 	POSTGRES_DB string = getEnv("POSTGRES_DB", "db")
