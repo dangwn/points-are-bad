@@ -1,9 +1,9 @@
-import os
-import alembic.config
+import glob
 import logging
+import os
 from typing import List, Optional
 
-import glob
+import alembic.config
 
 logging.basicConfig(level=logging.DEBUG)
     
@@ -41,7 +41,7 @@ def main() -> None:
     try:
         os.mkdir(os.path.join(
             os.getcwd(),
-            init_dir(),
+            init_dir,
             'alembic',
             'versions'
         ))

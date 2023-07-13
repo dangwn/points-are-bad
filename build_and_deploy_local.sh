@@ -59,7 +59,7 @@ docker stack deploy -c ${BUILD_CONFIG} --with-registry-auth pab
 echo ""
 echo "Running db migrations"
 sleep 10
-docker run --network=pab_public dangawne/points-are-bad/db-migrations:latest
+docker run --network=pab_public dangawne/points-are-bad/db-migrations:$BUILD_TAG
 
 echo ""
 echo "Done!"
