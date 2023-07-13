@@ -19,3 +19,13 @@ This is the repository containing the source code for [Points are Bad](https://p
  - An AWS SES user deployed, with at least one email address verified to send emails from ([SES docs](https://docs.aws.amazon.com/ses/latest/dg/send-email.html))
 
 Run the `build_and_deploy_local.sh` script (add `-h` for help) from the root directory of the project.
+
+When deployed locally, the following endpoints are created:
+   | Port   | Description                             |
+   |--------|-----------------------------------------|
+   |`:8020 `| Points are Bad REST API                 |
+   |`:8080 `| Adminer console for control of postgres |
+   |`:5000 `| Swagger docs for API spec               |
+   |`:15672`| RabbitMQ management console             |
+
+The credentials for logging into Adminer are set in the `docker-deploy-local.yml`, and the RabbitMQ username:password is `guest:guest`.
