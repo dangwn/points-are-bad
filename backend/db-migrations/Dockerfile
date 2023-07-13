@@ -20,7 +20,7 @@ ENV PATH="/home/migrationsuser/venv/bin:$PATH"
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install requirements
-COPY backend/db-migrations/requirements.txt requirements.txt
+COPY ./requirements.txt requirements.txt
 RUN pip3 install --no-cache-dir wheel
 RUN pip3 install --no-cache-dir --upgrade pip
 RUN pip3 install --no-cache-dir -r requirements.txt
@@ -41,8 +41,11 @@ COPY --from=build-image /home/migrationsuser/venv /home/migrationsuser/venv
 
 RUN mkdir /home/migrationsuser/api
 WORKDIR /home/migrationsuser/api
-COPY --chown=migrationsuser:migrationsuser backend/db-migrations/src .
+COPY --chown=migrationsuser:migrationsuser . .
 
 # Change User
 USER migrationsuser
 ENV PATH="/home/migrationsuser/venv/bin:$PATH"
+
+# Run Migrations
+CMD ["python", "run_migrations.py"]

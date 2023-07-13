@@ -1,10 +1,16 @@
 version: "3.8"
 
+networks:
+  pab_public:
+    external: true
+
 services:
   redis:
     image: redis:7.0.10
     ports:
       - "6379:6379"
+    networks:
+      - pab_public
 
   postgres:
     image: postgres:10.17
@@ -14,6 +20,8 @@ services:
       POSTGRES_DB: db
     ports:
       - "5432:5432"
+    networks:
+      - pab_public
 
   adminer:
     image: adminer:latest
@@ -21,6 +29,8 @@ services:
       - "8080:8080"
     depends_on:
       - postgres
+    networks:
+      - pab_public
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -28,6 +38,8 @@ services:
       - "5672:5672"
       - "5673:5673"
       - "15672:15672"
+    networks:
+      - pab_public
 
   email-server:
     image: dangawne/points-are-bad/email-server:latest
@@ -43,6 +55,8 @@ services:
       WEB_HOST_NAME: "http://localhost:3000"
     depends_on:
       - rabbitmq
+    networks:
+      - pab_public
 
   api-client:
     image: dangawne/points-are-bad/api-client:latest
@@ -68,8 +82,12 @@ services:
       REDIS_PORT: "6379"
       REDIS_PASSWORD: ""
       REFRESH_TOKEN_SECRET_KEY: ""
-
+    networks:
+      - pab_public
+      
   openapi:
     image: dangawne/points-are-bad/swagger-ui:latest
     ports:
       - "5000:8080"
+    networks:
+      - pab_public

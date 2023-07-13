@@ -24,7 +24,7 @@ type MatchWithoutGoals struct {
 }
 
 type MatchWithId struct {
-	MatchId int `json:"match_id"`
+	MatchId string `json:"match_id"`
 	MatchWithoutGoals
 }
 
@@ -34,7 +34,7 @@ type DateRange struct {
 }
 
 type MatchIdOnly struct {
-	MatchId int `json:"match_id" form:"match_id"`
+	MatchId string `json:"match_id" query:"match_id" form:"match_id"`
 }
 
 /*
@@ -94,7 +94,7 @@ func deleteMatch(c *gin.Context) {
 	}
 
 	var matchIdOnly MatchIdOnly
-	if err := c.BindJSON(&matchIdOnly); err != nil {
+	if err := c.BindQuery(&matchIdOnly); err != nil {
 		logMessage := "Could not get match Id from query in deleteMatch: " + err.Error()
 		abortRouterMethod(c, http.StatusBadRequest, "Could not delete match", logMessage)
 		return
@@ -209,7 +209,7 @@ func updateMatch(c *gin.Context) {
  * Only returns true when the number of rows affected is equal to 1
  * Otherwise it will return false even if the error is nil
  */
-func deleteMatchById(matchId int) (bool, error) {
+func deleteMatchById(matchId string) (bool, error) {
 	deleteQuery := "DELETE FROM matches WHERE match_id = $1"
 	if result, err := driver.Exec(deleteQuery, matchId); err != nil {
 		return false, err
@@ -280,7 +280,7 @@ func getMatchesInDateRange(startDate *Date, endDate *Date) ([]MatchWithoutGoals,
  * If any errors are caught, an empty MatchWithId is returned
  */
 func insertMatchIntoDb(match MatchWithoutGoals) (MatchWithId, error) {
-	var matchId int
+	var matchId string
 
 	insertQuery := `
 		INSERT INTO matches(match_date, home, away) 

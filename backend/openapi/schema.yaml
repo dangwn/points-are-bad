@@ -3,7 +3,7 @@ info:
   title: Points are Bad REST API
   description: |-
     This is the OpenAPI configuration for the Points are Bad REST API. For the source, code please see the [GitHub](https://github.com/dangwn/points-are-bad).
-  termsOfService: Local deployments only
+# termsOfService: 
 #   contact:
 #     email: 
   license:
