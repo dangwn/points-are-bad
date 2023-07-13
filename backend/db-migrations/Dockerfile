@@ -41,7 +41,7 @@ COPY --from=build-image /home/migrationsuser/venv /home/migrationsuser/venv
 
 RUN mkdir /home/migrationsuser/api
 WORKDIR /home/migrationsuser/api
-COPY --chown=migrationsuser:migrationsuser . .
+COPY --chown=migrationsuser:migrationsuser ./src .
 
 # Change User
 USER migrationsuser
