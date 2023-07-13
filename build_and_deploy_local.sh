@@ -34,7 +34,7 @@ echo "Building email server image..."
 docker build -f backend/email-server/Dockerfile -t dangawne/points-are-bad/email-server:$BUILD_TAG backend/email-server
 echo ""
 echo "Building OpenAPI docs image..."
-docker build -f backend/openapi/Dockerfile -t dangawne/points-are-bad/swagger-ui:$BUILD_TAG backend/openapi
+docker build -f backend/open-api/Dockerfile -t dangawne/points-are-bad/swagger-ui:$BUILD_TAG backend/open-api
 echo ""
 echo "Building migrations image..."
 docker build -f backend/db-migrations/Dockerfile -t dangawne/points-are-bad/db-migrations:$BUILD_TAG backend/db-migrations
