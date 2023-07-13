@@ -15,7 +15,6 @@ This is the repository containing the source code for [Points are Bad](https://p
 ## Deploy locally
 ### Requirements:
  - [Docker](https://docs.docker.com/) >= 1.13 (must have [docker swarm](https://docs.docker.com/engine/swarm/) available)
- - A python environment with [Alembic](https://alembic.sqlalchemy.org/en/latest/) and [SQLAlchemy](https://www.sqlalchemy.org/) (to run the db migrations)
  - An AWS SES user deployed, with at least one email address verified to send emails from ([SES docs](https://docs.aws.amazon.com/ses/latest/dg/send-email.html))
 
 Run the `build_and_deploy_local.sh` script (add `-h` for help) from the root directory of the project.

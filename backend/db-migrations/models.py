@@ -12,7 +12,7 @@ class Match(Base):
     '''
     __tablename__: str = 'matches'
     
-    match_id: Column = Column(Integer, primary_key=True, autoincrement=True)
+    match_id: Column = Column(String(36), primary_key=True)
     match_date: Column = Column(Date, nullable=False, index=True)
     home: Column = Column(String(64), nullable=False)
     away: Column = Column(String(64), nullable=False)
@@ -25,11 +25,11 @@ class Prediction(Base):
     '''
     __tablename__: str = 'predictions'
 
-    prediction_id: Column = Column(Integer, primary_key=True, autoincrement=True)
+    prediction_id: Column = Column(String(36), primary_key=True)
     home_goals: Column = Column(Integer, nullable=True, default=None)
     away_goals: Column = Column(Integer, nullable=True, default=None)
     user_id: Column = Column(String(36), ForeignKey('users.user_id', ondelete='CASCADE', onupdate='CASCADE'))
-    match_id: Column = Column(Integer, ForeignKey(Match.match_id, ondelete='CASCADE', onupdate='CASCADE'))
+    match_id: Column = Column(String(36), ForeignKey(Match.match_id, ondelete='CASCADE', onupdate='CASCADE'))
 
 class User(Base):
     '''
@@ -41,7 +41,7 @@ class User(Base):
     username: Column = Column(String(USERNAME_MAX_LENGTH), nullable=False)
     email: Column = Column(String(255), unique=True, nullable=False)
     hashed_password: Column = Column(String(255), nullable=False)
-    is_admin: Column = Column(Boolean(), nullable = False, default=False)
+    is_admin: Column = Column(Boolean(), nullable=False, default=False)
     points: Column = Column(Integer, nullable=False, index=True, default=0)
     correct_scores: Column = Column(Integer, nullable=False, index=True, default=0)
     largest_error: Column = Column(Integer, nullable=False, index=True, default=0)

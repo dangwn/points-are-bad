@@ -82,7 +82,7 @@ func appendIntPointerToSqlBuffer(b []byte, i *int) []byte {
 // Appends a Prediction object to the array buffer
 func appendPredictionToArrayBuffer(b []byte, pred Prediction) []byte {
 	b = append(b, '(')
-	b = strconv.AppendInt(b, int64(pred.PredictionId), 10)
+	b = append(b, []byte(pred.PredictionId)...)
 	b = append(b, ',')
 	b = appendIntPointerToSqlBuffer(b, pred.HomeGoals)
 	b = append(b, ',')

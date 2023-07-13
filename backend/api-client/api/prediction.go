@@ -13,7 +13,7 @@ import (
  *  Structs
  */
 type Prediction struct {
-	PredictionId int `json:"prediction_id"`
+	PredictionId string `json:"prediction_id"`
 	HomeGoals *int `json:"home_goals"`
 	AwayGoals *int `json:"away_goals"`
 }
@@ -155,14 +155,14 @@ func getPredictionsByUserId(userId string, startDate *Date, endDate *Date) ([]Pr
  * 		created for every match currently in the DB
  */
 func populatePredictionsByUserId(userId string) error {
-	var matchIds []int64
+	var matchIds []string
 
 	// Get match Ids for matches currently in DB
 	if rows, err := driver.Query("SELECT match_id FROM matches"); err != nil {
 		return err
 	} else {
 		for rows.Next() {
-			var matchId int64
+			var matchId string
 			if err := rows.Scan(&matchId); err != nil {
 				return err
 			}
@@ -187,7 +187,7 @@ func populatePredictionsByUserId(userId string) error {
  * This is used when a new match is created, and all users will have a new prediction
  * 		entry created for the new match
  */
-func populatePredictionsByMatchId(matchId int) error {
+func populatePredictionsByMatchId(matchId string) error {
 	var userIds []string
 
 	// Get user Ids for matches currently in DB
@@ -242,12 +242,12 @@ func updatePredictionsByUserId(predictions []Prediction, userId string) error {
 	
 	// Check that all predictions in "predictions" belong to the user
 	// The predicitons Ids are stored in the keys of a map, with an empty struct as their value
-	userPredictionIds := make(map[int]struct{})
+	userPredictionIds := make(map[string]struct{})
 	if rows, err := driver.Query("SELECT prediction_id FROM predictions WHERE user_id = $1", userId); err != nil {
 		return err
 	} else {
 		for rows.Next() {
-			var predId int
+			var predId string
 			if err := rows.Scan(&predId); err != nil {
 				return err
 			}

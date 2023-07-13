@@ -13,7 +13,7 @@ help() {
     echo "  -h | Help"
 }
 
-while getopts "t:f:h" flag; do
+while getopts "f:m:t:h" flag; do
     case "${flag}" in
         f) BUILD_CONFIG="${OPTARG}" ;;
         m) RUN_MIGRATIONS_SCRIPT="${OPTARG}" ;;
@@ -32,6 +32,14 @@ docker build -f backend/api-client/Dockerfile -t dangawne/points-are-bad/api-cli
 echo ""
 echo "Building email server image..."
 docker build -f backend/email-server/Dockerfile -t dangawne/points-are-bad/email-server:$BUILD_TAG backend/email-server
+echo ""
+echo "Building OpenAPI docs image..."
+docker build -f backend/openapi/Dockerfile -t dangawne/points-are-bad/swagger-ui:$BUILD_TAG backend/openapi
+echo ""
+echo "Building migrations image..."
+docker build -f backend/db-migrations/Dockerfile -t dangawne/points-are-bad/db-migrations:$BUILD_TAG backend/db-migrations
+echo ""
+echo "Images built successfully!"
 
 echo ""
 echo "Pulling external images..."
@@ -39,17 +47,19 @@ docker pull redis:7.0.10
 docker pull postgres:10.17
 docker pull adminer:latest
 docker pull rabbitmq:3-management
+echo ""
+echo "External images pulled successfully!"
 
 echo ""
 echo "Deploying in docker swarm..."
 docker swarm init
-docker stack deploy -c ${BUILD_CONFIG} pab
-
+docker network create -d overlay --attachable pab_public
+docker stack deploy -c ${BUILD_CONFIG} --with-registry-auth pab
 
 echo ""
 echo "Running db migrations"
 sleep 10
-python ${RUN_MIGRATIONS_SCRIPT}
+docker run --network=pab_public dangawne/points-are-bad/db-migrations:latest
 
 echo ""
 echo "Done!"

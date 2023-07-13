@@ -244,9 +244,9 @@ func addNewUserIntoDb(username string, email string, password string) (string, b
 	isAdmin := !adminInDB
 
 	// Verify email is unique
-	if emailExists, err := verifyEmailIsUnique(email); err != nil {
+	if emailIsUnique, err := verifyEmailIsUnique(email); err != nil {
 		return "", false, err
-	} else if emailExists {
+	} else if !emailIsUnique {
 		return "", false, errors.New("email already in use")
 	}
 
@@ -447,7 +447,7 @@ func testCreateUser(c *gin.Context) {
 		})
 		return
 	}
-
+	
 	if _, _, err := addNewUserIntoDb(
 		newUser.Username,
 		newUser.Email,
