@@ -172,6 +172,7 @@ func (a UnnestStringArray) String() string {
 
 func (a UnnestInt32Array) String() string {
 	if n := len(a); n > 0 {
+		b := make([]byte, 0, 14+3*n)
 		b := []byte("UNNEST(ARRAY[")
 
 		b = strconv.AppendInt(b, int64(a[0]), 10)
@@ -188,7 +189,8 @@ func (a UnnestInt32Array) String() string {
 
 func (a UnnestInt64Array) String() string {
 	if n := len(a); n > 0 {
-		b := []byte("UNNEST(ARRAY[")
+		b := make([]byte, 0, 14+3*n)
+		b = []byte("UNNEST(ARRAY[")
 
 		b = strconv.AppendInt(b, a[0], 10)
 		for i := 1; i < n; i++ {
