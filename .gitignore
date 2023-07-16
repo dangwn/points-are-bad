@@ -52,3 +52,6 @@ creds.txt
 
 docker-deploy-test.yml
 reboot_deploy.sh
+
+**/.terraform*
+**/terraform.tfstate*
