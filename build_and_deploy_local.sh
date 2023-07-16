@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 BUILD_TAG="latest"
 BUILD_CONFIG="docker-deploy-local.yml"
 
