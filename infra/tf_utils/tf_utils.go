@@ -9,13 +9,13 @@ import (
 )
 
 type StackData struct {
-    TerraformDir string
-    StackParams map[string]interface{}
-    SkipDestroy bool
+    TerraformDir    string
+    StackParams     map[string]interface{}
+    SkipDestroy     bool
 
-    StackOutputs map[string]interface{}
+    StackOutputs    map[string]interface{}
     
-    Options *terraform.Options
+    Options         *terraform.Options
 }
 
 func (sd *StackData) configureOptions() {
@@ -67,10 +67,10 @@ func RemoveTerraformStaticFiles(rootDir string) {
 	tfStateFiles[0] = rootDir + "/terraform.tfstate.backup"
 	tfStateFiles[1] = rootDir + "/terraform.tfstate"
 	tfStateFiles[2] = rootDir + "/.terraform.lock.hcl"
-	for _, f := range tfStateFiles {
-		if err := os.Remove("./" + f); err != nil {
+    for _, f := range tfStateFiles {
+        if err := os.Remove("./" + f); err != nil {
             fmt.Println(err)
             os.Exit(1)
         }
-	}
+    }
 }

@@ -2,56 +2,6 @@ provider "aws" {
   region = var.aws_region
 }
 
-#---------------------------------------------
-# Variables
-#---------------------------------------------
-variable "aws_region" {
-  type = string
-}
-
-variable "aws_az_1" {
-  type = string
-}
-
-variable "aws_az_2" {
-  type = string
-}
-
-variable "aws_az_3" {
-  type = string
-}
-
-variable "vpc_cidr_range" {
-  type = string
-}
-
-variable "private_subnet_1_cidr_range" {
-  type = string
-}
-
-variable "private_subnet_2_cidr_range" {
-  type = string
-}
-
-variable "private_subnet_3_cidr_range" {
-  type = string
-}
-
-variable "eks_endpoint_subnet_1_cidr_range" {
-  type = string
-}
-
-variable "eks_endpoint_subnet_2_cidr_range" {
-  type = string
-}
-
-variable "eks_endpoint_subnet_3_cidr_range" {
-  type = string
-}
-
-#---------------------------------------------
-# Resources
-#---------------------------------------------
 resource "aws_vpc" "pab_vpc" {
   cidr_block = var.vpc_cidr_range
   enable_dns_hostnames = true
@@ -166,23 +116,4 @@ resource "aws_route_table_association" "eks_endpoint_subnet_2" {
 resource "aws_route_table_association" "eks_endpoint_subnet_3" {
   route_table_id = aws_route_table.private_route_table.id
   subnet_id = aws_subnet.eks_endpoint_subnet_3.id
-}
-
-#---------------------------------------------
-# Outputs
-#---------------------------------------------
-output "vpc_id" {
-  value = aws_vpc.pab_vpc.id
-}
-
-output "private_subnet_1_id" {
-  value = aws_subnet.private_subnet_1.id
-}
-
-output "private_subnet_2_id" {
-  value = aws_subnet.private_subnet_2.id
-}
-
-output "private_subnet_3_id" {
-  value = aws_subnet.private_subnet_3.id
 }
