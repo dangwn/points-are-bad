@@ -12,6 +12,7 @@ This is the repository containing the source code for [Points are Bad](https://p
  - <b>CI:</b> Script for building and pushing docker images using [Travis CI](https://travis-ci.com)
  - <b>deploy:</b> Deployment code and helm charts for deploying k8s resources onto the cluster
  - <b>frontend:</b> Source code for the frontend web application
+ - <b>infra:</b> Infrastructure as code for AWS deployment
 
 ## Deploy locally
 ### Requirements:
