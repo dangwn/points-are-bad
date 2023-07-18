@@ -279,7 +279,7 @@ func getMatchesInDateRange(startDate, endDate *Date) ([]MatchWithoutGoals, error
  * Inserts a match into the DB
  * If any errors are caught, an empty MatchWithId is returned
  */
-func insertMatchIntoDb(match MatchWithoutGoals) (MatchWithId, error) {
+func insertMatchIntoDb(match MatchWithoutGoals) (Match, error) {
     matchId := createUUID()
     
     if _, err := driver.Exec(
@@ -289,16 +289,18 @@ func insertMatchIntoDb(match MatchWithoutGoals) (MatchWithId, error) {
         match.Home,
         match.Away,
     ); err != nil {
-        return MatchWithId{}, err
+        return Match{}, err
     }
 
     if err := populatePredictionsByMatchId(matchId); err != nil {
-        return MatchWithId{}, err
+        return Match{}, err
     }
 
-    return MatchWithId{
+    return Match{
         matchId,
         match,
+        nil, 
+        nil,
     }, nil
 }
 

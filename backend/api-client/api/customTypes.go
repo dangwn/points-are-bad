@@ -23,13 +23,12 @@ func (d *Date) UnmarshalJSON(bs []byte) error {
         return nil
     }
 
-    newDate, err := time.Parse(`"`+dateFormat+`"`, string(bs))
-    if err != nil {
+    if newDate, err := time.Parse(`"`+dateFormat+`"`, string(bs)); err != nil {
         return err
+    } else {
+        *d = Date(newDate)
+        return nil
     }
-    
-    *d = Date(newDate)
-    return nil
 }
 
 func (d *Date) MarshalJSON() ([]byte, error) {

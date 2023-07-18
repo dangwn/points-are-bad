@@ -111,18 +111,17 @@ paths:
       parameters:
         - name: start_date
           in: query
-          description: Begining of date range for matches (inclusive)
+          description: Begining of date range for matches inclusive (requires "" on date)
           required: false
           schema:
             type: string
-            example: '2010-01-01'
+            example: '"2010-01-01"'
         - name: end_date
           in: query
-          description: End of date range for matches (exclusive)
+          description: End of date range for matches exclusive (requires "" on date)
           required: false
           schema:
             type: string
-            example: '2010-01-01'
       responses:
         '200':
           description: List of matches without goals
@@ -191,14 +190,14 @@ paths:
         - match
       summary: Delete match
       description: Delete match by match Id
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MatchId'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/MatchId'
+      parameters:
+        - name: match_id
+          in: query
+          description: Match Id
+          required: true
+          schema:
+            type: string
+            example: 'string'
       responses:
         '204':
           description: Match successfully deleted
@@ -256,7 +255,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserWithPoints'
+                $ref: '#/components/schemas/Points'
         '401':
           description: Could not get logged in user
       security:
@@ -338,12 +337,12 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/PredictionWithMatch'
+                $ref: '#/components/schemas/Prediction'
           application/x-www-form-urlencoded:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/PredictionWithMatch'
+                $ref: '#/components/schemas/Prediction'
       responses:
         '202':
           description: Predictions updated
@@ -503,12 +502,11 @@ components:
       type: object
       properties:
         match_id: 
-          type: integer
-          format: int64
-          example: 0
+          type: string
+          example: "string"
         match_date: 
           type: string
-          example: '2010-01-01'
+          example: "2010-01-01"
         home:
           type: string
           example: string
@@ -529,9 +527,8 @@ components:
       type: object
       properties:
         match_id: 
-          type: integer
-          format: int64
-          example: 0
+          type: string
+          example: "string"
     MatchWithoutGoals:
       type: object
       properties:
@@ -565,6 +562,60 @@ components:
         password:
           type: string
           example: string
+    Points:
+      type: object
+      properties:
+        points:
+          type: integer
+          format: int64
+          example: 0
+        correct_scores:
+          type: integer
+          format: int64
+          example: 0
+        largest_error:
+          type: integer
+          format: int64
+          example: 0
+        position:
+          type: integer
+          format: int64
+          example: null
+          nullable: true
+    Prediction:
+      type: object
+      properties:
+        prediction_id:
+          type: string
+          example: "string"
+        home_goals:
+          type: integer
+          format: int64
+          nullable: true
+          example: null
+        away_goals:
+          type: integer
+          format: int64
+          nullable: true
+          example: null
+    PredictionWithMatch:
+      type: object
+      properties:
+        prediction_id:
+          type: string
+          example: "string"
+        home_goals:
+          type: integer
+          format: int64
+          nullable: true
+          example: null
+        away_goals:
+          type: integer
+          format: int64
+          nullable: true
+          example: null
+        match:
+          $ref: '#/components/schemas/Match'
     SessionUser:
       type: object
       properties:
@@ -583,27 +634,6 @@ components:
         token_type: 
           type: string
           example: string       
-    PredictionWithMatch:
-      type: object
-      properties:
-        prediction_id:
-          type: integer
-          format: int64
-          example: 0
-        home_goals:
-          type: integer
-          format: int64
-          nullable: true
-          example: null
-        away_goals:
-          type: integer
-          format: int64
-          nullable: true
-          example: null
-        match:
-          $ref: '#/components/schemas/Match'
-        user:
-          $ref: '#/components/schemas/SessionUser'
     UserWithPoints:
       type: object
       properties:
