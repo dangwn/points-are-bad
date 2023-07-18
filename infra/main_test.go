@@ -1,7 +1,6 @@
 package main
 
 import (
-    "fmt"
     "flag"
     "testing"
     vpc "points-are-bad/infra/vpc"
@@ -9,18 +8,18 @@ import (
 )
 
 var (
-    skipDestroy bool
     skipCleanup bool
+    skipDestroy bool
 )
 
 func TestMain(t *testing.T) {
-    flag.BoolVar(&skipDestroy, "skipDestroy", false, "Skip destroying infrastructure and leave it in AWS")
     flag.BoolVar(&skipCleanup, "skipCleanup", false, "Skip cleanup of local terraform files")
+    flag.BoolVar(&skipDestroy, "skipDestroy", false, "Skip destroying infrastructure and leave it in AWS")
 
     flag.Parse()
 
-    outputs := vpc.DeployVpc(t, skipDestroy, skipCleanup)
-    fmt.Println(fmt.Sprint("\n\n", outputs, "\n\n"))
+    vpcStack := vpc.DeployVpc(t, skipCleanup, skipDestroy)
+    defer vpcStack.TearDown(t)
 
     if !skipCleanup {
         tf_utils.RemoveTFCacheDir(".")

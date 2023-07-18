@@ -5,10 +5,11 @@ import (
 	"testing"
 )
 
-func DeployVpc(t *testing.T, skipDestroy bool, skipCleanup bool) map[string]interface{} {
+func DeployVpc(t *testing.T, skipCleanup, skipDestroy bool) tf_utils.StackData {
     rootDir := "./vpc"
     vpcData := tf_utils.StackData{
         TerraformDir: rootDir,
+        SkipCleanup: skipCleanup,
         SkipDestroy: skipDestroy,
         StackParams: map[string]interface{}{
             "aws_region": "us-east-1",
@@ -25,10 +26,8 @@ func DeployVpc(t *testing.T, skipDestroy bool, skipCleanup bool) map[string]inte
         },
     }
 
-    defer vpcData.TearDown(t, skipDestroy, skipCleanup, rootDir)
-
     vpcData.DeployStack(t)
     vpcData.CollectOutputs(t)
 
-    return vpcData.StackOutputs
+    return vpcData
 }
