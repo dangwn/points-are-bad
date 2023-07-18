@@ -18,7 +18,7 @@ import (
  * The expiration time of the the access token is given by ACCESS_TOKEN_EXPIRE_TIME,
  *		and is signed by ACCESS_TOKEN_SECRET_KEY (see config.go)
  */
-func createAccessToken(userId string, username string, isAdmin bool) (string, error) {
+func createAccessToken(userId, username string, isAdmin bool) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userId,
 		"username": username,

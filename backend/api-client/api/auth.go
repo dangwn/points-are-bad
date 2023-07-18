@@ -76,10 +76,6 @@ func login(c *gin.Context) {
     }
 
     c.JSON(http.StatusAccepted, Token{AccessToken: accessToken, TokenType: "Bearer"})
-    // c.JSON(http.StatusAccepted, gin.H{
-    //     "access_token": accessToken,
-    //     "token_type": "Bearer",
-    // })
     Logger.Info("User "+ userId + " successfully logged in")
 }
 
