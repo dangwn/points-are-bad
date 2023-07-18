@@ -11,6 +11,7 @@ import (
 type StackData struct {
     TerraformDir    string
     StackParams     map[string]interface{}
+    SkipCleanup     bool
     SkipDestroy     bool
 
     StackOutputs    map[string]interface{}
@@ -20,7 +21,7 @@ type StackData struct {
 
 func (sd *StackData) configureOptions() {
     if sd.Options == nil {
-           sd.Options = &terraform.Options{
+        sd.Options = &terraform.Options{
             TerraformDir:   sd.TerraformDir,
             Vars:           sd.StackParams,
         }
@@ -39,19 +40,17 @@ func (sd *StackData) CollectOutputs(t *testing.T) {
 }
 
 func (sd StackData) DestroyStack(t *testing.T) {
-    if !sd.SkipDestroy {
-        sd.configureOptions()
-        terraform.Destroy(t, sd.Options)
-    }
+    sd.configureOptions()
+    terraform.Destroy(t, sd.Options)
 }
 
-func (sd StackData) TearDown(t *testing.T, skipDestroy, skipCleanup bool, rootDir string) {
-    if !skipDestroy {
+func (sd StackData) TearDown(t *testing.T) {
+    if !sd.SkipDestroy {
         sd.DestroyStack(t)
     }
-    if !skipCleanup {
-        RemoveTerraformStaticFiles(rootDir)
-        RemoveTFCacheDir(rootDir)
+    if !sd.SkipCleanup {
+        RemoveTerraformStaticFiles(sd.TerraformDir)
+        RemoveTFCacheDir(sd.TerraformDir)
     }
 }
 
@@ -70,7 +69,6 @@ func RemoveTerraformStaticFiles(rootDir string) {
     for _, f := range tfStateFiles {
         if err := os.Remove("./" + f); err != nil {
             fmt.Println(err)
-            os.Exit(1)
         }
     }
 }
