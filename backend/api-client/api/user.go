@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -372,9 +371,6 @@ func updatePasswordByUserId(userId, oldPassword, newPassword string) error {
     if err != nil{
         return err
     }
-
-    fmt.Println("old password: " + oldPassword)
-    fmt.Println("New password: " + newPassword)
 
     if !verifyPasswordHash(oldPasswordHash, oldPassword) {
         err := errors.New("previous password was not verfied against password in db")
