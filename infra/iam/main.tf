@@ -19,19 +19,6 @@ resource "aws_iam_role" "eks_master_role" {
       }
     ]
   })
-
-  # inline_policy = jsonencode({
-  #   Version = "2012-10-17"
-  #   Statement = [
-  #     {
-  #       Effect = "Allow"
-  #       Action = [
-  #         "eks:DescribeCluster"
-  #       ]
-  #       Resource = "arn:aws:eks::${data.aws_caller_identity.current.account_id}:*"
-  #     }
-  #   ]
-  # })
 }
 
 resource "aws_iam_role_policy" "master_allow_describe" {
