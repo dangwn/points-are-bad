@@ -23,6 +23,9 @@ func DeployVpc(t *testing.T, skipCleanup, skipDestroy bool) tf_utils.StackData {
             "eks_endpoint_subnet_1_cidr_range": "10.0.3.0/24",
             "eks_endpoint_subnet_2_cidr_range": "10.0.4.0/24",
             "eks_endpoint_subnet_3_cidr_range": "10.0.5.0/24",
+            "public_subnet_1_cidr_range": "10.0.6.0/24",
+            "public_subnet_2_cidr_range": "10.0.7.0/24",
+            "public_subnet_3_cidr_range": "10.0.8.0/24",
         },
     }
 

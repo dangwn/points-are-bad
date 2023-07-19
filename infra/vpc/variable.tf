@@ -41,3 +41,15 @@ variable "eks_endpoint_subnet_2_cidr_range" {
 variable "eks_endpoint_subnet_3_cidr_range" {
   type = string
 }
+
+variable "public_subnet_1_cidr_range" {
+  type = string
+}
+
+variable "public_subnet_2_cidr_range" {
+  type = string
+}
+
+variable "public_subnet_3_cidr_range" {
+  type = string
+}
