@@ -55,3 +55,4 @@ reboot_deploy.sh
 
 **/.terraform*
 **/terraform.tfstate*
+scratch.py
